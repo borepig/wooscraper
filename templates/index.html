@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAV Scraper - Professional Metadata Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-dark text-light">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-search"></i> JAV Scraper</h3>
+                    <p class="text-muted sidebar-subtitle">Professional Metadata Tool</p>
+                </div>
+                
+                <div class="sidebar-content">
+                    <div class="card bg-dark border-secondary mb-3">
+                        <div class="card-header">
+                            <h6><i class="fas fa-folder-open"></i> Folder Selection</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control bg-dark text-light" id="folderPath" placeholder="Enter folder path...">
+                            </div>
+                            <button class="btn btn-primary w-100 mb-2" onclick="scanFolder()">
+                                <i class="fas fa-search"></i> Scan Folder
+                            </button>
+                            <button class="btn btn-success w-100" onclick="startScraping()" id="startBtn" disabled>
+                                <i class="fas fa-play"></i> Start Scraping
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-dark border-secondary mb-3">
+                        <div class="card-header">
+                            <h6><i class="fas fa-cog"></i> Settings</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="createNfo" checked>
+                                <label class="form-check-label" for="createNfo">Create NFO files</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="downloadCover" checked>
+                                <label class="form-check-label" for="downloadCover">Download covers</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="organizeFiles" checked>
+                                <label class="form-check-label" for="organizeFiles">Organize files</label>
+                            </div>
+                            <hr class="border-secondary">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="highContrast">
+                                <label class="form-check-label" for="highContrast">High contrast mode</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-header">
+                            <h6><i class="fas fa-info-circle"></i> Status</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="statusInfo">
+                                <p class="text-muted">Ready to scan</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 main-content">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                            <h2 class="mb-2 mb-md-0"><i class="fas fa-list"></i> File List</h2>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-outline-warning" onclick="testConnection()">
+                                    <i class="fas fa-wifi"></i> <span class="btn-text">Test Connection</span>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="stopScraping()" id="stopBtn" style="display: none;">
+                                    <i class="fas fa-stop"></i> <span class="btn-text">Stop</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="row mb-4" id="progressSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="card bg-dark border-secondary">
+                            <div class="card-body">
+                                <h6 class="card-title">Progress</h6>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" id="progressBar" style="width: 0%">0%</div>
+                                </div>
+                                <small class="text-muted" id="progressText">Ready to start...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Debug Log -->
+                <div class="row mb-4" id="debugSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="card bg-dark border-secondary">
+                            <div class="card-header">
+                                <h6><i class="fas fa-bug"></i> Debug Log</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="debugLog" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                                    <!-- Debug messages will appear here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- File List -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card bg-dark border-secondary">
+                            <div class="card-header">
+                                <h6><i class="fas fa-file-video"></i> Detected Files</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="fileList">
+                                    <p class="text-muted text-center py-4">
+                                        <i class="fas fa-folder-open fa-3x mb-3"></i><br>
+                                        Select a folder to scan for JAV files
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Results -->
+                <div class="row mt-4" id="resultsSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="card bg-dark border-secondary">
+                            <div class="card-header">
+                                <h6><i class="fas fa-check-circle"></i> Results</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="resultsList">
+                                    <!-- Results will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for folder browser -->
+    <div class="modal fade" id="folderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title">Select Folder</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> Due to browser security restrictions, you'll need to enter the full absolute path manually after selecting a folder.
+                    </div>
+                    <label for="folderInput" class="form-label">Select any file from the folder:</label>
+                    <input type="file" class="form-control" id="folderInput" webkitdirectory directory multiple>
+                    <small class="text-muted">
+                        This will help identify the folder name, then you'll enter the full path.
+                    </small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="selectFolder()">Select</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notificationToast" class="toast" role="alert">
+            <div class="toast-header bg-dark text-light">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                <!-- Toast message -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html> 

@@ -1,0 +1,45 @@
+# JAV Scraper Configuration
+scraper:
+  # Supported JAV sites for scraping
+  sites:
+    - name: "javguru"
+      url: "https://jav.guru"
+      enabled: true
+  
+  # Threading settings
+  max_threads: 5
+  timeout: 30
+  
+  # File processing
+  video_extensions: [".mp4", ".avi", ".mkv", ".wmv", ".mov"]
+  image_extensions: [".jpg", ".jpeg", ".png", ".gif"]
+  
+  # Output settings
+  create_nfo: true
+  download_cover: true
+  download_fanart: true
+  create_folder_cover: true
+  
+  # Metadata settings
+  translate_title: true
+  translate_description: true
+  language: "en"  # en, ja, zh
+  
+  # File organization
+  organize_files: true
+  create_actor_folders: false
+  create_genre_folders: false
+
+# UI Settings
+ui:
+  port: 5000
+  host: "0.0.0.0"
+  debug: false
+  theme: "dark"  # dark, light
+
+# Logging
+logging:
+  level: "INFO"
+  file: "scraper.log"
+  max_size: "10MB"
+  backup_count: 5 
