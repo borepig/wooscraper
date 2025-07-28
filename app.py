@@ -153,19 +153,28 @@ def run_scraping_job(folder_path, ui_settings):
     
     async def async_scraping():
         try:
+            logging.info(f"🚀 Starting scraping job with detailed logging")
+            logging.info(f"📁 Folder to scan: {folder_path}")
+            logging.info(f"⚙️ UI Settings: {ui_settings}")
+            
             async with JAVScraperEngine() as engine:
                 # Scan for files
+                logging.info(f"🔍 Scanning folder for JAV files: {folder_path}")
                 files = engine.scan_folder(folder_path)
                 job_status['total_files'] = len(files)
+                logging.info(f"📊 Found {len(files)} JAV files to process")
                 
                 if len(files) == 0:
-                    job_status['error'] = 'No JAV files found in folder'
+                    error_msg = 'No JAV files found in folder'
+                    logging.error(f"❌ {error_msg}")
+                    job_status['error'] = error_msg
                     job_status['running'] = False
                     return
                 
                 results = []
                 for i, file_info in enumerate(files):
                     if not job_status['running']:
+                        logging.info(f"⏹️ Job stopped by user")
                         break
                         
                     jav_code = file_info['jav_code']
@@ -174,59 +183,80 @@ def run_scraping_job(folder_path, ui_settings):
                     job_status['progress'] = int((i / len(files)) * 100)
                     job_status['message'] = f'Processing {jav_code} ({i+1}/{len(files)})'
                     
-                    logging.info(f"Processing {jav_code} ({i+1}/{len(files)})")
+                    logging.info(f"🎬 ===== Processing {jav_code} ({i+1}/{len(files)}) =====")
+                    logging.info(f"📄 File info: {file_info}")
                     
                     try:
                         # Scrape metadata
                         job_status['message'] = f'Scraping metadata for {jav_code}...'
+                        logging.info(f"🔍 Starting metadata scraping for {jav_code}")
                         metadata = await engine.scrape_all_sites(jav_code)
                         metadata.update(file_info)
-                        logging.info(f"Scraped metadata for {jav_code}")
+                        logging.info(f"✅ Metadata scraping completed for {jav_code}")
+                        logging.info(f"📊 Metadata source: {metadata.get('source', 'unknown')}")
+                        logging.info(f"📊 Metadata details: {metadata.get('detailed_metadata', {}).keys()}")
                         
                         # Determine output folder based on UI settings
                         organize_files = ui_settings.get('organize_files', True)
-                        logging.info(f"🔧 UI Settings received: {ui_settings}")
-                        logging.info(f"🔧 organize_files setting: {organize_files}")
+                        logging.info(f"🔧 UI Settings analysis:")
+                        logging.info(f"   📋 organize_files: {organize_files}")
+                        logging.info(f"   📋 folder_path: {ui_settings.get('folder_path', 'Not set')}")
+                        logging.info(f"   📋 download_cover: {ui_settings.get('download_cover', True)}")
                         logging.info(f"🔧 Original video folder: {file_info['folder']}")
+                        logging.info(f"🔧 Original video path: {file_info['file_path']}")
                         
                         if organize_files:
+                            logging.info(f"📁 ==== FOLDER ORGANIZATION MODE ====")
                             # Create organized folder structure: videos/actress_name/jav_code/
                             # Use the selected folder from UI settings, not the video's current folder
                             selected_folder = Path(ui_settings.get('folder_path', file_info['folder']))
+                            logging.info(f"🎯 Selected base folder: {selected_folder}")
                             
                             # Always create organized structure under selected folder, regardless of existing nested folders
                             videos_base = selected_folder / "videos"
-                            logging.info(f"🔍 Creating organized videos folder: {videos_base}")
+                            logging.info(f"📁 Videos base folder: {videos_base}")
                             
                             # Get actress name from detailed metadata
                             actress_name = ""
                             if metadata.get('detailed_metadata', {}).get('actress'):
                                 actress_name = metadata['detailed_metadata']['actress'].split(',')[0].strip()
+                                logging.info(f"🎭 Found actress in metadata: '{actress_name}'")
                             elif metadata.get('detailed_metadata', {}).get('actresses'):
                                 actress_name = metadata['detailed_metadata']['actresses'].split(',')[0].strip()
+                                logging.info(f"🎭 Found actress in actresses field: '{actress_name}'")
+                            else:
+                                logging.warning(f"⚠️ No actress name found in metadata")
                             
                             # Clean actress name for folder creation (remove special characters)
                             if actress_name:
                                 import re
+                                original_actress_name = actress_name
                                 actress_name = re.sub(r'[<>:"/\\|?*]', '', actress_name)
                                 actress_name = actress_name.strip()
+                                logging.info(f"🎭 Actress name cleaned: '{original_actress_name}' → '{actress_name}'")
                             
                             # Create folder structure
                             if actress_name:
                                 actress_folder = videos_base / actress_name
                                 output_folder = actress_folder / jav_code
+                                logging.info(f"📁 Actress folder: {actress_folder}")
+                                logging.info(f"📁 Final output folder: {output_folder}")
                             else:
                                 # Fallback if no actress name
                                 output_folder = videos_base / jav_code
+                                logging.info(f"⚠️ No actress name, using fallback folder: {output_folder}")
                             
                             # Check if this exact folder already exists to avoid nested creation
                             if output_folder.exists():
-                                logging.info(f"⚠️  Target folder already exists: {output_folder}")
-                                logging.info(f"⚠️  Will use existing folder to avoid nested structure")
+                                logging.info(f"⚠️ Target folder already exists: {output_folder}")
+                                logging.info(f"⚠️ Will use existing folder to avoid nested structure")
+                                logging.info(f"📁 Existing folder contents: {list(output_folder.iterdir())}")
                             else:
+                                logging.info(f"📁 Creating new folder structure...")
                                 output_folder.mkdir(parents=True, exist_ok=True)
                                 logging.info(f"✅ Created new folder: {output_folder}")
-                            logging.info(f"✅ Created organized folder structure:")
+                            
+                            logging.info(f"📁 ==== FINAL FOLDER STRUCTURE ====")
                             logging.info(f"   📁 Selected folder: {selected_folder}")
                             logging.info(f"   📁 Videos folder: {videos_base}")
                             logging.info(f"   📁 Actress folder: {actress_folder if actress_name else 'N/A'}")
@@ -236,19 +266,27 @@ def run_scraping_job(folder_path, ui_settings):
                             original_video_path = Path(file_info['file_path'])
                             new_video_path = output_folder / f"{jav_code}{original_video_path.suffix}"
                             
+                            logging.info(f"🎬 ==== VIDEO FILE MOVEMENT ====")
+                            logging.info(f"   📄 Original video: {original_video_path}")
+                            logging.info(f"   📄 Target video: {new_video_path}")
+                            logging.info(f"   📄 Original exists: {original_video_path.exists()}")
+                            logging.info(f"   📄 Target exists: {new_video_path.exists()}")
+                            
                             # Always move video to organized structure, regardless of current location
                             if original_video_path.exists():
                                 import shutil
                                 # Check if target file already exists
                                 if new_video_path.exists():
-                                    logging.info(f"⚠️  Target video already exists: {new_video_path}")
-                                    logging.info(f"⚠️  Skipping video move to avoid overwrite")
+                                    logging.warning(f"⚠️ Target video already exists: {new_video_path}")
+                                    logging.warning(f"⚠️ Skipping video move to avoid overwrite")
                                 else:
+                                    logging.info(f"🔄 Moving video file...")
                                     shutil.move(str(original_video_path), str(new_video_path))
-                                    logging.info(f"✅ Moved video from {original_video_path} to {new_video_path}")
+                                    logging.info(f"✅ Successfully moved video from {original_video_path} to {new_video_path}")
                             else:
-                                logging.warning(f"⚠️  Original video not found: {original_video_path}")
+                                logging.error(f"❌ Original video not found: {original_video_path}")
                         else:
+                            logging.info(f"📁 ==== NO ORGANIZATION MODE ====")
                             # Use the folder where the video file is located
                             video_file_path = Path(file_info['file_path'])
                             output_folder = video_file_path.parent
@@ -259,11 +297,19 @@ def run_scraping_job(folder_path, ui_settings):
                         # Create NFO file directly from metadata (no metadata.json needed)
                         job_status['message'] = f'Creating NFO file for {jav_code}...'
                         nfo_path = output_folder / "movie.nfo"
+                        logging.info(f"📄 ==== NFO FILE CREATION ====")
+                        logging.info(f"   📄 NFO path: {nfo_path}")
+                        logging.info(f"   📄 Output folder: {output_folder}")
+                        logging.info(f"   📄 Output folder exists: {output_folder.exists()}")
+                        
                         engine.create_nfo_file(metadata, str(nfo_path))
-                        logging.info(f"✅ Created NFO file: {nfo_path}")
-                        logging.info(f"✅ NFO file location: {nfo_path}")
+                        logging.info(f"✅ Successfully created NFO file: {nfo_path}")
+                        if nfo_path.exists():
+                            size = nfo_path.stat().st_size
+                            logging.info(f"📏 NFO file size: {size} bytes")
                         
                         # Download fanart and create poster
+                        logging.info(f"🎨 ==== FANART AND POSTER CREATION ====")
                         # Prioritize fanart_url from detailed metadata, fallback to best_cover
                         fanart_url = None
                         if metadata.get('detailed_metadata', {}).get('fanart_url'):
@@ -272,44 +318,104 @@ def run_scraping_job(folder_path, ui_settings):
                         elif metadata.get('best_cover'):
                             fanart_url = metadata['best_cover']
                             logging.info(f"🎨 Using fallback cover URL: {fanart_url}")
+                        else:
+                            logging.warning(f"⚠️ No fanart URL found in metadata")
+                            logging.info(f"📊 Available metadata keys: {list(metadata.get('detailed_metadata', {}).keys())}")
                         
                         if ui_settings.get('download_cover', True) and fanart_url:
                             fanart_path = output_folder / "fanart.jpg"
                             poster_path = output_folder / "poster.jpg"
                             
-                            logging.info(f"🎨 Downloading fanart to: {fanart_path}")
-                            logging.info(f"🎨 Creating poster at: {poster_path}")
+                            logging.info(f"🎨 Fanart download path: {fanart_path}")
+                            logging.info(f"🎨 Poster creation path: {poster_path}")
                             
-                            # Download fanart first
-                            if await engine.download_image(fanart_url, str(fanart_path)):
-                                # Create poster by cropping the right 47.125% of fanart
-                                engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
-                                logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
-                                logging.info(f"✅ Fanart location: {fanart_path}")
-                                logging.info(f"✅ Poster location: {poster_path}")
+                            # Check if webp conversion is needed (for JAVmost)
+                            needs_webp_conversion = metadata.get('detailed_metadata', {}).get('needs_webp_conversion', False)
+                            webp_url = metadata.get('detailed_metadata', {}).get('webp_url')
+                            
+                            logging.info(f"🔄 Webp conversion check:")
+                            logging.info(f"   🔄 needs_webp_conversion: {needs_webp_conversion}")
+                            logging.info(f"   🔄 webp_url: {webp_url}")
+                            
+                            if needs_webp_conversion and webp_url:
+                                logging.info(f"🔄 ==== WEBP CONVERSION MODE ====")
+                                logging.info(f"🔄 Converting webp to jpg: {webp_url}")
+                                logging.info(f"🔄 Target fanart path: {fanart_path}")
+                                
+                                if await engine.download_and_convert_webp_to_jpg(webp_url, str(fanart_path)):
+                                    logging.info(f"✅ Webp conversion successful")
+                                    # Create poster by cropping the right 47.125% of fanart
+                                    logging.info(f"🎨 Creating poster from fanart...")
+                                    engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
+                                    logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
+                                    logging.info(f"✅ Fanart location: {fanart_path}")
+                                    logging.info(f"✅ Poster location: {poster_path}")
+                                    
+                                    # Verify file sizes
+                                    if fanart_path.exists():
+                                        fanart_size = fanart_path.stat().st_size
+                                        logging.info(f"📏 Fanart file size: {fanart_size} bytes")
+                                    if poster_path.exists():
+                                        poster_size = poster_path.stat().st_size
+                                        logging.info(f"📏 Poster file size: {poster_size} bytes")
+                                else:
+                                    logging.error(f"❌ Failed to convert webp for {jav_code}")
                             else:
-                                logging.warning(f"⚠️ Failed to download fanart for {jav_code}")
+                                logging.info(f"📄 ==== REGULAR IMAGE DOWNLOAD MODE ====")
+                                # Regular image download
+                                logging.info(f"📄 Downloading regular image: {fanart_url}")
+                                if await engine.download_image(fanart_url, str(fanart_path)):
+                                    logging.info(f"✅ Regular image download successful")
+                                    # Create poster by cropping the right 47.125% of fanart
+                                    logging.info(f"🎨 Creating poster from fanart...")
+                                    engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
+                                    logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
+                                    logging.info(f"✅ Fanart location: {fanart_path}")
+                                    logging.info(f"✅ Poster location: {poster_path}")
+                                    
+                                    # Verify file sizes
+                                    if fanart_path.exists():
+                                        fanart_size = fanart_path.stat().st_size
+                                        logging.info(f"📏 Fanart file size: {fanart_size} bytes")
+                                    if poster_path.exists():
+                                        poster_size = poster_path.stat().st_size
+                                        logging.info(f"📏 Poster file size: {poster_size} bytes")
+                                else:
+                                    logging.error(f"❌ Failed to download fanart for {jav_code}")
                         else:
-                            logging.warning(f"⚠️ No fanart URL available for {jav_code}")
+                            if not ui_settings.get('download_cover', True):
+                                logging.info(f"ℹ️ Cover download disabled in UI settings")
+                            else:
+                                logging.warning(f"⚠️ No fanart URL available for {jav_code}")
                         
                         # Download actress portrait if available
-                        actress_portrait_url = metadata.get('detailed_metadata', {}).get('thumb_url')
-                        if actress_portrait_url and ui_settings.get('download_cover', True):
-                            actress_name = ""
-                            if metadata.get('detailed_metadata', {}).get('actress'):
-                                actress_name = metadata['detailed_metadata']['actress'].split(',')[0].strip()
+                        logging.info(f"🎭 ==== ACTRESS PORTRAIT DOWNLOAD ====")
+                        actress_name = ""
+                        if metadata.get('detailed_metadata', {}).get('actress'):
+                            actress_name = metadata['detailed_metadata']['actress'].split(',')[0].strip()
+                            logging.info(f"🎭 Found actress name: '{actress_name}'")
+                        else:
+                            logging.info(f"ℹ️ No actress name found in metadata")
+                        
+                        if actress_name and ui_settings.get('download_cover', True):
+                            # Clean actress name for filename
+                            import re
+                            original_actress_name = actress_name
+                            clean_actress_name = re.sub(r'[<>:"/\\|?*]', '', actress_name)
+                            clean_actress_name = clean_actress_name.replace(' ', '_')
+                            logging.info(f"🎭 Actress name cleaned: '{original_actress_name}' → '{clean_actress_name}'")
                             
-                            if actress_name:
-                                # Clean actress name for filename
-                                import re
-                                clean_actress_name = re.sub(r'[<>:"/\\|?*]', '', actress_name)
-                                clean_actress_name = clean_actress_name.replace(' ', '_')
-                                
-                                portrait_path = output_folder / f"{clean_actress_name}_portrait.jpg"
-                                
-                                logging.info(f"🎭 Downloading actress portrait for {actress_name}")
-                                logging.info(f"🎭 Portrait URL: {actress_portrait_url}")
-                                logging.info(f"🎭 Save path: {portrait_path}")
+                            portrait_path = output_folder / f"{clean_actress_name}_portrait.jpg"
+                            logging.info(f"🎭 Portrait save path: {portrait_path}")
+                            
+                            logging.info(f"🎭 Searching for actress portrait: {actress_name}")
+                            
+                            # Search for actress portrait using the enhanced method
+                            actress_portrait_url = await engine.search_actress_portrait(actress_name)
+                            
+                            if actress_portrait_url:
+                                logging.info(f"🎭 Found portrait URL: {actress_portrait_url}")
+                                logging.info(f"🎭 Attempting to download portrait...")
                                 
                                 if await engine.download_image(actress_portrait_url, str(portrait_path)):
                                     logging.info(f"✅ Successfully downloaded actress portrait: {portrait_path}")
@@ -318,11 +424,17 @@ def run_scraping_job(folder_path, ui_settings):
                                         size = portrait_path.stat().st_size
                                         logging.info(f"📏 Portrait file size: {size} bytes")
                                 else:
-                                    logging.warning(f"⚠️ Failed to download actress portrait for {actress_name}")
+                                    logging.error(f"❌ Failed to download actress portrait for {actress_name}")
+                                    logging.error(f"❌ Portrait URL: {actress_portrait_url}")
+                                    logging.error(f"❌ Portrait path: {portrait_path}")
                             else:
-                                logging.info(f"ℹ️ No actress name found, skipping portrait download")
+                                logging.warning(f"⚠️ No actress portrait found for {actress_name}")
+                                logging.warning(f"⚠️ Portrait search returned no results")
                         else:
-                            logging.info(f"ℹ️ No actress portrait URL available for {jav_code}")
+                            if not actress_name:
+                                logging.info(f"ℹ️ No actress name found, skipping portrait download")
+                            else:
+                                logging.info(f"ℹ️ Cover download disabled in UI settings, skipping portrait")
                             
                         results.append(metadata)
                         job_status['message'] = f'Completed {jav_code}'

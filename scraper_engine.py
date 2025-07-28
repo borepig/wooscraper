@@ -173,10 +173,6 @@ class JAVScraperEngine:
                 
                 if detail_html:
                     logging.info(f"📄 Detail page HTML length: {len(detail_html)} characters")
-                    # Save detail page HTML for inspection
-                    with open(f'debug_detail_{jav_code}.html', 'w', encoding='utf-8') as f:
-                        f.write(detail_html)
-                    logging.info(f"💾 Detail page HTML saved to: debug_detail_{jav_code}.html")
                     
                     # Parse detail page for comprehensive metadata
                     detail_soup = BeautifulSoup(detail_html, 'html.parser')
@@ -491,6 +487,10 @@ class JAVScraperEngine:
             
     async def scrape_all_sites(self, jav_code: str) -> Dict:
         """Scrape metadata from all enabled sites."""
+        logging.info(f"🔍 ==== METADATA SCRAPING START ====")
+        logging.info(f"🔍 JAV Code: {jav_code}")
+        logging.info(f"🔍 Config: {self.config.get('scraper', {})}")
+        
         enabled_sites = [site for site in self.config.get('scraper', {}).get('sites', []) if site.get('enabled', True)]
         logging.info(f"🔍 Enabled sites: {[site['name'] for site in enabled_sites]}")
         
@@ -498,6 +498,7 @@ class JAVScraperEngine:
         for site in enabled_sites:
             site_name = site['name']
             if site_name == 'javguru':
+                logging.info(f"🌐 Adding JavGuru task for {jav_code}")
                 tasks.append(self.scrape_javguru(jav_code))
                 
         logging.info(f"📡 Starting {len(tasks)} scraping tasks")
@@ -506,43 +507,79 @@ class JAVScraperEngine:
         
         # Check if all sites failed or returned empty results
         all_failed = True
-        for result in results:
+        for i, result in enumerate(results):
+            logging.info(f"📊 Analyzing result {i+1}: {type(result)}")
             if isinstance(result, dict) and result:
                 # Check if the result has meaningful data
                 has_title = result.get('title') and result.get('title') != 'None'
                 has_cover = result.get('cover_url')
                 has_actress = result.get('details', {}).get('Actress') or result.get('details', {}).get('Actor')
                 
+                logging.info(f"📊 Result {i+1} analysis:")
+                logging.info(f"   📊 Has title: {has_title} ({result.get('title', 'N/A')})")
+                logging.info(f"   📊 Has cover: {has_cover} ({result.get('cover_url', 'N/A')})")
+                logging.info(f"   📊 Has actress: {has_actress}")
+                
                 if has_title or has_cover or has_actress:
                     all_failed = False
+                    logging.info(f"✅ Result {i+1} has meaningful data")
                     break
+            else:
+                logging.warning(f"⚠️ Result {i+1} is not valid: {result}")
         
         # If all sites failed, try JAVmost as fallback
         if all_failed:
+            logging.warning(f"⚠️ ==== ALL ENABLED SITES FAILED, TRYING JAVMOST ====")
             logging.warning(f"⚠️ All scraping sites failed for {jav_code}, trying JAVmost")
-            javmost_result = await self.scrape_javmost(jav_code)
-            if javmost_result:
-                results = [javmost_result]
-                # Add JAVmost as a source
-                enabled_sites.append({'name': 'javmost', 'enabled': True})
-            else:
-                # If JAVmost also failed, use basic fallback
-                logging.warning(f"⚠️ JAVmost also failed for {jav_code}, using basic fallback")
-                fallback_result = await self.scrape_fallback(jav_code)
-                if fallback_result:
-                    results = [fallback_result]
-                    # Add fallback as a source
-                    enabled_sites.append({'name': 'fallback', 'enabled': True})
+            try:
+                javmost_result = await self.scrape_javmost(jav_code)
+                if javmost_result:
+                    logging.info(f"✅ JAVmost fallback successful")
+                    results = [javmost_result]
+                    # Add JAVmost as a source
+                    enabled_sites.append({'name': 'javmost', 'enabled': True})
                 else:
-                    # If fallback also failed, create a basic result
-                    logging.warning(f"⚠️ All fallbacks failed for {jav_code}, creating basic result")
-                    results = [{
-                        'title': f"{jav_code} - JAV Content",
-                        'cover_url': None,
-                        'details': {'Actor': 'Unknown', 'Studio': 'Unknown'},
-                        'source': 'basic'
-                    }]
-                    enabled_sites.append({'name': 'basic', 'enabled': True})
+                    logging.warning(f"⚠️ JAVmost fallback failed")
+                    # If JAVmost also failed, use basic fallback
+                    logging.warning(f"⚠️ JAVmost also failed for {jav_code}, using basic fallback")
+                    try:
+                        fallback_result = await self.scrape_fallback(jav_code)
+                        if fallback_result:
+                            logging.info(f"✅ Basic fallback successful")
+                            results = [fallback_result]
+                            # Add fallback as a source
+                            enabled_sites.append({'name': 'fallback', 'enabled': True})
+                        else:
+                            logging.warning(f"⚠️ Basic fallback also failed")
+                            # If fallback also failed, create a basic result
+                            logging.warning(f"⚠️ All fallbacks failed for {jav_code}, creating basic result")
+                            results = [{
+                                'title': f"{jav_code} - JAV Content",
+                                'cover_url': None,
+                                'details': {'Actor': 'Unknown', 'Studio': 'Unknown'},
+                                'source': 'basic'
+                            }]
+                            enabled_sites.append({'name': 'basic', 'enabled': True})
+                    except Exception as e:
+                        logging.error(f"❌ Error in basic fallback: {e}")
+                        # Create basic result as last resort
+                        results = [{
+                            'title': f"{jav_code} - JAV Content",
+                            'cover_url': None,
+                            'details': {'Actor': 'Unknown', 'Studio': 'Unknown'},
+                            'source': 'basic'
+                        }]
+                        enabled_sites.append({'name': 'basic', 'enabled': True})
+            except Exception as e:
+                logging.error(f"❌ Error in JAVmost fallback: {e}")
+                # Create basic result as last resort
+                results = [{
+                    'title': f"{jav_code} - JAV Content",
+                    'cover_url': None,
+                    'details': {'Actor': 'Unknown', 'Studio': 'Unknown'},
+                    'source': 'basic'
+                }]
+                enabled_sites.append({'name': 'basic', 'enabled': True})
         
 
         
@@ -855,91 +892,13 @@ class JAVScraperEngine:
             # Enhance metadata with actress portraits
             metadata = await self.enhance_actress_metadata(metadata)
             
-            # Create Videos folder in the same directory as the original video
+            # Note: File creation (NFO, fanart, poster) is handled in app.py
+            # This method only scrapes metadata and enhances it with actress portraits
+            logging.info(f"✅ Metadata processing completed for {jav_code}")
+            
+            # Save metadata JSON in the original folder for reference
             original_folder = Path(file_info['folder'])
-            videos_folder = original_folder / "Videos"
-            videos_folder.mkdir(exist_ok=True)
-            
-            # Create NFO file
-            if self.config.get('scraper', {}).get('create_nfo', True):
-                nfo_path = videos_folder / "movie.nfo"
-                self.create_nfo_file(metadata, str(nfo_path))
-                
-            # Download fanart and create poster
-            # Prioritize fanart_url from detailed metadata, fallback to best_cover
-            fanart_url = None
-            needs_webp_conversion = False
-            
-            if metadata.get('detailed_metadata', {}).get('fanart_url'):
-                fanart_url = metadata['detailed_metadata']['fanart_url']
-                needs_webp_conversion = metadata['detailed_metadata'].get('needs_webp_conversion', False)
-                logging.info(f"🎨 Using fanart URL from detailed metadata: {fanart_url}")
-            elif metadata.get('best_cover'):
-                fanart_url = metadata['best_cover']
-                logging.info(f"🎨 Using fallback cover URL: {fanart_url}")
-            
-            if self.config.get('scraper', {}).get('download_cover', True) and fanart_url:
-                fanart_path = videos_folder / "fanart.jpg"
-                poster_path = videos_folder / "poster.jpg"
-                
-                # Handle webp conversion if needed
-                if needs_webp_conversion and metadata.get('detailed_metadata', {}).get('webp_url'):
-                    webp_url = metadata['detailed_metadata']['webp_url']
-                    logging.info(f"🔄 Converting webp to jpg: {webp_url}")
-                    if await self.download_and_convert_webp_to_jpg(webp_url, str(fanart_path)):
-                        # Create poster by cropping the right 47.125% of fanart
-                        self.create_poster_from_fanart(str(fanart_path), str(poster_path))
-                        logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
-                    else:
-                        logging.warning(f"⚠️ Failed to convert webp for {jav_code}")
-                else:
-                    # Regular image download
-                    if await self.download_image(fanart_url, str(fanart_path)):
-                        # Create poster by cropping the right 47.125% of fanart
-                        self.create_poster_from_fanart(str(fanart_path), str(poster_path))
-                        logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
-                    else:
-                        logging.warning(f"⚠️ Failed to download fanart for {jav_code}")
-            else:
-                logging.warning(f"⚠️ No fanart URL available for {jav_code}")
-            
-            # Download actress portrait if available
-            actress_name = ""
-            if metadata.get('detailed_metadata', {}).get('actress'):
-                actress_name = metadata['detailed_metadata']['actress'].split(',')[0].strip()
-            
-            if actress_name and self.config.get('scraper', {}).get('download_cover', True):
-                # Clean actress name for filename
-                import re
-                clean_actress_name = re.sub(r'[<>:"/\\|?*]', '', actress_name)
-                clean_actress_name = clean_actress_name.replace(' ', '_')
-                
-                portrait_path = videos_folder / f"{clean_actress_name}_portrait.jpg"
-                
-                logging.info(f"🎭 Searching for actress portrait: {actress_name}")
-                
-                # Search for actress portrait using the existing method
-                actress_portrait_url = await self.search_actress_portrait(actress_name)
-                
-                if actress_portrait_url:
-                    logging.info(f"🎭 Found portrait URL: {actress_portrait_url}")
-                    logging.info(f"🎭 Save path: {portrait_path}")
-                    
-                    if await self.download_image(actress_portrait_url, str(portrait_path)):
-                        logging.info(f"✅ Successfully downloaded actress portrait: {portrait_path}")
-                        # Check file size
-                        if portrait_path.exists():
-                            size = portrait_path.stat().st_size
-                            logging.info(f"📏 Portrait file size: {size} bytes")
-                    else:
-                        logging.warning(f"⚠️ Failed to download actress portrait for {actress_name}")
-                else:
-                    logging.warning(f"⚠️ No actress portrait found for {actress_name}")
-            else:
-                logging.info(f"ℹ️ No actress name found, skipping portrait download")
-                
-            # Save metadata JSON
-            json_path = videos_folder / f"{jav_code}-metadata.json"
+            json_path = original_folder / f"{jav_code}-metadata.json"
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(metadata, f, ensure_ascii=False, indent=2)
                 
@@ -962,31 +921,49 @@ class JAVScraperEngine:
             
             # Clean actress name for search
             clean_name = actress_name.strip()
-            logging.info(f"🔍 Searching for actress portrait: {clean_name}")
+            logging.info(f"🎭 ==== ACTRESS PORTRAIT SEARCH START ====")
+            logging.info(f"🎭 Actress name: {clean_name}")
+            logging.info(f"🎭 Search strategy: javtiful.com → javmost.com → Google Images")
             
             # Try javtiful.com first
+            logging.info(f"🎭 ==== TRYING JAVTIFUL.COM ====")
             portrait_url = await self._search_javtiful_portrait(clean_name)
             if portrait_url:
                 logging.info(f"✅ Found portrait on javtiful.com: {portrait_url}")
+                logging.info(f"🎭 Portrait search completed successfully")
                 return portrait_url
+            else:
+                logging.warning(f"⚠️ No portrait found on javtiful.com")
             
             # Try javmost.com as fallback
+            logging.info(f"🎭 ==== TRYING JAVMOST.COM ====")
             portrait_url = await self._search_javmost_portrait(clean_name)
             if portrait_url:
                 logging.info(f"✅ Found portrait on javmost.com: {portrait_url}")
+                logging.info(f"🎭 Portrait search completed successfully")
                 return portrait_url
+            else:
+                logging.warning(f"⚠️ No portrait found on javmost.com")
             
             # Try Google Images as final fallback
+            logging.info(f"🎭 ==== TRYING GOOGLE IMAGES (FINAL FALLBACK) ====")
             portrait_url = await self._search_google_images_portrait(clean_name)
             if portrait_url:
                 logging.info(f"✅ Found portrait on Google Images: {portrait_url}")
+                logging.info(f"🎭 Portrait search completed successfully")
                 return portrait_url
+            else:
+                logging.warning(f"⚠️ No portrait found on Google Images")
             
+            logging.warning(f"⚠️ ==== PORTRAIT SEARCH FAILED ====")
             logging.warning(f"⚠️ No actress portrait found for {clean_name} on any source")
+            logging.warning(f"⚠️ Tried: javtiful.com, javmost.com, Google Images")
             return None
                 
         except Exception as e:
+            logging.error(f"❌ ==== PORTRAIT SEARCH ERROR ====")
             logging.error(f"❌ Error searching for actress portrait {actress_name}: {e}")
+            logging.error(f"❌ Exception type: {type(e).__name__}")
             return None
     
     async def _search_javtiful_portrait(self, clean_name: str) -> Optional[str]:
@@ -1147,48 +1124,130 @@ class JAVScraperEngine:
     async def _search_google_images_portrait(self, clean_name: str) -> Optional[str]:
         """Search for actress portrait on Google Images as final fallback."""
         try:
-            logging.info(f"🔍 Searching Google Images for: {clean_name}")
+            logging.info(f"🔍 ==== GOOGLE IMAGES PORTRAIT SEARCH ====")
+            logging.info(f"🔍 Actress name: {clean_name}")
             
             # Ensure session is available
             if not hasattr(self, 'session') or self.session is None:
                 self.session = aiohttp.ClientSession()
+                logging.info(f"🔍 Created new aiohttp session for Google search")
             
-            # Construct Google Images search URL
-            search_query = f"{clean_name} JAV actress portrait"
+            # Construct Google Images search URL with better query
+            search_query = f"{clean_name} JAV portrait"
             search_url = f"https://www.google.com/search?q={urllib.parse.quote(search_query)}&tbm=isch"
+            logging.info(f"🔍 Search query: {search_query}")
+            logging.info(f"🔍 Search URL: {search_url}")
             
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
             }
+            logging.info(f"🔍 Using headers: {list(headers.keys())}")
             
+            logging.info(f"📡 Requesting Google Images search...")
             async with self.session.get(search_url, headers=headers) as response:
+                logging.info(f"📊 Response status: {response.status}")
+                
                 if response.status == 200:
                     html = await response.text()
+                    logging.info(f"📄 Received HTML length: {len(html)} characters")
+                    
                     soup = BeautifulSoup(html, 'html.parser')
+                    logging.info(f"🔍 Parsed HTML with BeautifulSoup")
                     
                     # Look for image URLs in Google Images results
-                    for img in soup.find_all('img'):
-                        src = img.get('src', '')
-                        if src and src.startswith('http') and not src.endswith('.webp'):
-                            # Check if this looks like a portrait image
-                            if any(term in src.lower() for term in ['portrait', 'profile', 'actress', 'avatar']):
-                                logging.info(f"🖼️ Found Google Images portrait: {src}")
-                                return src
+                    logging.info(f"🔍 ==== SEARCHING FOR IMAGES ====")
+                    images_found = 0
+                    portrait_images = []
+                    regular_images = []
                     
-                    # If no specific portrait found, return the first image
+                    # Try multiple approaches to find images
+                    # Method 1: Look for img tags with src
                     for img in soup.find_all('img'):
                         src = img.get('src', '')
                         if src and src.startswith('http') and not src.endswith('.webp'):
-                            logging.info(f"🖼️ Found Google Images image: {src}")
-                            return src
+                            images_found += 1
+                            logging.info(f"🔍 Found image {images_found}: {src}")
+                            
+                            # Check if this looks like a portrait image
+                            if any(term in src.lower() for term in ['portrait', 'profile', 'actress', 'avatar', 'face', 'head']):
+                                portrait_images.append(src)
+                                logging.info(f"🖼️ Added to portrait candidates: {src}")
+                            else:
+                                regular_images.append(src)
+                                logging.info(f"📄 Added to regular candidates: {src}")
+                    
+                    # Method 2: Look for data-src attributes (Google Images often uses these)
+                    if not regular_images and not portrait_images:
+                        logging.info(f"🔍 Trying data-src attributes...")
+                        for img in soup.find_all('img'):
+                            data_src = img.get('data-src', '')
+                            if data_src and data_src.startswith('http') and not data_src.endswith('.webp'):
+                                images_found += 1
+                                logging.info(f"🔍 Found image {images_found} (data-src): {data_src}")
+                                
+                                if any(term in data_src.lower() for term in ['portrait', 'profile', 'actress', 'avatar', 'face', 'head']):
+                                    portrait_images.append(data_src)
+                                    logging.info(f"🖼️ Added to portrait candidates: {data_src}")
+                                else:
+                                    regular_images.append(data_src)
+                                    logging.info(f"📄 Added to regular candidates: {data_src}")
+                    
+                    # Method 3: Look for any image-like URLs in the HTML
+                    if not regular_images and not portrait_images:
+                        logging.info(f"🔍 Searching for image URLs in HTML content...")
+                        import re
+                        # Look for URLs that end with common image extensions
+                        image_pattern = r'https?://[^\s<>"]+\.(jpg|jpeg|png|gif|webp)'
+                        image_urls = re.findall(image_pattern, html)
+                        
+                        for url in image_urls:
+                            if not url.endswith('.webp'):
+                                images_found += 1
+                                logging.info(f"🔍 Found image {images_found} (regex): {url}")
+                                
+                                if any(term in url.lower() for term in ['portrait', 'profile', 'actress', 'avatar', 'face', 'head']):
+                                    portrait_images.append(url)
+                                    logging.info(f"🖼️ Added to portrait candidates: {url}")
+                                else:
+                                    regular_images.append(url)
+                                    logging.info(f"📄 Added to regular candidates: {url}")
+                    
+                    logging.info(f"📊 Image analysis complete:")
+                    logging.info(f"   📊 Total images found: {images_found}")
+                    logging.info(f"   📊 Portrait candidates: {len(portrait_images)}")
+                    logging.info(f"   📊 Regular candidates: {len(regular_images)}")
+                    
+                    # Return the first portrait image if available
+                    if portrait_images:
+                        selected_image = portrait_images[0]
+                        logging.info(f"✅ Selected portrait image: {selected_image}")
+                        return selected_image
+                    
+                    # If no portrait images, return the first regular image
+                    if regular_images:
+                        selected_image = regular_images[0]
+                        logging.info(f"✅ Selected regular image: {selected_image}")
+                        return selected_image
+                    
+                    logging.warning(f"⚠️ No suitable images found in Google search results")
+                    logging.warning(f"⚠️ HTML length: {len(html)} characters")
+                    logging.warning(f"⚠️ This might indicate Google Images has changed their structure")
                 else:
-                    logging.warning(f"❌ Failed to fetch Google Images for {clean_name}: {response.status}")
+                    logging.error(f"❌ Failed to fetch Google Images for {clean_name}: {response.status}")
+                    logging.error(f"❌ Response headers: {dict(response.headers)}")
             
             logging.warning(f"⚠️ No Google Images portrait found for {clean_name}")
             return None
                 
         except Exception as e:
+            logging.error(f"❌ ==== GOOGLE IMAGES SEARCH ERROR ====")
             logging.error(f"❌ Error searching Google Images for {clean_name}: {e}")
+            logging.error(f"❌ Exception type: {type(e).__name__}")
             return None
     
     async def _fetch_profile_page(self, url: str, headers: dict) -> Optional[str]:
@@ -1355,13 +1414,16 @@ class JAVScraperEngine:
     async def scrape_javmost(self, jav_code: str) -> Optional[Dict]:
         """Scrape metadata from JAVmost."""
         try:
-            logging.info(f"🔍 Starting JAVmost scrape for {jav_code}")
+            logging.info(f"🌐 ==== JAVMOST SCRAPING START ====")
+            logging.info(f"🌐 JAV Code: {jav_code}")
             url = f"https://www5.javmost.com/search/{jav_code}/"
+            logging.info(f"🌐 Search URL: {url}")
             
             # Ensure session is initialized
             if not hasattr(self, 'session') or self.session is None:
                 import aiohttp
                 self.session = aiohttp.ClientSession()
+                logging.info(f"🌐 Created new aiohttp session")
             
             # Add headers to avoid blocking
             headers = {
@@ -1372,45 +1434,77 @@ class JAVScraperEngine:
                 'Connection': 'keep-alive',
                 'Upgrade-Insecure-Requests': '1',
             }
+            logging.info(f"🌐 Using headers: {list(headers.keys())}")
             
             logging.info(f"📡 Requesting URL: {url}")
             async with self.session.get(url, headers=headers) as response:
                 logging.info(f"📊 Response status: {response.status}")
+                logging.info(f"📊 Response headers: {dict(response.headers)}")
                 
                 if response.status == 200:
                     html = await response.text()
                     logging.info(f"📄 Received HTML length: {len(html)} characters")
+                    
+                    # Check if HTML contains the JAV code
+                    if jav_code in html:
+                        logging.info(f"✅ HTML contains JAV code: {jav_code}")
+                    else:
+                        logging.warning(f"⚠️ HTML does not contain JAV code: {jav_code}")
+                    
                     soup = BeautifulSoup(html, 'html.parser')
+                    logging.info(f"🔍 Parsed HTML with BeautifulSoup")
                     
                     # Look for search results - JAVmost has specific structure
+                    logging.info(f"🔍 ==== SEARCHING FOR RESULTS ====")
                     # Find cards that contain the JAV code
                     results = soup.find_all('div', class_='card')
+                    logging.info(f"🔍 Found {len(results)} divs with class 'card'")
+                    
                     if not results:
+                        logging.info(f"🔍 No 'card' divs found, trying 'result' class")
                         # Try alternative selectors
                         results = soup.find_all('div', class_=lambda x: x and 'result' in x.lower())
+                        logging.info(f"🔍 Found {len(results)} divs with 'result' in class")
+                    
                     if not results:
+                        logging.info(f"🔍 No 'result' divs found, searching for JAV code in text")
                         # Try finding any div that contains the JAV code
                         results = soup.find_all('div', string=lambda text: text and jav_code in text)
+                        logging.info(f"🔍 Found {len(results)} divs containing JAV code in text")
+                    
                     if not results:
+                        logging.info(f"🔍 No specific results found, using entire page")
                         # Last resort: look for any content containing the JAV code
                         results = [soup]  # Use the entire page if no specific results found
+                        logging.info(f"🔍 Using entire page as result")
                     
                     if results:
                         logging.info(f"✅ Found {len(results)} results for {jav_code}")
                         
                         # Find the result that matches the exact JAV code
                         exact_match = None
-                        for result in results:
+                        logging.info(f"🔍 ==== SEARCHING FOR EXACT MATCH ====")
+                        for i, result in enumerate(results):
+                            logging.info(f"🔍 Checking result {i+1}/{len(results)}")
                             # Check if this result contains the exact JAV code
                             result_text = result.get_text()
                             if jav_code in result_text:
+                                logging.info(f"✅ Result {i+1} contains JAV code")
                                 # Check if it's the exact match (not a variant)
                                 title_elem = result.find('h1', class_='card-title')
                                 if title_elem:
                                     title_text = title_elem.get_text().strip()
+                                    logging.info(f"🔍 Found title: '{title_text}'")
                                     if title_text == jav_code:
                                         exact_match = result
+                                        logging.info(f"✅ Found exact match in result {i+1}")
                                         break
+                                    else:
+                                        logging.info(f"⚠️ Title doesn't match JAV code: '{title_text}' != '{jav_code}'")
+                                else:
+                                    logging.info(f"⚠️ No title element found in result {i+1}")
+                            else:
+                                logging.info(f"⚠️ Result {i+1} doesn't contain JAV code")
                         
                         # Use exact match if found, otherwise use first result
                         first_result = exact_match if exact_match else results[0]
