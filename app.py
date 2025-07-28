@@ -242,9 +242,11 @@ def run_scraping_job(folder_path, ui_settings):
                                 logging.info(f"📁 Actress folder: {actress_folder}")
                                 logging.info(f"📁 Final output folder: {output_folder}")
                             else:
-                                # Fallback if no actress name
-                                output_folder = videos_base / jav_code
-                                logging.info(f"⚠️ No actress name, using fallback folder: {output_folder}")
+                                # Use UNKNOWN as actress name for folder structure when no actress found
+                                actress_folder = videos_base / "UNKNOWN"
+                                output_folder = actress_folder / jav_code
+                                logging.info(f"📁 UNKNOWN actress folder: {actress_folder}")
+                                logging.info(f"📁 Final output folder: {output_folder}")
                             
                             # Check if this exact folder already exists to avoid nested creation
                             if output_folder.exists():
@@ -394,6 +396,9 @@ def run_scraping_job(folder_path, ui_settings):
                         if metadata.get('detailed_metadata', {}).get('actress'):
                             actress_name = metadata['detailed_metadata']['actress'].split(',')[0].strip()
                             logging.info(f"🎭 Found actress name: '{actress_name}'")
+                        elif metadata.get('detailed_metadata', {}).get('actresses'):
+                            actress_name = metadata['detailed_metadata']['actresses'].split(',')[0].strip()
+                            logging.info(f"🎭 Found actress in actresses field: '{actress_name}'")
                         else:
                             logging.info(f"ℹ️ No actress name found in metadata")
                         
