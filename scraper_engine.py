@@ -77,6 +77,39 @@ class JAVScraperEngine:
                 
         return None
         
+    def clean_actress_name(self, actress_name: str) -> str:
+        """
+        Clean actress name by removing Japanese characters and keeping only English/Romanized names.
+        Examples:
+        - "Miku Abeno 阿部乃みく" -> "Miku Abeno"
+        - "Yui Hatano 波多野結衣" -> "Yui Hatano"
+        - "Asahi Mizuno 水野朝陽" -> "Asahi Mizuno"
+        """
+        if not actress_name:
+            return ""
+            
+        # Remove Japanese characters (Hiragana, Katakana, Kanji)
+        # Japanese Unicode ranges:
+        # Hiragana: 3040-309F
+        # Katakana: 30A0-30FF
+        # Kanji: 4E00-9FAF
+        # Full-width characters: FF00-FFEF
+        cleaned_name = re.sub(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\uFF00-\uFFEF]', '', actress_name)
+        
+        # Remove any remaining parentheses and their contents
+        cleaned_name = re.sub(r'\s*\([^)]*\)', '', cleaned_name)
+        
+        # Remove extra whitespace and normalize
+        cleaned_name = re.sub(r'\s+', ' ', cleaned_name).strip()
+        
+        # Remove any remaining special characters that might be left
+        cleaned_name = re.sub(r'[^\w\s\-\.]', '', cleaned_name)
+        
+        # Final cleanup of extra spaces
+        cleaned_name = re.sub(r'\s+', ' ', cleaned_name).strip()
+        
+        return cleaned_name
+        
     def scan_folder(self, folder_path: str) -> List[Dict]:
         """Scan folder for video files and extract JAV codes."""
         video_extensions = self.config.get('scraper', {}).get('video_extensions', ['.mp4', '.avi', '.mkv'])
@@ -249,10 +282,16 @@ class JAVScraperEngine:
                 # Clean up the field name
                 field_name = field_name.replace(' ', '_').replace('-', '_')
                 
+                # Clean actress names if this is an actress-related field
+                if field_name in ['actress', 'actresses', 'cast', 'star', 'stars']:
+                    original_value = field_value
+                    field_value = self.clean_actress_name(field_value)
+                    logging.info(f"📋 Extracted {field_name}: {original_value} -> {field_value}")
+                else:
+                    logging.info(f"📋 Extracted {field_name}: {field_value}")
+                
                 # Store the metadata
                 metadata[field_name] = field_value
-                
-                logging.info(f"📋 Extracted {field_name}: {field_value}")
             
             # Also extract the main title from the page
             title_tag = soup.find('h1', class_='titl')
@@ -500,6 +539,9 @@ class JAVScraperEngine:
             if site_name == 'javguru':
                 logging.info(f"🌐 Adding JavGuru task for {jav_code}")
                 tasks.append(self.scrape_javguru(jav_code))
+            elif site_name == 'javtrailers':
+                logging.info(f"🌐 Adding JAV Trailers task for {jav_code}")
+                tasks.append(self.scrape_javtrailers(jav_code))
                 
         logging.info(f"📡 Starting {len(tasks)} scraping tasks")
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -527,32 +569,99 @@ class JAVScraperEngine:
             else:
                 logging.warning(f"⚠️ Result {i+1} is not valid: {result}")
         
-        # If all sites failed, try JAVmost as fallback
+        # If all sites failed, try fallback sites in order: JAVmost -> JAV Trailers -> Basic
         if all_failed:
-            logging.warning(f"⚠️ ==== ALL ENABLED SITES FAILED, TRYING JAVMOST ====")
-            logging.warning(f"⚠️ All scraping sites failed for {jav_code}, trying JAVmost")
+            logging.warning(f"⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====")
+            logging.warning(f"⚠️ All scraping sites failed for {jav_code}, trying fallback sites")
+            
+            # Try JAVmost first
+            logging.info(f"🔍 Trying JAVmost for {jav_code}")
+            javmost_result = None
             try:
                 javmost_result = await self.scrape_javmost(jav_code)
                 if javmost_result:
-                    logging.info(f"✅ JAVmost fallback successful")
-                    results = [javmost_result]
-                    # Add JAVmost as a source
-                    enabled_sites.append({'name': 'javmost', 'enabled': True})
+                    # Check if JAVmost result has meaningful data
+                    has_meaningful_data = (javmost_result.get('title') and 
+                                          javmost_result.get('title') != jav_code and
+                                          javmost_result.get('title') != f"{jav_code} - JAV Content" and
+                                          javmost_result.get('title') != "JAV MOST") or \
+                                         (javmost_result.get('cover_url') and javmost_result.get('cover_url').strip() != '') or \
+                                         (javmost_result.get('details', {}).get('Actress') and 
+                                          javmost_result.get('details', {}).get('Actress').strip() != '') or \
+                                         (javmost_result.get('details', {}).get('Studio') and 
+                                          javmost_result.get('details', {}).get('Studio').strip() != '') or \
+                                         (javmost_result.get('detailed_metadata', {}).get('actress') and 
+                                          javmost_result.get('detailed_metadata', {}).get('actress').strip() != '') or \
+                                         (javmost_result.get('detailed_metadata', {}).get('studio') and 
+                                          javmost_result.get('detailed_metadata', {}).get('studio').strip() != '')
+                    
+                    # Log the meaningful data check for debugging
+                    logging.info(f"🔍 JAVmost meaningful data check:")
+                    logging.info(f"   🔍 Title: {javmost_result.get('title', 'N/A')}")
+                    logging.info(f"   🔍 Cover URL: {javmost_result.get('cover_url', 'N/A')}")
+                    logging.info(f"   🔍 Details Actress: {javmost_result.get('details', {}).get('Actress', 'N/A')}")
+                    logging.info(f"   🔍 Details Studio: {javmost_result.get('details', {}).get('Studio', 'N/A')}")
+                    logging.info(f"   🔍 Detailed Metadata Actress: {javmost_result.get('detailed_metadata', {}).get('actress', 'N/A')}")
+                    logging.info(f"   🔍 Detailed Metadata Studio: {javmost_result.get('detailed_metadata', {}).get('studio', 'N/A')}")
+                    logging.info(f"   🔍 Has meaningful data: {has_meaningful_data}")
+                    
+                    if has_meaningful_data:
+                        logging.info(f"✅ JAVmost fallback successful with meaningful data")
+                        results = [javmost_result]
+                        enabled_sites.append({'name': 'javmost', 'enabled': True})
+                    else:
+                        logging.warning(f"⚠️ JAVmost returned data but no meaningful content for {jav_code}")
+                        logging.warning(f"⚠️ No actress information found, will try next fallback site")
+                        javmost_result = None  # Mark as failed for next fallback
                 else:
-                    logging.warning(f"⚠️ JAVmost fallback failed")
-                    # If JAVmost also failed, use basic fallback
-                    logging.warning(f"⚠️ JAVmost also failed for {jav_code}, using basic fallback")
+                    logging.warning(f"⚠️ JAVmost fallback failed for {jav_code}")
+            except Exception as e:
+                logging.error(f"❌ Error in JAVmost fallback: {e}")
+                javmost_result = None
+            
+            # If JAVmost failed or had no meaningful data, try JAV Trailers
+            if not javmost_result:
+                logging.info(f"🔍 Trying JAV Trailers for {jav_code}")
+                javtrailers_result = None
+                try:
+                    javtrailers_result = await self.scrape_javtrailers(jav_code)
+                    if javtrailers_result:
+                        # Check if JAV Trailers result has meaningful data
+                        has_meaningful_data = (javtrailers_result.get('title') and 
+                                              javtrailers_result.get('title') != jav_code and
+                                              javtrailers_result.get('title') != f"{jav_code} - JAV Content") or \
+                                             javtrailers_result.get('cover_url') or \
+                                             (javtrailers_result.get('detailed_metadata', {}).get('actress') and 
+                                              javtrailers_result.get('detailed_metadata', {}).get('actress').strip() != '') or \
+                                             (javtrailers_result.get('detailed_metadata', {}).get('studio') and 
+                                              javtrailers_result.get('detailed_metadata', {}).get('studio').strip() != '')
+                        
+                        if has_meaningful_data:
+                            logging.info(f"✅ JAV Trailers fallback successful with meaningful data")
+                            results = [javtrailers_result]
+                            enabled_sites.append({'name': 'javtrailers', 'enabled': True})
+                        else:
+                            logging.warning(f"⚠️ JAV Trailers returned data but no meaningful content for {jav_code}")
+                            logging.warning(f"⚠️ No actress information found, will try next fallback site")
+                            javtrailers_result = None  # Mark as failed for next fallback
+                    else:
+                        logging.warning(f"⚠️ JAV Trailers fallback failed for {jav_code}")
+                except Exception as e:
+                    logging.error(f"❌ Error in JAV Trailers fallback: {e}")
+                    javtrailers_result = None
+                
+                # If JAV Trailers also failed, try basic fallback
+                if not javtrailers_result:
+                    logging.info(f"🔍 Trying basic fallback for {jav_code}")
                     try:
                         fallback_result = await self.scrape_fallback(jav_code)
                         if fallback_result:
                             logging.info(f"✅ Basic fallback successful")
                             results = [fallback_result]
-                            # Add fallback as a source
                             enabled_sites.append({'name': 'fallback', 'enabled': True})
                         else:
-                            logging.warning(f"⚠️ Basic fallback also failed")
-                            # If fallback also failed, create a basic result
-                            logging.warning(f"⚠️ All fallbacks failed for {jav_code}, creating basic result")
+                            logging.warning(f"⚠️ Basic fallback failed for {jav_code}")
+                            # Create basic result as last resort
                             results = [{
                                 'title': f"{jav_code} - JAV Content",
                                 'cover_url': None,
@@ -570,16 +679,6 @@ class JAVScraperEngine:
                             'source': 'basic'
                         }]
                         enabled_sites.append({'name': 'basic', 'enabled': True})
-            except Exception as e:
-                logging.error(f"❌ Error in JAVmost fallback: {e}")
-                # Create basic result as last resort
-                results = [{
-                    'title': f"{jav_code} - JAV Content",
-                    'cover_url': None,
-                    'details': {'Actor': 'Unknown', 'Studio': 'Unknown'},
-                    'source': 'basic'
-                }]
-                enabled_sites.append({'name': 'basic', 'enabled': True})
         
 
         
@@ -911,7 +1010,7 @@ class JAVScraperEngine:
         Search for actress portrait using multiple sources:
         1. javtiful.com (primary)
         2. javmost.com (fallback)
-        3. Google Images (final fallback)
+        3. javdatabase.com (final fallback)
         Returns the portrait URL if found.
         """
         try:
@@ -923,7 +1022,7 @@ class JAVScraperEngine:
             clean_name = actress_name.strip()
             logging.info(f"🎭 ==== ACTRESS PORTRAIT SEARCH START ====")
             logging.info(f"🎭 Actress name: {clean_name}")
-            logging.info(f"🎭 Search strategy: javtiful.com → javmost.com → Google Images")
+            logging.info(f"🎭 Search strategy: javtiful.com → javmost.com → javdatabase.com")
             
             # Try javtiful.com first
             logging.info(f"🎭 ==== TRYING JAVTIFUL.COM ====")
@@ -945,19 +1044,19 @@ class JAVScraperEngine:
             else:
                 logging.warning(f"⚠️ No portrait found on javmost.com")
             
-            # Try Google Images as final fallback
-            logging.info(f"🎭 ==== TRYING GOOGLE IMAGES (FINAL FALLBACK) ====")
-            portrait_url = await self._search_google_images_portrait(clean_name)
+            # Try javdatabase.com as final fallback
+            logging.info(f"🎭 ==== TRYING JAVDATABASE.COM (FINAL FALLBACK) ====")
+            portrait_url = await self._search_javdatabase_portrait(clean_name)
             if portrait_url:
-                logging.info(f"✅ Found portrait on Google Images: {portrait_url}")
+                logging.info(f"✅ Found portrait on javdatabase.com: {portrait_url}")
                 logging.info(f"🎭 Portrait search completed successfully")
                 return portrait_url
             else:
-                logging.warning(f"⚠️ No portrait found on Google Images")
+                logging.warning(f"⚠️ No portrait found on javdatabase.com")
             
             logging.warning(f"⚠️ ==== PORTRAIT SEARCH FAILED ====")
             logging.warning(f"⚠️ No actress portrait found for {clean_name} on any source")
-            logging.warning(f"⚠️ Tried: javtiful.com, javmost.com, Google Images")
+            logging.warning(f"⚠️ Tried: javtiful.com, javmost.com, javdatabase.com")
             return None
                 
         except Exception as e:
@@ -1121,132 +1220,67 @@ class JAVScraperEngine:
             logging.error(f"❌ Error searching javmost for {clean_name}: {e}")
             return None
     
-    async def _search_google_images_portrait(self, clean_name: str) -> Optional[str]:
-        """Search for actress portrait on Google Images as final fallback."""
+    async def _search_javdatabase_portrait(self, clean_name: str) -> Optional[str]:
+        """Search for actress portrait on javdatabase.com as final fallback."""
         try:
-            logging.info(f"🔍 ==== GOOGLE IMAGES PORTRAIT SEARCH ====")
+            logging.info(f"🔍 ==== JAVDATABASE PORTRAIT SEARCH ====")
             logging.info(f"🔍 Actress name: {clean_name}")
+            
+            # Convert actress name to URL slug format
+            # Example: "Kana Yume" -> "kana-yume"
+            actress_slug = clean_name.lower().replace(' ', '-')
+            logging.info(f"🔍 Actress slug: {actress_slug}")
+            
+            # Construct direct portrait URL using the known pattern
+            portrait_url = f"https://www.javdatabase.com/idolimages/thumb/{actress_slug}.webp"
+            logging.info(f"🔍 Direct portrait URL: {portrait_url}")
+            
+            # Check if the portrait exists by making a HEAD request
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'image/webp,image/*,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+            }
             
             # Ensure session is available
             if not hasattr(self, 'session') or self.session is None:
                 self.session = aiohttp.ClientSession()
-                logging.info(f"🔍 Created new aiohttp session for Google search")
+                logging.info(f"🔍 Created new aiohttp session for JAV Database check")
             
-            # Construct Google Images search URL with better query
-            search_query = f"{clean_name} JAV portrait"
-            search_url = f"https://www.google.com/search?q={urllib.parse.quote(search_query)}&tbm=isch"
-            logging.info(f"🔍 Search query: {search_query}")
-            logging.info(f"🔍 Search URL: {search_url}")
-            
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-            }
-            logging.info(f"🔍 Using headers: {list(headers.keys())}")
-            
-            logging.info(f"📡 Requesting Google Images search...")
-            async with self.session.get(search_url, headers=headers) as response:
+            logging.info(f"📡 Checking if portrait exists...")
+            async with self.session.head(portrait_url, headers=headers) as response:
                 logging.info(f"📊 Response status: {response.status}")
                 
                 if response.status == 200:
-                    html = await response.text()
-                    logging.info(f"📄 Received HTML length: {len(html)} characters")
-                    
-                    soup = BeautifulSoup(html, 'html.parser')
-                    logging.info(f"🔍 Parsed HTML with BeautifulSoup")
-                    
-                    # Look for image URLs in Google Images results
-                    logging.info(f"🔍 ==== SEARCHING FOR IMAGES ====")
-                    images_found = 0
-                    portrait_images = []
-                    regular_images = []
-                    
-                    # Try multiple approaches to find images
-                    # Method 1: Look for img tags with src
-                    for img in soup.find_all('img'):
-                        src = img.get('src', '')
-                        if src and src.startswith('http') and not src.endswith('.webp'):
-                            images_found += 1
-                            logging.info(f"🔍 Found image {images_found}: {src}")
-                            
-                            # Check if this looks like a portrait image
-                            if any(term in src.lower() for term in ['portrait', 'profile', 'actress', 'avatar', 'face', 'head']):
-                                portrait_images.append(src)
-                                logging.info(f"🖼️ Added to portrait candidates: {src}")
-                            else:
-                                regular_images.append(src)
-                                logging.info(f"📄 Added to regular candidates: {src}")
-                    
-                    # Method 2: Look for data-src attributes (Google Images often uses these)
-                    if not regular_images and not portrait_images:
-                        logging.info(f"🔍 Trying data-src attributes...")
-                        for img in soup.find_all('img'):
-                            data_src = img.get('data-src', '')
-                            if data_src and data_src.startswith('http') and not data_src.endswith('.webp'):
-                                images_found += 1
-                                logging.info(f"🔍 Found image {images_found} (data-src): {data_src}")
-                                
-                                if any(term in data_src.lower() for term in ['portrait', 'profile', 'actress', 'avatar', 'face', 'head']):
-                                    portrait_images.append(data_src)
-                                    logging.info(f"🖼️ Added to portrait candidates: {data_src}")
-                                else:
-                                    regular_images.append(data_src)
-                                    logging.info(f"📄 Added to regular candidates: {data_src}")
-                    
-                    # Method 3: Look for any image-like URLs in the HTML
-                    if not regular_images and not portrait_images:
-                        logging.info(f"🔍 Searching for image URLs in HTML content...")
-                        import re
-                        # Look for URLs that end with common image extensions
-                        image_pattern = r'https?://[^\s<>"]+\.(jpg|jpeg|png|gif|webp)'
-                        image_urls = re.findall(image_pattern, html)
-                        
-                        for url in image_urls:
-                            if not url.endswith('.webp'):
-                                images_found += 1
-                                logging.info(f"🔍 Found image {images_found} (regex): {url}")
-                                
-                                if any(term in url.lower() for term in ['portrait', 'profile', 'actress', 'avatar', 'face', 'head']):
-                                    portrait_images.append(url)
-                                    logging.info(f"🖼️ Added to portrait candidates: {url}")
-                                else:
-                                    regular_images.append(url)
-                                    logging.info(f"📄 Added to regular candidates: {url}")
-                    
-                    logging.info(f"📊 Image analysis complete:")
-                    logging.info(f"   📊 Total images found: {images_found}")
-                    logging.info(f"   📊 Portrait candidates: {len(portrait_images)}")
-                    logging.info(f"   📊 Regular candidates: {len(regular_images)}")
-                    
-                    # Return the first portrait image if available
-                    if portrait_images:
-                        selected_image = portrait_images[0]
-                        logging.info(f"✅ Selected portrait image: {selected_image}")
-                        return selected_image
-                    
-                    # If no portrait images, return the first regular image
-                    if regular_images:
-                        selected_image = regular_images[0]
-                        logging.info(f"✅ Selected regular image: {selected_image}")
-                        return selected_image
-                    
-                    logging.warning(f"⚠️ No suitable images found in Google search results")
-                    logging.warning(f"⚠️ HTML length: {len(html)} characters")
-                    logging.warning(f"⚠️ This might indicate Google Images has changed their structure")
+                    logging.info(f"✅ Portrait found at: {portrait_url}")
+                    return portrait_url
                 else:
-                    logging.error(f"❌ Failed to fetch Google Images for {clean_name}: {response.status}")
-                    logging.error(f"❌ Response headers: {dict(response.headers)}")
-            
-            logging.warning(f"⚠️ No Google Images portrait found for {clean_name}")
-            return None
+                    logging.warning(f"⚠️ Portrait not found at: {portrait_url}")
+                    
+                    # Try alternative slug formats if the first one doesn't work
+                    alternative_slugs = [
+                        actress_slug.replace('-', ''),  # "kana-yume" -> "kanayume"
+                        actress_slug.replace('-', '_'),  # "kana-yume" -> "kana_yume"
+                        clean_name.lower().replace(' ', ''),  # "Kana Yume" -> "kanayume"
+                    ]
+                    
+                    for alt_slug in alternative_slugs:
+                        alt_portrait_url = f"https://www.javdatabase.com/idolimages/thumb/{alt_slug}.webp"
+                        logging.info(f"🔍 Trying alternative URL: {alt_portrait_url}")
+                        
+                        async with self.session.head(alt_portrait_url, headers=headers) as alt_response:
+                            if alt_response.status == 200:
+                                logging.info(f"✅ Portrait found at alternative URL: {alt_portrait_url}")
+                                return alt_portrait_url
+                    
+                    logging.warning(f"⚠️ No portrait found for {clean_name} with any slug format")
+                    return None
                 
         except Exception as e:
-            logging.error(f"❌ ==== GOOGLE IMAGES SEARCH ERROR ====")
-            logging.error(f"❌ Error searching Google Images for {clean_name}: {e}")
+            logging.error(f"❌ ==== JAVDATABASE SEARCH ERROR ====")
+            logging.error(f"❌ Error searching JAV Database for {clean_name}: {e}")
             logging.error(f"❌ Exception type: {type(e).__name__}")
             return None
     
@@ -1265,25 +1299,43 @@ class JAVScraperEngine:
 
     async def enhance_actress_metadata(self, metadata: Dict) -> Dict:
         """
-        Enhance metadata by searching for actress portraits on javdatabase.com.
-        This method will be called after scraping the main metadata.
+        Enhance metadata by searching for actress portraits.
+        Only attempts portrait search if actress information is found in metadata.
         """
         try:
             # Get actress information from metadata
             actress_name = None
+            actress_source = None
             
             # Check different possible fields for actress name
             if metadata.get('detailed_metadata', {}).get('actress'):
                 actress_name = metadata['detailed_metadata']['actress'].split(',')[0].strip()
+                actress_source = 'detailed_metadata.actress'
             elif metadata.get('detailed_metadata', {}).get('actresses'):
                 actress_name = metadata['detailed_metadata']['actresses'].split(',')[0].strip()
+                actress_source = 'detailed_metadata.actresses'
             elif metadata.get('all_details', {}).get('Actress'):
                 actress_name = metadata['all_details']['Actress'].split(',')[0].strip()
+                actress_source = 'all_details.Actress'
             
             if not actress_name:
                 logging.info(f"ℹ️ No actress name found in metadata, skipping portrait search")
+                logging.info(f"ℹ️ Metadata source: {metadata.get('source', 'unknown')}")
                 return metadata
             
+            # Clean the actress name to remove Japanese characters
+            original_actress_name = actress_name
+            actress_name = self.clean_actress_name(actress_name)
+            
+            if not actress_name:
+                logging.warning(f"⚠️ Actress name cleaned to empty: {original_actress_name}")
+                return metadata
+            
+            logging.info(f"🎭 ==== ACTRESS PORTRAIT SEARCH START ====")
+            logging.info(f"🎭 Original actress name: {original_actress_name}")
+            logging.info(f"🎭 Cleaned actress name: {actress_name}")
+            logging.info(f"🎭 Actress source: {actress_source}")
+            logging.info(f"🎭 Metadata source: {metadata.get('source', 'unknown')}")
             logging.info(f"🎭 Enhancing metadata for actress: {actress_name}")
             
             # Search for actress portrait
@@ -1560,7 +1612,11 @@ class JAVScraperEngine:
                                     # Find the actress link
                                     actress_link = star_parent.find('a', href=lambda x: x and 'star' in x)
                                     if actress_link:
-                                        actress_text = actress_link.get_text().strip()
+                                        original_actress_text = actress_link.get_text().strip()
+                                        # Clean the actress name to remove Japanese characters
+                                        actress_text = self.clean_actress_name(original_actress_text)
+                                        logging.info(f"🎭 JAVmost original actress: {original_actress_text}")
+                                        logging.info(f"🎭 JAVmost cleaned actress: {actress_text}")
                         
                         metadata['actress'] = actress_text
                         
@@ -1735,3 +1791,248 @@ class JAVScraperEngine:
             logging.error(f"❌ Error in JAVmost scraper for {jav_code}: {e}")
             return None 
             return None 
+
+    async def scrape_javtrailers(self, jav_code: str) -> Optional[Dict]:
+        """Scrape metadata from JavTrailers.com."""
+        try:
+            logging.info(f"🎬 ==== JAVTRAILERS SCRAPING START ====")
+            logging.info(f"🎬 JAV Code: {jav_code}")
+            
+            # Step 1: Search for the JAV code
+            search_url = f"https://javtrailers.com/search/{jav_code}"
+            logging.info(f"🔍 Search URL: {search_url}")
+            
+            search_html = await self.fetch_html_with_playwright(search_url)
+            if not search_html:
+                logging.warning(f"⚠️ Failed to fetch search page for {jav_code}")
+                return None
+            
+            search_soup = BeautifulSoup(search_html, 'html.parser')
+            
+            # Look for the first video result that matches our JAV code
+            video_links = search_soup.find_all('a', href=True)
+            detail_url = None
+            
+            for link in video_links:
+                href = link.get('href', '')
+                # Look for video links that contain the JAV code
+                if '/video/' in href:
+                    # Check if this link contains our JAV code
+                    link_text = link.get_text(strip=True)
+                    if jav_code.lower() in link_text.lower():
+                        detail_url = href if href.startswith('http') else f"https://javtrailers.com{href}"
+                        logging.info(f"🎯 Found detail URL: {detail_url}")
+                        logging.info(f"🎯 Link text: {link_text}")
+                        break
+            
+            # If not found by text, try to find by URL pattern
+            if not detail_url:
+                for link in video_links:
+                    href = link.get('href', '')
+                    if '/video/' in href and jav_code.lower() in href.lower():
+                        detail_url = href if href.startswith('http') else f"https://javtrailers.com{href}"
+                        logging.info(f"🎯 Found detail URL by URL pattern: {detail_url}")
+                        break
+            
+            if not detail_url:
+                logging.warning(f"⚠️ No detail page found for {jav_code}")
+                return None
+            
+            # Step 2: Fetch the detail page
+            logging.info(f"📄 Fetching detail page: {detail_url}")
+            detail_html = await self.fetch_html_with_playwright(detail_url)
+            
+            if not detail_html:
+                logging.warning(f"⚠️ Failed to fetch detail page for {jav_code}")
+                return None
+            
+            detail_soup = BeautifulSoup(detail_html, 'html.parser')
+            
+            # Extract metadata from detail page
+            metadata = {}
+            
+            # Extract title
+            title_tag = detail_soup.find('h1')
+            if title_tag:
+                title = title_tag.get_text(strip=True)
+                metadata['title'] = title
+                logging.info(f"📋 Title: {title}")
+            else:
+                # Fallback: use JAV code as title
+                title = f"{jav_code} - JAV Content"
+                metadata['title'] = title
+                logging.info(f"📋 Title (fallback): {title}")
+            
+            # Extract DVD ID and Content ID
+            dvd_id = jav_code
+            content_id = None
+            
+            # Look for content ID in the page - try multiple patterns
+            content_patterns = [
+                r'Content ID:\s*([^\s<]+)',
+                r'DVD ID:\s*([^\s<]+)',
+                r'ID:\s*([^\s<]+)'
+            ]
+            for pattern in content_patterns:
+                content_match = re.search(pattern, detail_html)
+                if content_match:
+                    content_id = content_match.group(1)
+                    logging.info(f"📋 Content ID: {content_id}")
+                    break
+            
+            # Extract release date - try multiple patterns
+            release_date = None
+            date_patterns = [
+                r'Release Date:\s*(\d+\s+\w+\s+\d+)',
+                r'(\d+\s+\w+\s+\d+)\s*$',  # Date at end of line
+                r'(\d{1,2}\s+\w+\s+\d{4})'  # General date pattern
+            ]
+            for pattern in date_patterns:
+                date_match = re.search(pattern, detail_html)
+                if date_match:
+                    release_date = date_match.group(1)
+                    logging.info(f"📋 Release Date: {release_date}")
+                    break
+            
+            # Extract duration - try multiple patterns
+            duration = None
+            duration_patterns = [
+                r'Duration:\s*(\d+)\s*mins',
+                r'(\d+)\s*mins',
+                r'(\d+):(\d+)'  # HH:MM format
+            ]
+            for pattern in duration_patterns:
+                duration_match = re.search(pattern, detail_html)
+                if duration_match:
+                    if ':' in pattern:
+                        hours, minutes = duration_match.groups()
+                        duration = str(int(hours) * 60 + int(minutes))
+                    else:
+                        duration = duration_match.group(1)
+                    logging.info(f"📋 Duration: {duration} mins")
+                    break
+            
+            # Extract studio using BeautifulSoup
+            studio = None
+            studio_span = detail_soup.find('span', string=lambda text: text and 'Studio:' in text)
+            if studio_span:
+                studio_link = studio_span.find_next('a')
+                if studio_link:
+                    studio = studio_link.get_text(strip=True)
+                    logging.info(f"📋 Studio: {studio}")
+            
+            # Extract categories using BeautifulSoup
+            categories = []
+            categories_span = detail_soup.find('span', string=lambda text: text and 'Categories:' in text)
+            if categories_span:
+                category_links = categories_span.find_next_siblings('a')
+                for link in category_links:
+                    category_text = link.get_text(strip=True)
+                    if category_text:
+                        categories.append(category_text)
+                logging.info(f"📋 Categories: {categories}")
+            
+            # Extract cast using BeautifulSoup
+            cast = []
+            cast_span = detail_soup.find('span', string=lambda text: text and 'Cast(s):' in text)
+            if cast_span:
+                cast_link = cast_span.find_next('a')
+                if cast_link:
+                    cast_text = cast_link.get_text(strip=True)
+                    # Clean up the cast text using the new cleaning function
+                    cleaned_cast_text = self.clean_actress_name(cast_text)
+                    if cleaned_cast_text:
+                        cast = [cleaned_cast_text]
+                        logging.info(f"📋 Original cast text: {cast_text}")
+                        logging.info(f"📋 Cleaned cast: {cleaned_cast_text}")
+                    else:
+                        logging.warning(f"⚠️ Cast text cleaned to empty: {cast_text}")
+            
+            # Extract series using BeautifulSoup
+            series = None
+            series_span = detail_soup.find('span', string=lambda text: text and 'Series:' in text)
+            if series_span:
+                series_link = series_span.find_next('a')
+                if series_link:
+                    series = series_link.get_text(strip=True)
+                    logging.info(f"📋 Series: {series}")
+            
+            # Extract images from JavTrailers
+            fanart_url = None
+            poster_url = None
+            
+            # Look for image URLs in the page
+            img_tags = detail_soup.find_all('img')
+            for img in img_tags:
+                src = img.get('src', '')
+                data_src = img.get('data-src', '')
+                img_url = data_src if data_src else src
+                
+                if img_url and 'pics.dmm.co.jp' in img_url:
+                    # This is likely a cover/poster image
+                    if not poster_url:
+                        poster_url = img_url
+                        logging.info(f"📋 Poster URL: {poster_url}")
+                    elif not fanart_url:
+                        fanart_url = img_url
+                        logging.info(f"📋 Fanart URL: {fanart_url}")
+            
+            # If we found a poster but no fanart, use poster as fanart too
+            if poster_url and not fanart_url:
+                fanart_url = poster_url
+                logging.info(f"📋 Using poster as fanart: {fanart_url}")
+            
+            # Create detailed metadata structure
+            detailed_metadata = {
+                'dvd_id': dvd_id,
+                'content_id': content_id,
+                'release_date': release_date,
+                'duration': duration,
+                'studio': studio,
+                'categories': categories,
+                'cast': cast,
+                'series': series,
+                'source': 'javtrailers'
+            }
+            
+            # Add image URLs to detailed metadata
+            if poster_url:
+                detailed_metadata['poster_url'] = poster_url
+            if fanart_url:
+                detailed_metadata['fanart_url'] = fanart_url
+            
+            # Extract actress information
+            if cast:
+                # Look for female performers (typically Japanese names)
+                actresses = []
+                for person in cast:
+                    # Use the new cleaning function for consistent actress name cleaning
+                    clean_name = self.clean_actress_name(person)
+                    if clean_name:
+                        actresses.append(clean_name)
+                        logging.info(f"🎭 Original actress: {person}")
+                        logging.info(f"🎭 Cleaned actress: {clean_name}")
+                    else:
+                        logging.warning(f"⚠️ Actress name cleaned to empty: {person}")
+                
+                if actresses:
+                    detailed_metadata['actress'] = ', '.join(actresses)
+                    logging.info(f"🎭 Final actresses list: {actresses}")
+                else:
+                    logging.warning(f"⚠️ No valid actresses found after cleaning")
+            
+            # Create result structure
+            result = {
+                'title': metadata.get('title', f"{jav_code} - JAV Content"),
+                'cover_url': poster_url,  # Use poster URL as cover URL
+                'detail_url': detail_url,
+                'detailed_metadata': detailed_metadata,
+                'source': 'javtrailers'
+            }
+            
+            logging.info(f"✅ JavTrailers scrape completed for {jav_code}")
+            return result
+            
+        except Exception as e:
+            logging.error(f"❌ Error scraping JavTrailers for {jav_code}: {e}")
+            return None

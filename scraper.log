@@ -1320,3 +1320,1720 @@ client_session: <aiohttp.client.ClientSession object at 0x7f00154f27b0>
 2025-07-27 22:43:06,776 - asyncio - ERROR - Unclosed connector
 connections: ['deque([(<aiohttp.client_proto.ResponseHandler object at 0x7f00148710d0>, 44354.640759559)])', 'deque([(<aiohttp.client_proto.ResponseHandler object at 0x7f001556d970>, 44357.109326719)])']
 connector: <aiohttp.connector.TCPConnector object at 0x7f00154f2510>
+2025-07-28 22:31:13,779 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:31:13,780 - root - INFO - 🔍 JAV Code: MXBD-196
+2025-07-28 22:31:13,780 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:31:13,780 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:31:13,780 - root - INFO - 🌐 Adding JavGuru task for MXBD-196
+2025-07-28 22:31:13,780 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:31:13,780 - root - INFO - 🔍 Starting JavGuru scrape for MXBD-196
+2025-07-28 22:31:13,780 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=MXBD-196
+2025-07-28 22:31:13,780 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=MXBD-196
+2025-07-28 22:31:17,079 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:31:17,084 - root - INFO - 📄 Retrieved HTML length: 100884 characters
+2025-07-28 22:31:17,102 - root - INFO - ✅ JavGuru scrape completed for MXBD-196 (search results only)
+2025-07-28 22:31:17,102 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:31:17,103 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:31:17,103 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:31:17,103 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:31:17,103 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:31:17,103 - root - INFO -    📊 Has actress: None
+2025-07-28 22:31:17,103 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:31:17,103 - root - WARNING - ⚠️ All scraping sites failed for MXBD-196, trying fallback sites
+2025-07-28 22:31:17,103 - root - INFO - 🔍 Trying JAVmost for MXBD-196
+2025-07-28 22:31:17,103 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:31:17,103 - root - INFO - 🌐 JAV Code: MXBD-196
+2025-07-28 22:31:17,103 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:31:17,103 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:31:17,103 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:31:18,588 - root - INFO - 📊 Response status: 200
+2025-07-28 22:31:18,588 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:31:18 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=GRhJiqc45qjZy6wvHyU8Y6KqEkc8ntYbpSEsiEAF70MhX3OWNDOWw1oYbdRT%2Boli9Fbs0mSJZzDSvpd%2FJUb5i%2FNuLz8%2BNzasDG833oZZfA%3D%3D"}]}', 'Content-Encoding': 'gzip', 'Set-Cookie': 'ci_session=corcnq6a1jt3f0ndl2g21s2cvlqnvlj2; HttpOnly; Path=/; Max-Age=7200; Expires=Mon, 28 Jul 2025 14:31:17 GMT', 'CF-RAY': '966464842ecca80e-SYD'}
+2025-07-28 22:31:18,589 - root - INFO - 📄 Received HTML length: 59227 characters
+2025-07-28 22:31:18,589 - root - INFO - ✅ HTML contains JAV code: MXBD-196
+2025-07-28 22:31:18,593 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:31:18,593 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:31:18,593 - root - INFO - 🔍 Found 0 divs with class 'card'
+2025-07-28 22:31:18,593 - root - INFO - 🔍 No 'card' divs found, trying 'result' class
+2025-07-28 22:31:18,593 - root - INFO - 🔍 Found 0 divs with 'result' in class
+2025-07-28 22:31:18,593 - root - INFO - 🔍 No 'result' divs found, searching for JAV code in text
+2025-07-28 22:31:18,593 - root - INFO - 🔍 Found 0 divs containing JAV code in text
+2025-07-28 22:31:18,593 - root - INFO - 🔍 No specific results found, using entire page
+2025-07-28 22:31:18,593 - root - INFO - 🔍 Using entire page as result
+2025-07-28 22:31:18,593 - root - INFO - ✅ Found 1 results for MXBD-196
+2025-07-28 22:31:18,593 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:31:18,593 - root - INFO - 🔍 Checking result 1/1
+2025-07-28 22:31:18,593 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:31:18,593 - root - INFO - ⚠️ No title element found in result 1
+2025-07-28 22:31:18,852 - root - INFO - ✅ JAVmost scrape completed for MXBD-196
+2025-07-28 22:31:18,852 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:31:18,852 - root - INFO - ℹ️ No actress name found in metadata, skipping portrait search
+2025-07-28 22:31:18,852 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:31:18,852 - root - INFO - 🔍 JAV Code: SVDVD-436
+2025-07-28 22:31:18,852 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:31:18,852 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:31:18,852 - root - INFO - 🌐 Adding JavGuru task for SVDVD-436
+2025-07-28 22:31:18,852 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:31:18,852 - root - INFO - 🔍 Starting JavGuru scrape for SVDVD-436
+2025-07-28 22:31:18,852 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:31:18,852 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:31:23,424 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:31:23,429 - root - INFO - 📄 Retrieved HTML length: 100904 characters
+2025-07-28 22:31:23,451 - root - INFO - ✅ JavGuru scrape completed for SVDVD-436 (search results only)
+2025-07-28 22:31:23,451 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:31:23,451 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:31:23,451 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:31:23,451 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:31:23,451 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:31:23,451 - root - INFO -    📊 Has actress: None
+2025-07-28 22:31:23,451 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:31:23,451 - root - WARNING - ⚠️ All scraping sites failed for SVDVD-436, trying fallback sites
+2025-07-28 22:31:23,451 - root - INFO - 🔍 Trying JAVmost for SVDVD-436
+2025-07-28 22:31:23,451 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:31:23,451 - root - INFO - 🌐 JAV Code: SVDVD-436
+2025-07-28 22:31:23,451 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:31:23,451 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:31:23,451 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:31:24,975 - root - INFO - 📊 Response status: 200
+2025-07-28 22:31:24,975 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:31:24 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=e8co9ZaiOaDmaZkImoTibsUOHxVf3BDWGFD0fHjbCsB%2BuzcSkEVYj6G%2FDP65DriLFfdK5GuVhDYg%2FvE2FX%2Fm9Kx4Sp9oOIr364k6d%2FkYXw%3D%3D"}]}', 'Content-Encoding': 'gzip', 'CF-RAY': '966464aba965a80e-SYD'}
+2025-07-28 22:31:24,976 - root - INFO - 📄 Received HTML length: 67854 characters
+2025-07-28 22:31:24,976 - root - INFO - ✅ HTML contains JAV code: SVDVD-436
+2025-07-28 22:31:24,980 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:31:24,981 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:31:24,981 - root - INFO - 🔍 Found 2 divs with class 'card'
+2025-07-28 22:31:24,981 - root - INFO - ✅ Found 2 results for SVDVD-436
+2025-07-28 22:31:24,981 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:31:24,981 - root - INFO - 🔍 Checking result 1/2
+2025-07-28 22:31:24,981 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:31:24,981 - root - INFO - 🔍 Found title: 'SVDVD-436-UNCENSORED-EDIT'
+2025-07-28 22:31:24,981 - root - INFO - ⚠️ Title doesn't match JAV code: 'SVDVD-436-UNCENSORED-EDIT' != 'SVDVD-436'
+2025-07-28 22:31:24,981 - root - INFO - 🔍 Checking result 2/2
+2025-07-28 22:31:24,981 - root - INFO - ✅ Result 2 contains JAV code
+2025-07-28 22:31:24,981 - root - INFO - 🔍 Found title: 'SVDVD-436'
+2025-07-28 22:31:24,981 - root - INFO - ✅ Found exact match in result 2
+2025-07-28 22:31:24,981 - root - INFO - 🔍 Title is same as JAV code, searching Google for better title
+2025-07-28 22:31:24,981 - root - INFO - 🔍 Searching Google for title of SVDVD-436
+2025-07-28 22:31:25,378 - root - WARNING - ⚠️ No suitable title found for SVDVD-436
+2025-07-28 22:31:25,379 - root - INFO - 🎭 JAVmost original actress: Asahi Mizuno
+2025-07-28 22:31:25,379 - root - INFO - 🎭 JAVmost cleaned actress: Asahi Mizuno
+2025-07-28 22:31:25,379 - root - INFO - 🔗 Detail URL: https://www5.javmost.com/SVDVD-436/
+2025-07-28 22:31:25,938 - root - INFO - ✅ JAVmost scrape completed for SVDVD-436
+2025-07-28 22:31:25,938 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:31:25,939 - root - INFO - 🎭 Original actress name: Asahi Mizuno
+2025-07-28 22:31:25,939 - root - INFO - 🎭 Cleaned actress name: Asahi Mizuno
+2025-07-28 22:31:25,939 - root - INFO - 🎭 Enhancing metadata for actress: Asahi Mizuno
+2025-07-28 22:31:25,939 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 22:31:25,939 - root - INFO - 🎭 Actress name: Asahi Mizuno
+2025-07-28 22:31:25,939 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → Google Images
+2025-07-28 22:31:25,939 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 22:31:25,939 - root - INFO - 🔍 Searching javtiful.com for: Asahi Mizuno
+2025-07-28 22:31:25,939 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Asahi+Mizuno
+2025-07-28 22:31:30,007 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:31:30,012 - root - INFO - 📄 Retrieved HTML length: 59912 characters
+2025-07-28 22:31:30,033 - root - WARNING - ⚠️ No javtiful portrait found for Asahi Mizuno
+2025-07-28 22:31:30,033 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 22:31:30,033 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 22:31:30,033 - root - INFO - 🔍 Searching javmost.com for: Asahi Mizuno
+2025-07-28 22:31:30,997 - root - INFO - 🎯 Found potential javmost actress link: https://www5.javmost.com/star/Asahi Mizuno/ (Asahi Mizuno)
+2025-07-28 22:31:31,512 - root - INFO - 🖼️ Found javmost portrait: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:31:31,513 - root - INFO - ✅ Found portrait on javmost.com: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:31:31,513 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 22:31:31,513 - root - INFO - ✅ Added actress portrait URL: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:31:50,966 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:31:50,967 - root - INFO - 🔍 JAV Code: MXBD-196
+2025-07-28 22:31:50,967 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:31:50,967 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:31:50,967 - root - INFO - 🌐 Adding JavGuru task for MXBD-196
+2025-07-28 22:31:50,967 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:31:50,967 - root - INFO - 🔍 Starting JavGuru scrape for MXBD-196
+2025-07-28 22:31:50,967 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=MXBD-196
+2025-07-28 22:31:50,967 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=MXBD-196
+2025-07-28 22:31:54,043 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:31:54,049 - root - INFO - 📄 Retrieved HTML length: 100874 characters
+2025-07-28 22:31:54,071 - root - INFO - ✅ JavGuru scrape completed for MXBD-196 (search results only)
+2025-07-28 22:31:54,071 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:31:54,071 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:31:54,072 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:31:54,072 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:31:54,072 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:31:54,072 - root - INFO -    📊 Has actress: None
+2025-07-28 22:31:54,072 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:31:54,072 - root - WARNING - ⚠️ All scraping sites failed for MXBD-196, trying fallback sites
+2025-07-28 22:31:54,072 - root - INFO - 🔍 Trying JAVmost for MXBD-196
+2025-07-28 22:31:54,072 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:31:54,072 - root - INFO - 🌐 JAV Code: MXBD-196
+2025-07-28 22:31:54,072 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:31:54,072 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:31:54,072 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:31:55,734 - root - INFO - 📊 Response status: 200
+2025-07-28 22:31:55,734 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:31:55 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=6Xo9UzmPdYlg3qMQTSlNqiquTW7byhKFKpZzr7XwQ0wKjatm3816MFcLmnl0s0AA8IIDJX%2Fsx%2BmtUWNr5tPyIRdKJx%2BKHdDsq8wk8Ei90g%3D%3D"}]}', 'Content-Encoding': 'gzip', 'Set-Cookie': 'ci_session=9fe9kb44ivfvadh9rjn1dolvtb0dqe02; HttpOnly; Path=/; Max-Age=7200; Expires=Mon, 28 Jul 2025 14:31:54 GMT', 'CF-RAY': '9664656b1a8fe7dd-SYD'}
+2025-07-28 22:31:55,734 - root - INFO - 📄 Received HTML length: 59236 characters
+2025-07-28 22:31:55,734 - root - INFO - ✅ HTML contains JAV code: MXBD-196
+2025-07-28 22:31:55,739 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:31:55,739 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:31:55,739 - root - INFO - 🔍 Found 0 divs with class 'card'
+2025-07-28 22:31:55,739 - root - INFO - 🔍 No 'card' divs found, trying 'result' class
+2025-07-28 22:31:55,740 - root - INFO - 🔍 Found 0 divs with 'result' in class
+2025-07-28 22:31:55,740 - root - INFO - 🔍 No 'result' divs found, searching for JAV code in text
+2025-07-28 22:31:55,740 - root - INFO - 🔍 Found 0 divs containing JAV code in text
+2025-07-28 22:31:55,740 - root - INFO - 🔍 No specific results found, using entire page
+2025-07-28 22:31:55,740 - root - INFO - 🔍 Using entire page as result
+2025-07-28 22:31:55,740 - root - INFO - ✅ Found 1 results for MXBD-196
+2025-07-28 22:31:55,740 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:31:55,740 - root - INFO - 🔍 Checking result 1/1
+2025-07-28 22:31:55,740 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:31:55,740 - root - INFO - ⚠️ No title element found in result 1
+2025-07-28 22:31:56,002 - root - INFO - ✅ JAVmost scrape completed for MXBD-196
+2025-07-28 22:31:56,002 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:31:56,002 - root - INFO - ℹ️ No actress name found in metadata, skipping portrait search
+2025-07-28 22:31:56,002 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:31:56,002 - root - INFO - 🔍 JAV Code: SVDVD-436
+2025-07-28 22:31:56,002 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:31:56,002 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:31:56,002 - root - INFO - 🌐 Adding JavGuru task for SVDVD-436
+2025-07-28 22:31:56,002 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:31:56,002 - root - INFO - 🔍 Starting JavGuru scrape for SVDVD-436
+2025-07-28 22:31:56,002 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:31:56,002 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:31:59,028 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:31:59,034 - root - INFO - 📄 Retrieved HTML length: 100902 characters
+2025-07-28 22:31:59,056 - root - INFO - ✅ JavGuru scrape completed for SVDVD-436 (search results only)
+2025-07-28 22:31:59,056 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:31:59,056 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:31:59,056 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:31:59,056 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:31:59,056 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:31:59,056 - root - INFO -    📊 Has actress: None
+2025-07-28 22:31:59,056 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:31:59,056 - root - WARNING - ⚠️ All scraping sites failed for SVDVD-436, trying fallback sites
+2025-07-28 22:31:59,056 - root - INFO - 🔍 Trying JAVmost for SVDVD-436
+2025-07-28 22:31:59,056 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:31:59,056 - root - INFO - 🌐 JAV Code: SVDVD-436
+2025-07-28 22:31:59,056 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:31:59,056 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:31:59,056 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:31:59,511 - root - INFO - 📊 Response status: 200
+2025-07-28 22:31:59,511 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:31:59 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=vYJAZjAFpmq5C2SnoaE9VqqpzcI0hFX0%2FfXI2gI8Z2mxsL1NRjvikHE2QYRQ9UTyV94jkuSSFhlbHFFprz1vMN%2Bx6JXR2FSnaJ56eyYX3A%3D%3D"}]}', 'Content-Encoding': 'gzip', 'CF-RAY': '9664658a2acde7dd-SYD'}
+2025-07-28 22:31:59,512 - root - INFO - 📄 Received HTML length: 67854 characters
+2025-07-28 22:31:59,512 - root - INFO - ✅ HTML contains JAV code: SVDVD-436
+2025-07-28 22:31:59,517 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:31:59,517 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:31:59,517 - root - INFO - 🔍 Found 2 divs with class 'card'
+2025-07-28 22:31:59,517 - root - INFO - ✅ Found 2 results for SVDVD-436
+2025-07-28 22:31:59,517 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:31:59,517 - root - INFO - 🔍 Checking result 1/2
+2025-07-28 22:31:59,517 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:31:59,517 - root - INFO - 🔍 Found title: 'SVDVD-436-UNCENSORED-EDIT'
+2025-07-28 22:31:59,517 - root - INFO - ⚠️ Title doesn't match JAV code: 'SVDVD-436-UNCENSORED-EDIT' != 'SVDVD-436'
+2025-07-28 22:31:59,517 - root - INFO - 🔍 Checking result 2/2
+2025-07-28 22:31:59,517 - root - INFO - ✅ Result 2 contains JAV code
+2025-07-28 22:31:59,517 - root - INFO - 🔍 Found title: 'SVDVD-436'
+2025-07-28 22:31:59,517 - root - INFO - ✅ Found exact match in result 2
+2025-07-28 22:31:59,518 - root - INFO - 🔍 Title is same as JAV code, searching Google for better title
+2025-07-28 22:31:59,518 - root - INFO - 🔍 Searching Google for title of SVDVD-436
+2025-07-28 22:31:59,909 - root - WARNING - ⚠️ No suitable title found for SVDVD-436
+2025-07-28 22:31:59,910 - root - INFO - 🎭 JAVmost original actress: Asahi Mizuno
+2025-07-28 22:31:59,910 - root - INFO - 🎭 JAVmost cleaned actress: Asahi Mizuno
+2025-07-28 22:31:59,910 - root - INFO - 🔗 Detail URL: https://www5.javmost.com/SVDVD-436/
+2025-07-28 22:32:00,595 - root - INFO - ✅ JAVmost scrape completed for SVDVD-436
+2025-07-28 22:32:00,595 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:32:00,595 - root - INFO - 🎭 Original actress name: Asahi Mizuno
+2025-07-28 22:32:00,595 - root - INFO - 🎭 Cleaned actress name: Asahi Mizuno
+2025-07-28 22:32:00,595 - root - INFO - 🎭 Enhancing metadata for actress: Asahi Mizuno
+2025-07-28 22:32:00,595 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 22:32:00,595 - root - INFO - 🎭 Actress name: Asahi Mizuno
+2025-07-28 22:32:00,595 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → Google Images
+2025-07-28 22:32:00,595 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 22:32:00,595 - root - INFO - 🔍 Searching javtiful.com for: Asahi Mizuno
+2025-07-28 22:32:00,595 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Asahi+Mizuno
+2025-07-28 22:32:04,599 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:32:04,604 - root - INFO - 📄 Retrieved HTML length: 59912 characters
+2025-07-28 22:32:04,626 - root - WARNING - ⚠️ No javtiful portrait found for Asahi Mizuno
+2025-07-28 22:32:04,626 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 22:32:04,626 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 22:32:04,626 - root - INFO - 🔍 Searching javmost.com for: Asahi Mizuno
+2025-07-28 22:32:05,531 - root - INFO - 🎯 Found potential javmost actress link: https://www5.javmost.com/star/Asahi Mizuno/ (Asahi Mizuno)
+2025-07-28 22:32:06,231 - root - INFO - 🖼️ Found javmost portrait: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:32:06,232 - root - INFO - ✅ Found portrait on javmost.com: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:32:06,232 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 22:32:06,232 - root - INFO - ✅ Added actress portrait URL: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:32:22,709 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:32:22,709 - root - INFO - 🔍 JAV Code: MXBD-196
+2025-07-28 22:32:22,709 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:32:22,709 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:32:22,709 - root - INFO - 🌐 Adding JavGuru task for MXBD-196
+2025-07-28 22:32:22,709 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:32:22,709 - root - INFO - 🔍 Starting JavGuru scrape for MXBD-196
+2025-07-28 22:32:22,709 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=MXBD-196
+2025-07-28 22:32:22,709 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=MXBD-196
+2025-07-28 22:32:26,505 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:32:26,511 - root - INFO - 📄 Retrieved HTML length: 100876 characters
+2025-07-28 22:32:26,534 - root - INFO - ✅ JavGuru scrape completed for MXBD-196 (search results only)
+2025-07-28 22:32:26,534 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:32:26,534 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:32:26,534 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:32:26,534 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:32:26,534 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:32:26,534 - root - INFO -    📊 Has actress: None
+2025-07-28 22:32:26,534 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:32:26,534 - root - WARNING - ⚠️ All scraping sites failed for MXBD-196, trying fallback sites
+2025-07-28 22:32:26,534 - root - INFO - 🔍 Trying JAVmost for MXBD-196
+2025-07-28 22:32:26,534 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:32:26,534 - root - INFO - 🌐 JAV Code: MXBD-196
+2025-07-28 22:32:26,534 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:32:26,534 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:32:26,534 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:32:27,007 - root - INFO - 📊 Response status: 200
+2025-07-28 22:32:27,007 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:32:27 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=6aueElOJxDfugwOFcxn%2FWLo40jpIUObTXNEVfxcqrbpUBQtzT9ir%2FnP6W9LCMOUf40bYjipokqnwSGDqsJ8OfgpCqxpXmkAv5DfvdJThyw%3D%3D"}]}', 'Content-Encoding': 'gzip', 'Set-Cookie': 'ci_session=r3scge45mamjo056pidlv59dsak61jjb; HttpOnly; Path=/; Max-Age=7200; Expires=Mon, 28 Jul 2025 14:32:26 GMT', 'CF-RAY': '96646635f921e7d2-SYD'}
+2025-07-28 22:32:27,007 - root - INFO - 📄 Received HTML length: 59236 characters
+2025-07-28 22:32:27,007 - root - INFO - ✅ HTML contains JAV code: MXBD-196
+2025-07-28 22:32:27,012 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:32:27,012 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:32:27,012 - root - INFO - 🔍 Found 0 divs with class 'card'
+2025-07-28 22:32:27,012 - root - INFO - 🔍 No 'card' divs found, trying 'result' class
+2025-07-28 22:32:27,013 - root - INFO - 🔍 Found 0 divs with 'result' in class
+2025-07-28 22:32:27,013 - root - INFO - 🔍 No 'result' divs found, searching for JAV code in text
+2025-07-28 22:32:27,013 - root - INFO - 🔍 Found 0 divs containing JAV code in text
+2025-07-28 22:32:27,013 - root - INFO - 🔍 No specific results found, using entire page
+2025-07-28 22:32:27,013 - root - INFO - 🔍 Using entire page as result
+2025-07-28 22:32:27,013 - root - INFO - ✅ Found 1 results for MXBD-196
+2025-07-28 22:32:27,013 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:32:27,013 - root - INFO - 🔍 Checking result 1/1
+2025-07-28 22:32:27,013 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:32:27,013 - root - INFO - ⚠️ No title element found in result 1
+2025-07-28 22:32:27,274 - root - INFO - ✅ JAVmost scrape completed for MXBD-196
+2025-07-28 22:32:27,274 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:32:27,274 - root - INFO - ℹ️ No actress name found in metadata, skipping portrait search
+2025-07-28 22:32:27,274 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:32:27,274 - root - INFO - 🔍 JAV Code: SVDVD-436
+2025-07-28 22:32:27,274 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:32:27,274 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:32:27,274 - root - INFO - 🌐 Adding JavGuru task for SVDVD-436
+2025-07-28 22:32:27,274 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:32:27,274 - root - INFO - 🔍 Starting JavGuru scrape for SVDVD-436
+2025-07-28 22:32:27,274 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:32:27,274 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:32:30,604 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:32:30,611 - root - INFO - 📄 Retrieved HTML length: 100882 characters
+2025-07-28 22:32:30,635 - root - INFO - ✅ JavGuru scrape completed for SVDVD-436 (search results only)
+2025-07-28 22:32:30,635 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:32:30,635 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:32:30,635 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:32:30,636 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:32:30,636 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:32:30,636 - root - INFO -    📊 Has actress: None
+2025-07-28 22:32:30,636 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:32:30,636 - root - WARNING - ⚠️ All scraping sites failed for SVDVD-436, trying fallback sites
+2025-07-28 22:32:30,636 - root - INFO - 🔍 Trying JAVmost for SVDVD-436
+2025-07-28 22:32:30,636 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:32:30,636 - root - INFO - 🌐 JAV Code: SVDVD-436
+2025-07-28 22:32:30,636 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:32:30,636 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:32:30,636 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:32:31,398 - root - INFO - 📊 Response status: 200
+2025-07-28 22:32:31,398 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:32:31 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=npgTyHjgKsE5ndkPKiUrpJR12treck%2F5riCb9tNN%2BM0yMA4P%2B6xlZHfDsfQhiMJhfUhdcOUMlVSovT48ln0mE1AjpcwCSpkQ13uqWg3oCg%3D%3D"}]}', 'Content-Encoding': 'gzip', 'CF-RAY': '9664664f8aa4e7d2-SYD'}
+2025-07-28 22:32:31,398 - root - INFO - 📄 Received HTML length: 67854 characters
+2025-07-28 22:32:31,398 - root - INFO - ✅ HTML contains JAV code: SVDVD-436
+2025-07-28 22:32:31,404 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:32:31,404 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:32:31,404 - root - INFO - 🔍 Found 2 divs with class 'card'
+2025-07-28 22:32:31,404 - root - INFO - ✅ Found 2 results for SVDVD-436
+2025-07-28 22:32:31,404 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:32:31,405 - root - INFO - 🔍 Checking result 1/2
+2025-07-28 22:32:31,405 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:32:31,405 - root - INFO - 🔍 Found title: 'SVDVD-436-UNCENSORED-EDIT'
+2025-07-28 22:32:31,405 - root - INFO - ⚠️ Title doesn't match JAV code: 'SVDVD-436-UNCENSORED-EDIT' != 'SVDVD-436'
+2025-07-28 22:32:31,405 - root - INFO - 🔍 Checking result 2/2
+2025-07-28 22:32:31,405 - root - INFO - ✅ Result 2 contains JAV code
+2025-07-28 22:32:31,405 - root - INFO - 🔍 Found title: 'SVDVD-436'
+2025-07-28 22:32:31,405 - root - INFO - ✅ Found exact match in result 2
+2025-07-28 22:32:31,405 - root - INFO - 🔍 Title is same as JAV code, searching Google for better title
+2025-07-28 22:32:31,405 - root - INFO - 🔍 Searching Google for title of SVDVD-436
+2025-07-28 22:32:31,982 - root - INFO - ✅ Found potential title: Watch  A New Female Teacher ...
+2025-07-28 22:32:31,982 - root - INFO - ✅ Enhanced title: SVDVD-436 - Watch  A New Female Teacher ...
+2025-07-28 22:32:31,983 - root - INFO - 🎭 JAVmost original actress: Asahi Mizuno
+2025-07-28 22:32:31,983 - root - INFO - 🎭 JAVmost cleaned actress: Asahi Mizuno
+2025-07-28 22:32:31,983 - root - INFO - 🔗 Detail URL: https://www5.javmost.com/SVDVD-436/
+2025-07-28 22:32:32,482 - root - INFO - ✅ JAVmost scrape completed for SVDVD-436
+2025-07-28 22:32:32,482 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:32:32,482 - root - INFO - 🎭 Original actress name: Asahi Mizuno
+2025-07-28 22:32:32,482 - root - INFO - 🎭 Cleaned actress name: Asahi Mizuno
+2025-07-28 22:32:32,482 - root - INFO - 🎭 Enhancing metadata for actress: Asahi Mizuno
+2025-07-28 22:32:32,482 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 22:32:32,482 - root - INFO - 🎭 Actress name: Asahi Mizuno
+2025-07-28 22:32:32,482 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → Google Images
+2025-07-28 22:32:32,482 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 22:32:32,482 - root - INFO - 🔍 Searching javtiful.com for: Asahi Mizuno
+2025-07-28 22:32:32,482 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Asahi+Mizuno
+2025-07-28 22:32:36,506 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:32:36,511 - root - INFO - 📄 Retrieved HTML length: 59892 characters
+2025-07-28 22:32:36,535 - root - WARNING - ⚠️ No javtiful portrait found for Asahi Mizuno
+2025-07-28 22:32:36,535 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 22:32:36,535 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 22:32:36,535 - root - INFO - 🔍 Searching javmost.com for: Asahi Mizuno
+2025-07-28 22:32:37,237 - root - INFO - 🎯 Found potential javmost actress link: https://www5.javmost.com/star/Asahi Mizuno/ (Asahi Mizuno)
+2025-07-28 22:32:37,506 - root - INFO - 🖼️ Found javmost portrait: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:32:37,506 - root - INFO - ✅ Found portrait on javmost.com: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:32:37,506 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 22:32:37,506 - root - INFO - ✅ Added actress portrait URL: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:33:02,260 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:33:02,260 - root - INFO - 🔍 JAV Code: MXBD-196
+2025-07-28 22:33:02,260 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:33:02,260 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:33:02,260 - root - INFO - 🌐 Adding JavGuru task for MXBD-196
+2025-07-28 22:33:02,260 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:33:02,260 - root - INFO - 🔍 Starting JavGuru scrape for MXBD-196
+2025-07-28 22:33:02,260 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=MXBD-196
+2025-07-28 22:33:02,260 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=MXBD-196
+2025-07-28 22:33:05,309 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:33:05,315 - root - INFO - 📄 Retrieved HTML length: 100896 characters
+2025-07-28 22:33:05,337 - root - INFO - ✅ JavGuru scrape completed for MXBD-196 (search results only)
+2025-07-28 22:33:05,337 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:33:05,338 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:33:05,338 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:33:05,338 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:33:05,338 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:33:05,338 - root - INFO -    📊 Has actress: None
+2025-07-28 22:33:05,338 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:33:05,338 - root - WARNING - ⚠️ All scraping sites failed for MXBD-196, trying fallback sites
+2025-07-28 22:33:05,338 - root - INFO - 🔍 Trying JAVmost for MXBD-196
+2025-07-28 22:33:05,338 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:33:05,338 - root - INFO - 🌐 JAV Code: MXBD-196
+2025-07-28 22:33:05,338 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:33:05,338 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:33:05,338 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:33:06,634 - root - INFO - 📊 Response status: 200
+2025-07-28 22:33:06,635 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:33:06 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=7h8ZECgm8mzpjvdIAnHM7e%2FstFuJ57Iv%2FoKk34So61sLzrS%2F6BiSPzECIRM%2BloNEXicz1m59RDjjNy%2F0xZJcc%2FJjiDkeoxA%2F4uNMUGSP2w%3D%3D"}]}', 'Cf-Cache-Status': 'DYNAMIC', 'Content-Encoding': 'gzip', 'Set-Cookie': 'ci_session=obe94c9d0p98gqdbion3dqphtgfupm4l; HttpOnly; Path=/; Max-Age=7200; Expires=Mon, 28 Jul 2025 14:33:05 GMT', 'CF-RAY': '966467288aeca93b-SYD'}
+2025-07-28 22:33:06,635 - root - INFO - 📄 Received HTML length: 59236 characters
+2025-07-28 22:33:06,635 - root - INFO - ✅ HTML contains JAV code: MXBD-196
+2025-07-28 22:33:06,640 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:33:06,640 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:33:06,640 - root - INFO - 🔍 Found 0 divs with class 'card'
+2025-07-28 22:33:06,640 - root - INFO - 🔍 No 'card' divs found, trying 'result' class
+2025-07-28 22:33:06,640 - root - INFO - 🔍 Found 0 divs with 'result' in class
+2025-07-28 22:33:06,640 - root - INFO - 🔍 No 'result' divs found, searching for JAV code in text
+2025-07-28 22:33:06,641 - root - INFO - 🔍 Found 0 divs containing JAV code in text
+2025-07-28 22:33:06,641 - root - INFO - 🔍 No specific results found, using entire page
+2025-07-28 22:33:06,641 - root - INFO - 🔍 Using entire page as result
+2025-07-28 22:33:06,641 - root - INFO - ✅ Found 1 results for MXBD-196
+2025-07-28 22:33:06,641 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:33:06,641 - root - INFO - 🔍 Checking result 1/1
+2025-07-28 22:33:06,641 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:33:06,641 - root - INFO - ⚠️ No title element found in result 1
+2025-07-28 22:33:07,339 - root - INFO - ✅ JAVmost scrape completed for MXBD-196
+2025-07-28 22:33:07,339 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 22:33:07,339 - root - INFO -    🔍 Title: JAV MOST
+2025-07-28 22:33:07,339 - root - INFO -    🔍 Cover URL: 
+2025-07-28 22:33:07,339 - root - INFO -    🔍 Details Actress: 
+2025-07-28 22:33:07,339 - root - INFO -    🔍 Details Studio: 
+2025-07-28 22:33:07,339 - root - INFO -    🔍 Detailed Metadata Actress: 
+2025-07-28 22:33:07,339 - root - INFO -    🔍 Detailed Metadata Studio: 
+2025-07-28 22:33:07,339 - root - INFO -    🔍 Has meaningful data: True
+2025-07-28 22:33:07,339 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:33:07,339 - root - INFO - ℹ️ No actress name found in metadata, skipping portrait search
+2025-07-28 22:33:07,339 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:33:07,339 - root - INFO - 🔍 JAV Code: SVDVD-436
+2025-07-28 22:33:07,339 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:33:07,339 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:33:07,339 - root - INFO - 🌐 Adding JavGuru task for SVDVD-436
+2025-07-28 22:33:07,339 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:33:07,339 - root - INFO - 🔍 Starting JavGuru scrape for SVDVD-436
+2025-07-28 22:33:07,339 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:33:07,339 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:33:10,420 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:33:10,426 - root - INFO - 📄 Retrieved HTML length: 100884 characters
+2025-07-28 22:33:10,451 - root - INFO - ✅ JavGuru scrape completed for SVDVD-436 (search results only)
+2025-07-28 22:33:10,452 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:33:10,452 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:33:10,452 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:33:10,452 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:33:10,452 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:33:10,452 - root - INFO -    📊 Has actress: None
+2025-07-28 22:33:10,452 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:33:10,452 - root - WARNING - ⚠️ All scraping sites failed for SVDVD-436, trying fallback sites
+2025-07-28 22:33:10,452 - root - INFO - 🔍 Trying JAVmost for SVDVD-436
+2025-07-28 22:33:10,452 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:33:10,452 - root - INFO - 🌐 JAV Code: SVDVD-436
+2025-07-28 22:33:10,452 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:33:10,452 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:33:10,452 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:33:11,535 - root - INFO - 📊 Response status: 200
+2025-07-28 22:33:11,536 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:33:11 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=Z%2BXIDDc6e73XCjFdQKA3U2T36nXAP8zp6t3ecmUriClJrhAu5vMe%2ByFI7R%2Bm4%2BqdjY%2B1GBmPokUcz2kkQK5uetzbL9XuWtkLIfUloyQCeg%3D%3D"}]}', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Content-Encoding': 'gzip', 'CF-RAY': '966467486ff3a93b-SYD'}
+2025-07-28 22:33:11,536 - root - INFO - 📄 Received HTML length: 67845 characters
+2025-07-28 22:33:11,536 - root - INFO - ✅ HTML contains JAV code: SVDVD-436
+2025-07-28 22:33:11,541 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:33:11,541 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:33:11,541 - root - INFO - 🔍 Found 2 divs with class 'card'
+2025-07-28 22:33:11,541 - root - INFO - ✅ Found 2 results for SVDVD-436
+2025-07-28 22:33:11,541 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:33:11,541 - root - INFO - 🔍 Checking result 1/2
+2025-07-28 22:33:11,541 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:33:11,541 - root - INFO - 🔍 Found title: 'SVDVD-436-UNCENSORED-EDIT'
+2025-07-28 22:33:11,541 - root - INFO - ⚠️ Title doesn't match JAV code: 'SVDVD-436-UNCENSORED-EDIT' != 'SVDVD-436'
+2025-07-28 22:33:11,541 - root - INFO - 🔍 Checking result 2/2
+2025-07-28 22:33:11,541 - root - INFO - ✅ Result 2 contains JAV code
+2025-07-28 22:33:11,541 - root - INFO - 🔍 Found title: 'SVDVD-436'
+2025-07-28 22:33:11,541 - root - INFO - ✅ Found exact match in result 2
+2025-07-28 22:33:11,541 - root - INFO - 🔍 Title is same as JAV code, searching Google for better title
+2025-07-28 22:33:11,541 - root - INFO - 🔍 Searching Google for title of SVDVD-436
+2025-07-28 22:33:11,933 - root - WARNING - ⚠️ No suitable title found for SVDVD-436
+2025-07-28 22:33:11,935 - root - INFO - 🎭 JAVmost original actress: Asahi Mizuno
+2025-07-28 22:33:11,935 - root - INFO - 🎭 JAVmost cleaned actress: Asahi Mizuno
+2025-07-28 22:33:11,935 - root - INFO - 🔗 Detail URL: https://www5.javmost.com/SVDVD-436/
+2025-07-28 22:33:12,401 - root - INFO - ✅ JAVmost scrape completed for SVDVD-436
+2025-07-28 22:33:12,401 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 22:33:12,401 - root - INFO -    🔍 Title: SVDVD-436
+2025-07-28 22:33:12,401 - root - INFO -    🔍 Cover URL: https://img3.javmost.com/images/SVDVD-436.webp
+2025-07-28 22:33:12,401 - root - INFO -    🔍 Details Actress: Asahi Mizuno
+2025-07-28 22:33:12,401 - root - INFO -    🔍 Details Studio: Sadistic Village
+2025-07-28 22:33:12,401 - root - INFO -    🔍 Detailed Metadata Actress: Asahi Mizuno
+2025-07-28 22:33:12,401 - root - INFO -    🔍 Detailed Metadata Studio: Sadistic Village
+2025-07-28 22:33:12,401 - root - INFO -    🔍 Has meaningful data: https://img3.javmost.com/images/SVDVD-436.webp
+2025-07-28 22:33:12,401 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:33:12,402 - root - INFO - 🎭 Original actress name: Asahi Mizuno
+2025-07-28 22:33:12,402 - root - INFO - 🎭 Cleaned actress name: Asahi Mizuno
+2025-07-28 22:33:12,402 - root - INFO - 🎭 Enhancing metadata for actress: Asahi Mizuno
+2025-07-28 22:33:12,402 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 22:33:12,402 - root - INFO - 🎭 Actress name: Asahi Mizuno
+2025-07-28 22:33:12,402 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → Google Images
+2025-07-28 22:33:12,402 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 22:33:12,402 - root - INFO - 🔍 Searching javtiful.com for: Asahi Mizuno
+2025-07-28 22:33:12,402 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Asahi+Mizuno
+2025-07-28 22:33:16,417 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:33:16,422 - root - INFO - 📄 Retrieved HTML length: 59892 characters
+2025-07-28 22:33:16,444 - root - WARNING - ⚠️ No javtiful portrait found for Asahi Mizuno
+2025-07-28 22:33:16,444 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 22:33:16,444 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 22:33:16,444 - root - INFO - 🔍 Searching javmost.com for: Asahi Mizuno
+2025-07-28 22:33:16,926 - root - INFO - 🎯 Found potential javmost actress link: https://www5.javmost.com/star/Asahi Mizuno/ (Asahi Mizuno)
+2025-07-28 22:33:17,319 - root - INFO - 🖼️ Found javmost portrait: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:33:17,319 - root - INFO - ✅ Found portrait on javmost.com: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:33:17,319 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 22:33:17,319 - root - INFO - ✅ Added actress portrait URL: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:33:37,637 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:33:37,637 - root - INFO - 🔍 JAV Code: MXBD-196
+2025-07-28 22:33:37,637 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:33:37,637 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:33:37,637 - root - INFO - 🌐 Adding JavGuru task for MXBD-196
+2025-07-28 22:33:37,637 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:33:37,637 - root - INFO - 🔍 Starting JavGuru scrape for MXBD-196
+2025-07-28 22:33:37,637 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=MXBD-196
+2025-07-28 22:33:37,637 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=MXBD-196
+2025-07-28 22:33:41,692 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:33:41,698 - root - INFO - 📄 Retrieved HTML length: 100886 characters
+2025-07-28 22:33:41,721 - root - INFO - ✅ JavGuru scrape completed for MXBD-196 (search results only)
+2025-07-28 22:33:41,721 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:33:41,721 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:33:41,721 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:33:41,721 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:33:41,721 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:33:41,721 - root - INFO -    📊 Has actress: None
+2025-07-28 22:33:41,721 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:33:41,722 - root - WARNING - ⚠️ All scraping sites failed for MXBD-196, trying fallback sites
+2025-07-28 22:33:41,722 - root - INFO - 🔍 Trying JAVmost for MXBD-196
+2025-07-28 22:33:41,722 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:33:41,722 - root - INFO - 🌐 JAV Code: MXBD-196
+2025-07-28 22:33:41,722 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:33:41,722 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:33:41,722 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:33:42,204 - root - INFO - 📊 Response status: 200
+2025-07-28 22:33:42,204 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:33:42 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=1k%2Be3GpTW3Pa3L9YLRQLCPoQqZab0xQ%2BVwTsu%2BGhfXA%2BY%2BXYNAWaCwd9s6ouNGM2nPsHPhk9pvdzv6Txbvon7OKN1b2DLqRYYDY50LA%3D"}]}', 'Content-Encoding': 'gzip', 'Set-Cookie': 'ci_session=s8a6k6nel4s13p5oc2vfe4t4oqa6j3mg; HttpOnly; Path=/; Max-Age=7200; Expires=Mon, 28 Jul 2025 14:33:42 GMT', 'CF-RAY': '9664680beeb58b80-SYD'}
+2025-07-28 22:33:42,205 - root - INFO - 📄 Received HTML length: 59236 characters
+2025-07-28 22:33:42,205 - root - INFO - ✅ HTML contains JAV code: MXBD-196
+2025-07-28 22:33:42,209 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:33:42,209 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:33:42,210 - root - INFO - 🔍 Found 0 divs with class 'card'
+2025-07-28 22:33:42,210 - root - INFO - 🔍 No 'card' divs found, trying 'result' class
+2025-07-28 22:33:42,210 - root - INFO - 🔍 Found 0 divs with 'result' in class
+2025-07-28 22:33:42,210 - root - INFO - 🔍 No 'result' divs found, searching for JAV code in text
+2025-07-28 22:33:42,210 - root - INFO - 🔍 Found 0 divs containing JAV code in text
+2025-07-28 22:33:42,210 - root - INFO - 🔍 No specific results found, using entire page
+2025-07-28 22:33:42,210 - root - INFO - 🔍 Using entire page as result
+2025-07-28 22:33:42,210 - root - INFO - ✅ Found 1 results for MXBD-196
+2025-07-28 22:33:42,210 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:33:42,210 - root - INFO - 🔍 Checking result 1/1
+2025-07-28 22:33:42,210 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:33:42,210 - root - INFO - ⚠️ No title element found in result 1
+2025-07-28 22:33:42,478 - root - INFO - ✅ JAVmost scrape completed for MXBD-196
+2025-07-28 22:33:42,478 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 22:33:42,478 - root - INFO -    🔍 Title: JAV MOST
+2025-07-28 22:33:42,478 - root - INFO -    🔍 Cover URL: 
+2025-07-28 22:33:42,478 - root - INFO -    🔍 Details Actress: 
+2025-07-28 22:33:42,478 - root - INFO -    🔍 Details Studio: 
+2025-07-28 22:33:42,478 - root - INFO -    🔍 Detailed Metadata Actress: 
+2025-07-28 22:33:42,478 - root - INFO -    🔍 Detailed Metadata Studio: 
+2025-07-28 22:33:42,478 - root - INFO -    🔍 Has meaningful data: 
+2025-07-28 22:33:42,478 - root - WARNING - ⚠️ JAVmost returned data but no meaningful content for MXBD-196
+2025-07-28 22:33:42,478 - root - INFO - 🔍 Trying JAV Trailers for MXBD-196
+2025-07-28 22:33:42,478 - root - INFO - 🎬 ==== JAVTRAILERS SCRAPING START ====
+2025-07-28 22:33:42,478 - root - INFO - 🎬 JAV Code: MXBD-196
+2025-07-28 22:33:42,478 - root - INFO - 🔍 Search URL: https://javtrailers.com/search/MXBD-196
+2025-07-28 22:33:42,478 - root - INFO - 🌐 Using Playwright to fetch: https://javtrailers.com/search/MXBD-196
+2025-07-28 22:33:46,378 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:33:46,383 - root - INFO - 📄 Retrieved HTML length: 66675 characters
+2025-07-28 22:33:46,415 - root - INFO - 🎯 Found detail URL: https://javtrailers.com/video/h_068mxbd00196
+2025-07-28 22:33:46,416 - root - INFO - 🎯 Link text: 1:58:00MXBD-196 Dirty And Tied Up: Cum Down Her Throat Kana Yume16 Nov 2014
+2025-07-28 22:33:46,416 - root - INFO - 📄 Fetching detail page: https://javtrailers.com/video/h_068mxbd00196
+2025-07-28 22:33:46,416 - root - INFO - 🌐 Using Playwright to fetch: https://javtrailers.com/video/h_068mxbd00196
+2025-07-28 22:33:50,185 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:33:50,191 - root - INFO - 📄 Retrieved HTML length: 49878 characters
+2025-07-28 22:33:50,212 - root - INFO - 📋 Title: MXBD-196 Dirty And Tied Up: Cum Down Her Throat Kana Yume
+2025-07-28 22:33:50,214 - root - INFO - 📋 Release Date: 16 Nov 2014
+2025-07-28 22:33:50,214 - root - INFO - 📋 Duration: 118 mins
+2025-07-28 22:33:50,214 - root - INFO - 📋 Studio: MAXING
+2025-07-28 22:33:50,214 - root - INFO - 📋 Categories: ['Hard Sex', 'Featured Actress', 'Bondage', 'Deep Throat', 'Hi-Def', 'StaffPicks04', 'SOD Create Sale']
+2025-07-28 22:33:50,215 - root - INFO - 📋 Original cast text: Kana Yume 由愛可奈
+2025-07-28 22:33:50,215 - root - INFO - 📋 Cleaned cast: Kana Yume
+2025-07-28 22:33:50,216 - root - INFO - 📋 Series: Inboku ~Semen Entangled In The Back Of The Throat And On The Face~
+2025-07-28 22:33:50,216 - root - INFO - 📋 Poster URL: https://pics.dmm.co.jp/digital/video/h_068mxbd00196/h_068mxbd00196ps.jpg
+2025-07-28 22:33:50,216 - root - INFO - 📋 Fanart URL: https://pics.dmm.co.jp/digital/video/h_068mxbd00196/h_068mxbd00196pl.jpg
+2025-07-28 22:33:50,216 - root - INFO - 🎭 Original actress: Kana Yume
+2025-07-28 22:33:50,216 - root - INFO - 🎭 Cleaned actress: Kana Yume
+2025-07-28 22:33:50,216 - root - INFO - 🎭 Final actresses list: ['Kana Yume']
+2025-07-28 22:33:50,216 - root - INFO - ✅ JavTrailers scrape completed for MXBD-196
+2025-07-28 22:33:50,216 - root - INFO - ✅ JAV Trailers fallback successful with meaningful data
+2025-07-28 22:33:50,216 - root - INFO - 🎭 Original actress name: Kana Yume
+2025-07-28 22:33:50,216 - root - INFO - 🎭 Cleaned actress name: Kana Yume
+2025-07-28 22:33:50,216 - root - INFO - 🎭 Enhancing metadata for actress: Kana Yume
+2025-07-28 22:33:50,216 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 22:33:50,216 - root - INFO - 🎭 Actress name: Kana Yume
+2025-07-28 22:33:50,216 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → Google Images
+2025-07-28 22:33:50,216 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 22:33:50,216 - root - INFO - 🔍 Searching javtiful.com for: Kana Yume
+2025-07-28 22:33:50,216 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Kana+Yume
+2025-07-28 22:33:54,227 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:33:54,233 - root - INFO - 📄 Retrieved HTML length: 59872 characters
+2025-07-28 22:33:54,257 - root - WARNING - ⚠️ No javtiful portrait found for Kana Yume
+2025-07-28 22:33:54,257 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 22:33:54,257 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 22:33:54,257 - root - INFO - 🔍 Searching javmost.com for: Kana Yume
+2025-07-28 22:33:55,253 - root - WARNING - ⚠️ No javmost portrait found for Kana Yume
+2025-07-28 22:33:55,253 - root - WARNING - ⚠️ No portrait found on javmost.com
+2025-07-28 22:33:55,253 - root - INFO - 🎭 ==== TRYING GOOGLE IMAGES (FINAL FALLBACK) ====
+2025-07-28 22:33:55,253 - root - INFO - 🔍 ==== GOOGLE IMAGES PORTRAIT SEARCH ====
+2025-07-28 22:33:55,253 - root - INFO - 🔍 Actress name: Kana Yume
+2025-07-28 22:33:55,253 - root - INFO - 🔍 Search query: Kana Yume JAV portrait
+2025-07-28 22:33:55,253 - root - INFO - 🔍 Search URL: https://www.google.com/search?q=Kana%20Yume%20JAV%20portrait&tbm=isch
+2025-07-28 22:33:55,253 - root - INFO - 🔍 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:33:55,253 - root - INFO - 📡 Requesting Google Images search...
+2025-07-28 22:33:55,665 - root - INFO - 📊 Response status: 200
+2025-07-28 22:33:56,412 - root - INFO - 📄 Received HTML length: 849393 characters
+2025-07-28 22:33:56,453 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:33:56,453 - root - INFO - 🔍 ==== SEARCHING FOR IMAGES ====
+2025-07-28 22:33:56,454 - root - INFO - 🔍 Trying data-src attributes...
+2025-07-28 22:33:56,454 - root - INFO - 🔍 Searching for image URLs in HTML content...
+2025-07-28 22:33:56,455 - root - INFO - 🔍 Found image 1 (regex): png
+2025-07-28 22:33:56,455 - root - INFO - 📄 Added to regular candidates: png
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 2 (regex): png
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: png
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 3 (regex): png
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: png
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 4 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 5 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 6 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 7 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 8 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 9 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 10 (regex): webp
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 11 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 12 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 13 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 14 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 15 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 16 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 17 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 18 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 19 (regex): jpeg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpeg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 20 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 21 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 22 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 23 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 24 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 25 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 26 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 27 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 28 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 29 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 30 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 31 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 32 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 33 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 34 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 35 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 36 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 37 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 38 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 39 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 40 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 41 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 42 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 43 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 44 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 45 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 46 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 47 (regex): webp
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 48 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 49 (regex): webp
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 50 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 51 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 52 (regex): webp
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 53 (regex): jpg
+2025-07-28 22:33:56,456 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,456 - root - INFO - 🔍 Found image 54 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 55 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 56 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 57 (regex): webp
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 58 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 59 (regex): png
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: png
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 60 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 61 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 62 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 63 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 64 (regex): webp
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 65 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 66 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 67 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 68 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 69 (regex): webp
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 70 (regex): webp
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 71 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 72 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 73 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 74 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 75 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 76 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 77 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 78 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 79 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 80 (regex): webp
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 81 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 82 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 83 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 84 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 85 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 86 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 87 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 88 (regex): webp
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 89 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 90 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 91 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 92 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 93 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 94 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 95 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 96 (regex): webp
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 97 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 98 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 99 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 100 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 101 (regex): webp
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:33:56,457 - root - INFO - 🔍 Found image 102 (regex): jpg
+2025-07-28 22:33:56,457 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:33:56,457 - root - INFO - 📊 Image analysis complete:
+2025-07-28 22:33:56,457 - root - INFO -    📊 Total images found: 102
+2025-07-28 22:33:56,457 - root - INFO -    📊 Portrait candidates: 0
+2025-07-28 22:33:56,457 - root - INFO -    📊 Regular candidates: 102
+2025-07-28 22:33:56,457 - root - INFO - ✅ Selected regular image: png
+2025-07-28 22:33:56,458 - root - INFO - ✅ Found portrait on Google Images: png
+2025-07-28 22:33:56,458 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 22:33:56,458 - root - INFO - ✅ Added actress portrait URL: png
+2025-07-28 22:33:56,458 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:33:56,458 - root - INFO - 🔍 JAV Code: SVDVD-436
+2025-07-28 22:33:56,458 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:33:56,458 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:33:56,458 - root - INFO - 🌐 Adding JavGuru task for SVDVD-436
+2025-07-28 22:33:56,458 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:33:56,458 - root - INFO - 🔍 Starting JavGuru scrape for SVDVD-436
+2025-07-28 22:33:56,458 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:33:56,458 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:33:59,492 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:33:59,498 - root - INFO - 📄 Retrieved HTML length: 100882 characters
+2025-07-28 22:33:59,528 - root - INFO - ✅ JavGuru scrape completed for SVDVD-436 (search results only)
+2025-07-28 22:33:59,529 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:33:59,529 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:33:59,529 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:33:59,529 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:33:59,529 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:33:59,529 - root - INFO -    📊 Has actress: None
+2025-07-28 22:33:59,529 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:33:59,529 - root - WARNING - ⚠️ All scraping sites failed for SVDVD-436, trying fallback sites
+2025-07-28 22:33:59,529 - root - INFO - 🔍 Trying JAVmost for SVDVD-436
+2025-07-28 22:33:59,529 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:33:59,529 - root - INFO - 🌐 JAV Code: SVDVD-436
+2025-07-28 22:33:59,529 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:33:59,529 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:33:59,529 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:33:59,992 - root - INFO - 📊 Response status: 200
+2025-07-28 22:33:59,992 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:33:59 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=9JaSLUoe%2FN2OwnrLDlgIY2kZpeWSrjvXxY%2B46PPkTS2D%2BtYKDOJ2Bc6dIb%2FvChG%2FC6oXx%2FsuNI9A0SObXR5KdBXbqHqHebk7D2TdSmY%3D"}]}', 'Content-Encoding': 'gzip', 'CF-RAY': '9664687b1d538b80-SYD'}
+2025-07-28 22:33:59,992 - root - INFO - 📄 Received HTML length: 67854 characters
+2025-07-28 22:33:59,992 - root - INFO - ✅ HTML contains JAV code: SVDVD-436
+2025-07-28 22:33:59,998 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:33:59,999 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:33:59,999 - root - INFO - 🔍 Found 2 divs with class 'card'
+2025-07-28 22:33:59,999 - root - INFO - ✅ Found 2 results for SVDVD-436
+2025-07-28 22:33:59,999 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:33:59,999 - root - INFO - 🔍 Checking result 1/2
+2025-07-28 22:33:59,999 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:33:59,999 - root - INFO - 🔍 Found title: 'SVDVD-436-UNCENSORED-EDIT'
+2025-07-28 22:33:59,999 - root - INFO - ⚠️ Title doesn't match JAV code: 'SVDVD-436-UNCENSORED-EDIT' != 'SVDVD-436'
+2025-07-28 22:33:59,999 - root - INFO - 🔍 Checking result 2/2
+2025-07-28 22:33:59,999 - root - INFO - ✅ Result 2 contains JAV code
+2025-07-28 22:33:59,999 - root - INFO - 🔍 Found title: 'SVDVD-436'
+2025-07-28 22:33:59,999 - root - INFO - ✅ Found exact match in result 2
+2025-07-28 22:33:59,999 - root - INFO - 🔍 Title is same as JAV code, searching Google for better title
+2025-07-28 22:33:59,999 - root - INFO - 🔍 Searching Google for title of SVDVD-436
+2025-07-28 22:34:00,296 - root - WARNING - ⚠️ No suitable title found for SVDVD-436
+2025-07-28 22:34:00,296 - root - INFO - 🎭 JAVmost original actress: Asahi Mizuno
+2025-07-28 22:34:00,296 - root - INFO - 🎭 JAVmost cleaned actress: Asahi Mizuno
+2025-07-28 22:34:00,297 - root - INFO - 🔗 Detail URL: https://www5.javmost.com/SVDVD-436/
+2025-07-28 22:34:00,554 - root - INFO - ✅ JAVmost scrape completed for SVDVD-436
+2025-07-28 22:34:00,554 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 22:34:00,554 - root - INFO -    🔍 Title: SVDVD-436
+2025-07-28 22:34:00,554 - root - INFO -    🔍 Cover URL: https://img3.javmost.com/images/SVDVD-436.webp
+2025-07-28 22:34:00,554 - root - INFO -    🔍 Details Actress: Asahi Mizuno
+2025-07-28 22:34:00,554 - root - INFO -    🔍 Details Studio: Sadistic Village
+2025-07-28 22:34:00,554 - root - INFO -    🔍 Detailed Metadata Actress: Asahi Mizuno
+2025-07-28 22:34:00,554 - root - INFO -    🔍 Detailed Metadata Studio: Sadistic Village
+2025-07-28 22:34:00,554 - root - INFO -    🔍 Has meaningful data: True
+2025-07-28 22:34:00,554 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:34:00,554 - root - INFO - 🎭 Original actress name: Asahi Mizuno
+2025-07-28 22:34:00,554 - root - INFO - 🎭 Cleaned actress name: Asahi Mizuno
+2025-07-28 22:34:00,554 - root - INFO - 🎭 Enhancing metadata for actress: Asahi Mizuno
+2025-07-28 22:34:00,554 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 22:34:00,554 - root - INFO - 🎭 Actress name: Asahi Mizuno
+2025-07-28 22:34:00,554 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → Google Images
+2025-07-28 22:34:00,554 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 22:34:00,554 - root - INFO - 🔍 Searching javtiful.com for: Asahi Mizuno
+2025-07-28 22:34:00,554 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Asahi+Mizuno
+2025-07-28 22:34:04,736 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:34:04,742 - root - INFO - 📄 Retrieved HTML length: 59892 characters
+2025-07-28 22:34:04,766 - root - WARNING - ⚠️ No javtiful portrait found for Asahi Mizuno
+2025-07-28 22:34:04,766 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 22:34:04,766 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 22:34:04,766 - root - INFO - 🔍 Searching javmost.com for: Asahi Mizuno
+2025-07-28 22:34:05,463 - root - INFO - 🎯 Found potential javmost actress link: https://www5.javmost.com/star/Asahi Mizuno/ (Asahi Mizuno)
+2025-07-28 22:34:05,733 - root - INFO - 🖼️ Found javmost portrait: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:34:05,733 - root - INFO - ✅ Found portrait on javmost.com: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:34:05,733 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 22:34:05,733 - root - INFO - ✅ Added actress portrait URL: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:38:22,386 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:38:22,386 - root - INFO - 🔍 JAV Code: MXBD-196
+2025-07-28 22:38:22,386 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:38:22,386 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:38:22,386 - root - INFO - 🌐 Adding JavGuru task for MXBD-196
+2025-07-28 22:38:22,386 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:38:22,386 - root - INFO - 🔍 Starting JavGuru scrape for MXBD-196
+2025-07-28 22:38:22,386 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=MXBD-196
+2025-07-28 22:38:22,386 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=MXBD-196
+2025-07-28 22:38:26,113 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:38:26,119 - root - INFO - 📄 Retrieved HTML length: 100886 characters
+2025-07-28 22:38:26,142 - root - INFO - ✅ JavGuru scrape completed for MXBD-196 (search results only)
+2025-07-28 22:38:26,142 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:38:26,142 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:38:26,142 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:38:26,142 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:38:26,142 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:38:26,142 - root - INFO -    📊 Has actress: None
+2025-07-28 22:38:26,142 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:38:26,142 - root - WARNING - ⚠️ All scraping sites failed for MXBD-196, trying fallback sites
+2025-07-28 22:38:26,142 - root - INFO - 🔍 Trying JAVmost for MXBD-196
+2025-07-28 22:38:26,142 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:38:26,142 - root - INFO - 🌐 JAV Code: MXBD-196
+2025-07-28 22:38:26,142 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:38:26,142 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:38:26,142 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 22:38:27,671 - root - INFO - 📊 Response status: 200
+2025-07-28 22:38:27,671 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:38:27 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=iLOe0G9nO%2BMx2FnTt9pkCYwa5ZCcUQS375kLoJApc9I6z48TZiER7hs4WijnCWHIu6nrafjEwDfAs2h8bBoJQjfl%2FuKrWOmwM3oQrykTOQ%3D%3D"}]}', 'Content-Encoding': 'gzip', 'Set-Cookie': 'ci_session=npqikjiiolb2dvj1u3j9467drlaabh5o; HttpOnly; Path=/; Max-Age=7200; Expires=Mon, 28 Jul 2025 14:38:26 GMT', 'CF-RAY': '96646efd9a59e7ca-SYD'}
+2025-07-28 22:38:27,672 - root - INFO - 📄 Received HTML length: 59236 characters
+2025-07-28 22:38:27,672 - root - INFO - ✅ HTML contains JAV code: MXBD-196
+2025-07-28 22:38:27,675 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:38:27,676 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:38:27,676 - root - INFO - 🔍 Found 0 divs with class 'card'
+2025-07-28 22:38:27,676 - root - INFO - 🔍 No 'card' divs found, trying 'result' class
+2025-07-28 22:38:27,676 - root - INFO - 🔍 Found 0 divs with 'result' in class
+2025-07-28 22:38:27,676 - root - INFO - 🔍 No 'result' divs found, searching for JAV code in text
+2025-07-28 22:38:27,676 - root - INFO - 🔍 Found 0 divs containing JAV code in text
+2025-07-28 22:38:27,676 - root - INFO - 🔍 No specific results found, using entire page
+2025-07-28 22:38:27,676 - root - INFO - 🔍 Using entire page as result
+2025-07-28 22:38:27,676 - root - INFO - ✅ Found 1 results for MXBD-196
+2025-07-28 22:38:27,676 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:38:27,676 - root - INFO - 🔍 Checking result 1/1
+2025-07-28 22:38:27,676 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:38:27,676 - root - INFO - ⚠️ No title element found in result 1
+2025-07-28 22:38:27,933 - root - INFO - ✅ JAVmost scrape completed for MXBD-196
+2025-07-28 22:38:27,934 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 22:38:27,934 - root - INFO -    🔍 Title: JAV MOST
+2025-07-28 22:38:27,934 - root - INFO -    🔍 Cover URL: 
+2025-07-28 22:38:27,934 - root - INFO -    🔍 Details Actress: 
+2025-07-28 22:38:27,934 - root - INFO -    🔍 Details Studio: 
+2025-07-28 22:38:27,934 - root - INFO -    🔍 Detailed Metadata Actress: 
+2025-07-28 22:38:27,934 - root - INFO -    🔍 Detailed Metadata Studio: 
+2025-07-28 22:38:27,934 - root - INFO -    🔍 Has meaningful data: 
+2025-07-28 22:38:27,934 - root - WARNING - ⚠️ JAVmost returned data but no meaningful content for MXBD-196
+2025-07-28 22:38:27,934 - root - INFO - 🔍 Trying JAV Trailers for MXBD-196
+2025-07-28 22:38:27,934 - root - INFO - 🎬 ==== JAVTRAILERS SCRAPING START ====
+2025-07-28 22:38:27,934 - root - INFO - 🎬 JAV Code: MXBD-196
+2025-07-28 22:38:27,934 - root - INFO - 🔍 Search URL: https://javtrailers.com/search/MXBD-196
+2025-07-28 22:38:27,934 - root - INFO - 🌐 Using Playwright to fetch: https://javtrailers.com/search/MXBD-196
+2025-07-28 22:38:32,128 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:38:32,133 - root - INFO - 📄 Retrieved HTML length: 66675 characters
+2025-07-28 22:38:32,158 - root - INFO - 🎯 Found detail URL: https://javtrailers.com/video/h_068mxbd00196
+2025-07-28 22:38:32,158 - root - INFO - 🎯 Link text: 1:58:00MXBD-196 Dirty And Tied Up: Cum Down Her Throat Kana Yume16 Nov 2014
+2025-07-28 22:38:32,158 - root - INFO - 📄 Fetching detail page: https://javtrailers.com/video/h_068mxbd00196
+2025-07-28 22:38:32,158 - root - INFO - 🌐 Using Playwright to fetch: https://javtrailers.com/video/h_068mxbd00196
+2025-07-28 22:38:36,134 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:38:36,139 - root - INFO - 📄 Retrieved HTML length: 49878 characters
+2025-07-28 22:38:36,160 - root - INFO - 📋 Title: MXBD-196 Dirty And Tied Up: Cum Down Her Throat Kana Yume
+2025-07-28 22:38:36,161 - root - INFO - 📋 Release Date: 16 Nov 2014
+2025-07-28 22:38:36,161 - root - INFO - 📋 Duration: 118 mins
+2025-07-28 22:38:36,161 - root - INFO - 📋 Studio: MAXING
+2025-07-28 22:38:36,161 - root - INFO - 📋 Categories: ['Hard Sex', 'Featured Actress', 'Bondage', 'Deep Throat', 'Hi-Def', 'StaffPicks04', 'SOD Create Sale']
+2025-07-28 22:38:36,163 - root - INFO - 📋 Original cast text: Kana Yume 由愛可奈
+2025-07-28 22:38:36,163 - root - INFO - 📋 Cleaned cast: Kana Yume
+2025-07-28 22:38:36,163 - root - INFO - 📋 Series: Inboku ~Semen Entangled In The Back Of The Throat And On The Face~
+2025-07-28 22:38:36,163 - root - INFO - 📋 Poster URL: https://pics.dmm.co.jp/digital/video/h_068mxbd00196/h_068mxbd00196ps.jpg
+2025-07-28 22:38:36,163 - root - INFO - 📋 Fanart URL: https://pics.dmm.co.jp/digital/video/h_068mxbd00196/h_068mxbd00196pl.jpg
+2025-07-28 22:38:36,163 - root - INFO - 🎭 Original actress: Kana Yume
+2025-07-28 22:38:36,163 - root - INFO - 🎭 Cleaned actress: Kana Yume
+2025-07-28 22:38:36,163 - root - INFO - 🎭 Final actresses list: ['Kana Yume']
+2025-07-28 22:38:36,163 - root - INFO - ✅ JavTrailers scrape completed for MXBD-196
+2025-07-28 22:38:36,163 - root - INFO - ✅ JAV Trailers fallback successful with meaningful data
+2025-07-28 22:38:36,163 - root - INFO - 🎭 Original actress name: Kana Yume
+2025-07-28 22:38:36,163 - root - INFO - 🎭 Cleaned actress name: Kana Yume
+2025-07-28 22:38:36,163 - root - INFO - 🎭 Enhancing metadata for actress: Kana Yume
+2025-07-28 22:38:36,163 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 22:38:36,163 - root - INFO - 🎭 Actress name: Kana Yume
+2025-07-28 22:38:36,163 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → Google Images
+2025-07-28 22:38:36,163 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 22:38:36,163 - root - INFO - 🔍 Searching javtiful.com for: Kana Yume
+2025-07-28 22:38:36,163 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Kana+Yume
+2025-07-28 22:38:40,419 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:38:40,424 - root - INFO - 📄 Retrieved HTML length: 59864 characters
+2025-07-28 22:38:40,448 - root - WARNING - ⚠️ No javtiful portrait found for Kana Yume
+2025-07-28 22:38:40,448 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 22:38:40,448 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 22:38:40,448 - root - INFO - 🔍 Searching javmost.com for: Kana Yume
+2025-07-28 22:38:41,431 - root - WARNING - ⚠️ No javmost portrait found for Kana Yume
+2025-07-28 22:38:41,431 - root - WARNING - ⚠️ No portrait found on javmost.com
+2025-07-28 22:38:41,431 - root - INFO - 🎭 ==== TRYING GOOGLE IMAGES (FINAL FALLBACK) ====
+2025-07-28 22:38:41,431 - root - INFO - 🔍 ==== GOOGLE IMAGES PORTRAIT SEARCH ====
+2025-07-28 22:38:41,431 - root - INFO - 🔍 Actress name: Kana Yume
+2025-07-28 22:38:41,431 - root - INFO - 🔍 Search query: Kana Yume JAV portrait
+2025-07-28 22:38:41,431 - root - INFO - 🔍 Search URL: https://www.google.com/search?q=Kana%20Yume%20JAV%20portrait&tbm=isch
+2025-07-28 22:38:41,431 - root - INFO - 🔍 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:38:41,431 - root - INFO - 📡 Requesting Google Images search...
+2025-07-28 22:38:42,175 - root - INFO - 📊 Response status: 200
+2025-07-28 22:38:42,617 - root - INFO - 📄 Received HTML length: 853894 characters
+2025-07-28 22:38:42,663 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:38:42,663 - root - INFO - 🔍 ==== SEARCHING FOR IMAGES ====
+2025-07-28 22:38:42,664 - root - INFO - 🔍 Trying data-src attributes...
+2025-07-28 22:38:42,664 - root - INFO - 🔍 Searching for image URLs in HTML content...
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 1 (regex): png
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: png
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 2 (regex): png
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: png
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 3 (regex): png
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: png
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 4 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 5 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 6 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 7 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 8 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 9 (regex): webp
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 10 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 11 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 12 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 13 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 14 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 15 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 16 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 17 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 18 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 19 (regex): jpeg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpeg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 20 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 21 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 22 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 23 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 24 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 25 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 26 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 27 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 28 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 29 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 30 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 31 (regex): jpg
+2025-07-28 22:38:42,666 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,666 - root - INFO - 🔍 Found image 32 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 33 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 34 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 35 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 36 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 37 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 38 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 39 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 40 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 41 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 42 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 43 (regex): webp
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 44 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 45 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 46 (regex): webp
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 47 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 48 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 49 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 50 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 51 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 52 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 53 (regex): webp
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 54 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 55 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 56 (regex): webp
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 57 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 58 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 59 (regex): png
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: png
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 60 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 61 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 62 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 63 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 64 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 65 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 66 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 67 (regex): webp
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 68 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 69 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 70 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 71 (regex): webp
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 72 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 73 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,667 - root - INFO - 🔍 Found image 74 (regex): jpg
+2025-07-28 22:38:42,667 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 75 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 76 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 77 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 78 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 79 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 80 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 81 (regex): webp
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 82 (regex): webp
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 83 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 84 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 85 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 86 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 87 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 88 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 89 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 90 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 91 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 92 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 93 (regex): webp
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: webp
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 94 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 95 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 96 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 97 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 98 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 99 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 100 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 101 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Found image 102 (regex): jpg
+2025-07-28 22:38:42,668 - root - INFO - 📄 Added to regular candidates: jpg
+2025-07-28 22:38:42,668 - root - INFO - 📊 Image analysis complete:
+2025-07-28 22:38:42,668 - root - INFO -    📊 Total images found: 102
+2025-07-28 22:38:42,668 - root - INFO -    📊 Portrait candidates: 0
+2025-07-28 22:38:42,668 - root - INFO -    📊 Regular candidates: 102
+2025-07-28 22:38:42,668 - root - INFO - ✅ Selected regular image: png
+2025-07-28 22:38:42,668 - root - INFO - ✅ Found portrait on Google Images: png
+2025-07-28 22:38:42,668 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 22:38:42,668 - root - INFO - ✅ Added actress portrait URL: png
+2025-07-28 22:38:42,668 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:38:42,668 - root - INFO - 🔍 JAV Code: SVDVD-436
+2025-07-28 22:38:42,668 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:38:42,669 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:38:42,669 - root - INFO - 🌐 Adding JavGuru task for SVDVD-436
+2025-07-28 22:38:42,669 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:38:42,669 - root - INFO - 🔍 Starting JavGuru scrape for SVDVD-436
+2025-07-28 22:38:42,669 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:38:42,669 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=SVDVD-436
+2025-07-28 22:38:46,033 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:38:46,038 - root - INFO - 📄 Retrieved HTML length: 100892 characters
+2025-07-28 22:38:46,059 - root - INFO - ✅ JavGuru scrape completed for SVDVD-436 (search results only)
+2025-07-28 22:38:46,059 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:38:46,060 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:38:46,060 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:38:46,060 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:38:46,060 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:38:46,060 - root - INFO -    📊 Has actress: None
+2025-07-28 22:38:46,060 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:38:46,060 - root - WARNING - ⚠️ All scraping sites failed for SVDVD-436, trying fallback sites
+2025-07-28 22:38:46,060 - root - INFO - 🔍 Trying JAVmost for SVDVD-436
+2025-07-28 22:38:46,060 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:38:46,060 - root - INFO - 🌐 JAV Code: SVDVD-436
+2025-07-28 22:38:46,060 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:38:46,060 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:38:46,060 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 22:38:46,516 - root - INFO - 📊 Response status: 200
+2025-07-28 22:38:46,516 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:38:46 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=ES4jCbxomW%2B8imij0AkaLQhy%2BTqda0vq7%2B7SziFuFFC7U%2BapHMaFKuE8ig1olRMYYqyYgu2FegayaVSBDtPEj9iw1HsHbk%2FA0Mn00JvRrw%3D%3D"}]}', 'Content-Encoding': 'gzip', 'CF-RAY': '96646f79ec98e7ca-SYD'}
+2025-07-28 22:38:46,516 - root - INFO - 📄 Received HTML length: 67845 characters
+2025-07-28 22:38:46,516 - root - INFO - ✅ HTML contains JAV code: SVDVD-436
+2025-07-28 22:38:46,523 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:38:46,523 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:38:46,523 - root - INFO - 🔍 Found 2 divs with class 'card'
+2025-07-28 22:38:46,523 - root - INFO - ✅ Found 2 results for SVDVD-436
+2025-07-28 22:38:46,523 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:38:46,523 - root - INFO - 🔍 Checking result 1/2
+2025-07-28 22:38:46,523 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:38:46,523 - root - INFO - 🔍 Found title: 'SVDVD-436-UNCENSORED-EDIT'
+2025-07-28 22:38:46,524 - root - INFO - ⚠️ Title doesn't match JAV code: 'SVDVD-436-UNCENSORED-EDIT' != 'SVDVD-436'
+2025-07-28 22:38:46,524 - root - INFO - 🔍 Checking result 2/2
+2025-07-28 22:38:46,524 - root - INFO - ✅ Result 2 contains JAV code
+2025-07-28 22:38:46,524 - root - INFO - 🔍 Found title: 'SVDVD-436'
+2025-07-28 22:38:46,524 - root - INFO - ✅ Found exact match in result 2
+2025-07-28 22:38:46,524 - root - INFO - 🔍 Title is same as JAV code, searching Google for better title
+2025-07-28 22:38:46,524 - root - INFO - 🔍 Searching Google for title of SVDVD-436
+2025-07-28 22:38:47,276 - root - WARNING - ⚠️ No suitable title found for SVDVD-436
+2025-07-28 22:38:47,277 - root - INFO - 🎭 JAVmost original actress: Asahi Mizuno
+2025-07-28 22:38:47,277 - root - INFO - 🎭 JAVmost cleaned actress: Asahi Mizuno
+2025-07-28 22:38:47,277 - root - INFO - 🔗 Detail URL: https://www5.javmost.com/SVDVD-436/
+2025-07-28 22:38:47,743 - root - INFO - ✅ JAVmost scrape completed for SVDVD-436
+2025-07-28 22:38:47,743 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 22:38:47,743 - root - INFO -    🔍 Title: SVDVD-436
+2025-07-28 22:38:47,743 - root - INFO -    🔍 Cover URL: https://img3.javmost.com/images/SVDVD-436.webp
+2025-07-28 22:38:47,743 - root - INFO -    🔍 Details Actress: Asahi Mizuno
+2025-07-28 22:38:47,743 - root - INFO -    🔍 Details Studio: Sadistic Village
+2025-07-28 22:38:47,743 - root - INFO -    🔍 Detailed Metadata Actress: Asahi Mizuno
+2025-07-28 22:38:47,743 - root - INFO -    🔍 Detailed Metadata Studio: Sadistic Village
+2025-07-28 22:38:47,743 - root - INFO -    🔍 Has meaningful data: True
+2025-07-28 22:38:47,743 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 22:38:47,743 - root - INFO - 🎭 Original actress name: Asahi Mizuno
+2025-07-28 22:38:47,743 - root - INFO - 🎭 Cleaned actress name: Asahi Mizuno
+2025-07-28 22:38:47,744 - root - INFO - 🎭 Enhancing metadata for actress: Asahi Mizuno
+2025-07-28 22:38:47,744 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 22:38:47,744 - root - INFO - 🎭 Actress name: Asahi Mizuno
+2025-07-28 22:38:47,744 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → Google Images
+2025-07-28 22:38:47,744 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 22:38:47,744 - root - INFO - 🔍 Searching javtiful.com for: Asahi Mizuno
+2025-07-28 22:38:47,744 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Asahi+Mizuno
+2025-07-28 22:38:51,771 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:38:51,776 - root - INFO - 📄 Retrieved HTML length: 59894 characters
+2025-07-28 22:38:51,800 - root - WARNING - ⚠️ No javtiful portrait found for Asahi Mizuno
+2025-07-28 22:38:51,800 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 22:38:51,800 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 22:38:51,800 - root - INFO - 🔍 Searching javmost.com for: Asahi Mizuno
+2025-07-28 22:38:52,554 - root - INFO - 🎯 Found potential javmost actress link: https://www5.javmost.com/star/Asahi Mizuno/ (Asahi Mizuno)
+2025-07-28 22:38:52,822 - root - INFO - 🖼️ Found javmost portrait: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:38:52,822 - root - INFO - ✅ Found portrait on javmost.com: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:38:52,823 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 22:38:52,823 - root - INFO - ✅ Added actress portrait URL: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 22:38:52,823 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 22:38:52,823 - root - INFO - 🔍 JAV Code: ABC-123
+2025-07-28 22:38:52,823 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 22:38:52,823 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 22:38:52,823 - root - INFO - 🌐 Adding JavGuru task for ABC-123
+2025-07-28 22:38:52,823 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 22:38:52,823 - root - INFO - 🔍 Starting JavGuru scrape for ABC-123
+2025-07-28 22:38:52,823 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=ABC-123
+2025-07-28 22:38:52,823 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=ABC-123
+2025-07-28 22:38:57,153 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:38:57,158 - root - INFO - 📄 Retrieved HTML length: 100868 characters
+2025-07-28 22:38:57,176 - root - INFO - ✅ JavGuru scrape completed for ABC-123 (search results only)
+2025-07-28 22:38:57,177 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 22:38:57,177 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 22:38:57,177 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 22:38:57,177 - root - INFO -    📊 Has title: None (None)
+2025-07-28 22:38:57,177 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 22:38:57,177 - root - INFO -    📊 Has actress: None
+2025-07-28 22:38:57,177 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 22:38:57,177 - root - WARNING - ⚠️ All scraping sites failed for ABC-123, trying fallback sites
+2025-07-28 22:38:57,177 - root - INFO - 🔍 Trying JAVmost for ABC-123
+2025-07-28 22:38:57,177 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 22:38:57,177 - root - INFO - 🌐 JAV Code: ABC-123
+2025-07-28 22:38:57,177 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/ABC-123/
+2025-07-28 22:38:57,177 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:38:57,177 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/ABC-123/
+2025-07-28 22:38:58,571 - root - INFO - 📊 Response status: 200
+2025-07-28 22:38:58,571 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 12:38:58 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=XZH4347L6Bdho2gYXSgU7wuiLQytZf7ji1Lf9OnsXbiTCMtyfv7fTS9npPoG7SeEgE4T3uCsw8%2F1hxkxLFNBtyarfK1l9q%2Bn6Tvk0wfa0g%3D%3D"}]}', 'Content-Encoding': 'gzip', 'CF-RAY': '96646fbf6aefe7ca-SYD'}
+2025-07-28 22:38:58,572 - root - INFO - 📄 Received HTML length: 59218 characters
+2025-07-28 22:38:58,572 - root - INFO - ✅ HTML contains JAV code: ABC-123
+2025-07-28 22:38:58,576 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:38:58,576 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 22:38:58,576 - root - INFO - 🔍 Found 0 divs with class 'card'
+2025-07-28 22:38:58,576 - root - INFO - 🔍 No 'card' divs found, trying 'result' class
+2025-07-28 22:38:58,576 - root - INFO - 🔍 Found 0 divs with 'result' in class
+2025-07-28 22:38:58,577 - root - INFO - 🔍 No 'result' divs found, searching for JAV code in text
+2025-07-28 22:38:58,577 - root - INFO - 🔍 Found 0 divs containing JAV code in text
+2025-07-28 22:38:58,577 - root - INFO - 🔍 No specific results found, using entire page
+2025-07-28 22:38:58,577 - root - INFO - 🔍 Using entire page as result
+2025-07-28 22:38:58,577 - root - INFO - ✅ Found 1 results for ABC-123
+2025-07-28 22:38:58,577 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 22:38:58,577 - root - INFO - 🔍 Checking result 1/1
+2025-07-28 22:38:58,577 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 22:38:58,577 - root - INFO - ⚠️ No title element found in result 1
+2025-07-28 22:38:58,836 - root - INFO - ✅ JAVmost scrape completed for ABC-123
+2025-07-28 22:38:58,836 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 22:38:58,836 - root - INFO -    🔍 Title: JAV MOST
+2025-07-28 22:38:58,836 - root - INFO -    🔍 Cover URL: 
+2025-07-28 22:38:58,836 - root - INFO -    🔍 Details Actress: 
+2025-07-28 22:38:58,836 - root - INFO -    🔍 Details Studio: 
+2025-07-28 22:38:58,836 - root - INFO -    🔍 Detailed Metadata Actress: 
+2025-07-28 22:38:58,836 - root - INFO -    🔍 Detailed Metadata Studio: 
+2025-07-28 22:38:58,836 - root - INFO -    🔍 Has meaningful data: 
+2025-07-28 22:38:58,836 - root - WARNING - ⚠️ JAVmost returned data but no meaningful content for ABC-123
+2025-07-28 22:38:58,836 - root - INFO - 🔍 Trying JAV Trailers for ABC-123
+2025-07-28 22:38:58,836 - root - INFO - 🎬 ==== JAVTRAILERS SCRAPING START ====
+2025-07-28 22:38:58,836 - root - INFO - 🎬 JAV Code: ABC-123
+2025-07-28 22:38:58,836 - root - INFO - 🔍 Search URL: https://javtrailers.com/search/ABC-123
+2025-07-28 22:38:58,836 - root - INFO - 🌐 Using Playwright to fetch: https://javtrailers.com/search/ABC-123
+2025-07-28 22:39:02,914 - root - INFO - ✅ Page loaded successfully
+2025-07-28 22:39:02,920 - root - INFO - 📄 Retrieved HTML length: 62094 characters
+2025-07-28 22:39:02,943 - root - WARNING - ⚠️ No detail page found for ABC-123
+2025-07-28 22:39:02,943 - root - WARNING - ⚠️ JAV Trailers fallback failed for ABC-123
+2025-07-28 22:39:02,943 - root - INFO - 🔍 Trying basic fallback for ABC-123
+2025-07-28 22:39:02,943 - root - INFO - 🔄 Using fallback scraper for ABC-123
+2025-07-28 22:39:02,943 - root - INFO - ✅ Fallback scraper completed for ABC-123
+2025-07-28 22:39:02,943 - root - INFO - ✅ Basic fallback successful
+2025-07-28 22:39:02,943 - root - INFO - ℹ️ No actress name found in metadata, skipping portrait search
+2025-07-28 22:47:42,466 - root - INFO - 🔍 ==== JAVDATABASE PORTRAIT SEARCH ====
+2025-07-28 22:47:42,466 - root - INFO - 🔍 Actress name: Kana Yume
+2025-07-28 22:47:42,466 - root - INFO - 🔍 Search URL: https://www.javdatabase.com/?post_type=idols&s=Kana+Yume
+2025-07-28 22:47:42,466 - root - INFO - 🔍 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:47:42,466 - root - INFO - 📡 Requesting JAV Database search...
+2025-07-28 22:47:43,527 - root - INFO - 📊 Response status: 200
+2025-07-28 22:47:43,539 - root - INFO - 📄 Received HTML length: 54548 characters
+2025-07-28 22:47:43,546 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:47:43,546 - root - INFO - 🔍 ==== SEARCHING FOR ACTRESS PROFILES ====
+2025-07-28 22:47:43,546 - root - INFO - 🎯 Found potential actress link: https://www.javdatabase.com/idols/kana-yume/ (Kana Yume)
+2025-07-28 22:47:43,546 - root - INFO - 📊 Found 1 potential actress links
+2025-07-28 22:47:43,546 - root - INFO - 🔍 Checking profile: https://www.javdatabase.com/idols/kana-yume/
+2025-07-28 22:47:43,598 - root - INFO - 🖼️ Found JAV Database portrait: https://www.javdatabase.com/covers/thumb/mi/mizd00448ps.webp
+2025-07-28 22:47:43,599 - root - INFO - 🔍 ==== JAVDATABASE PORTRAIT SEARCH ====
+2025-07-28 22:47:43,599 - root - INFO - 🔍 Actress name: Asahi Mizuno
+2025-07-28 22:47:43,599 - root - INFO - 🔍 Search URL: https://www.javdatabase.com/?post_type=idols&s=Asahi+Mizuno
+2025-07-28 22:47:43,599 - root - INFO - 🔍 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:47:43,599 - root - INFO - 📡 Requesting JAV Database search...
+2025-07-28 22:47:44,053 - root - INFO - 📊 Response status: 200
+2025-07-28 22:47:44,054 - root - INFO - 📄 Received HTML length: 54581 characters
+2025-07-28 22:47:44,059 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:47:44,059 - root - INFO - 🔍 ==== SEARCHING FOR ACTRESS PROFILES ====
+2025-07-28 22:47:44,060 - root - INFO - 🎯 Found potential actress link: https://www.javdatabase.com/idols/asahi-mizuno/ (Asahi Mizuno)
+2025-07-28 22:47:44,060 - root - INFO - 📊 Found 1 potential actress links
+2025-07-28 22:47:44,060 - root - INFO - 🔍 Checking profile: https://www.javdatabase.com/idols/asahi-mizuno/
+2025-07-28 22:47:44,119 - root - INFO - 🖼️ Found JAV Database portrait: https://www.javdatabase.com/covers/thumb/re/real00934ps.webp
+2025-07-28 22:47:44,119 - root - INFO - 🔍 ==== JAVDATABASE PORTRAIT SEARCH ====
+2025-07-28 22:47:44,119 - root - INFO - 🔍 Actress name: Yui Hatano
+2025-07-28 22:47:44,119 - root - INFO - 🔍 Search URL: https://www.javdatabase.com/?post_type=idols&s=Yui+Hatano
+2025-07-28 22:47:44,119 - root - INFO - 🔍 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:47:44,119 - root - INFO - 📡 Requesting JAV Database search...
+2025-07-28 22:47:45,185 - root - INFO - 📊 Response status: 200
+2025-07-28 22:47:45,186 - root - INFO - 📄 Received HTML length: 54559 characters
+2025-07-28 22:47:45,191 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:47:45,191 - root - INFO - 🔍 ==== SEARCHING FOR ACTRESS PROFILES ====
+2025-07-28 22:47:45,192 - root - INFO - 🎯 Found potential actress link: https://www.javdatabase.com/idols/yui-hatano/ (Yui Hatano)
+2025-07-28 22:47:45,192 - root - INFO - 📊 Found 1 potential actress links
+2025-07-28 22:47:45,192 - root - INFO - 🔍 Checking profile: https://www.javdatabase.com/idols/yui-hatano/
+2025-07-28 22:47:45,251 - root - INFO - 🖼️ Found JAV Database portrait: https://www.javdatabase.com/covers/thumb/sv/svs00089ps.webp
+2025-07-28 22:47:45,252 - root - INFO - 🔍 ==== JAVDATABASE PORTRAIT SEARCH ====
+2025-07-28 22:47:45,252 - root - INFO - 🔍 Actress name: Rara Anzai
+2025-07-28 22:47:45,252 - root - INFO - 🔍 Search URL: https://www.javdatabase.com/?post_type=idols&s=Rara+Anzai
+2025-07-28 22:47:45,252 - root - INFO - 🔍 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 22:47:45,252 - root - INFO - 📡 Requesting JAV Database search...
+2025-07-28 22:47:46,242 - root - INFO - 📊 Response status: 200
+2025-07-28 22:47:46,249 - root - INFO - 📄 Received HTML length: 54559 characters
+2025-07-28 22:47:46,254 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 22:47:46,254 - root - INFO - 🔍 ==== SEARCHING FOR ACTRESS PROFILES ====
+2025-07-28 22:47:46,255 - root - INFO - 🎯 Found potential actress link: https://www.javdatabase.com/idols/rara-anzai/ (Rara Anzai)
+2025-07-28 22:47:46,255 - root - INFO - 📊 Found 1 potential actress links
+2025-07-28 22:47:46,255 - root - INFO - 🔍 Checking profile: https://www.javdatabase.com/idols/rara-anzai/
+2025-07-28 22:47:46,634 - root - INFO - 🖼️ Found JAV Database portrait: https://www.javdatabase.com/covers/thumb/of/ofje00535ps.webp
+2025-07-28 22:58:10,431 - root - INFO - 🔍 ==== JAVDATABASE PORTRAIT SEARCH ====
+2025-07-28 22:58:10,432 - root - INFO - 🔍 Actress name: Kana Yume
+2025-07-28 22:58:10,432 - root - INFO - 🔍 Actress slug: kana-yume
+2025-07-28 22:58:10,432 - root - INFO - 🔍 Direct portrait URL: https://www.javdatabase.com/idolimages/thumb/kana-yume.webp
+2025-07-28 22:58:10,432 - root - INFO - 📡 Checking if portrait exists...
+2025-07-28 22:58:10,482 - root - INFO - 📊 Response status: 200
+2025-07-28 22:58:10,482 - root - INFO - ✅ Portrait found at: https://www.javdatabase.com/idolimages/thumb/kana-yume.webp
+2025-07-28 22:58:10,482 - root - INFO - 📥 Downloading webp image: https://www.javdatabase.com/idolimages/thumb/kana-yume.webp
+2025-07-28 22:58:10,508 - root - INFO - ✅ Successfully converted webp to jpg: test_kana_yume_portrait.jpg
+2025-07-28 22:58:10,508 - root - INFO - 🔍 ==== JAVDATABASE PORTRAIT SEARCH ====
+2025-07-28 22:58:10,508 - root - INFO - 🔍 Actress name: Asahi Mizuno
+2025-07-28 22:58:10,508 - root - INFO - 🔍 Actress slug: asahi-mizuno
+2025-07-28 22:58:10,508 - root - INFO - 🔍 Direct portrait URL: https://www.javdatabase.com/idolimages/thumb/asahi-mizuno.webp
+2025-07-28 22:58:10,508 - root - INFO - 📡 Checking if portrait exists...
+2025-07-28 22:58:10,787 - root - INFO - 📊 Response status: 200
+2025-07-28 22:58:10,787 - root - INFO - ✅ Portrait found at: https://www.javdatabase.com/idolimages/thumb/asahi-mizuno.webp
+2025-07-28 22:58:10,787 - root - INFO - 📥 Downloading webp image: https://www.javdatabase.com/idolimages/thumb/asahi-mizuno.webp
+2025-07-28 22:58:10,801 - root - INFO - ✅ Successfully converted webp to jpg: test_asahi_mizuno_portrait.jpg
+2025-07-28 22:58:10,801 - root - INFO - 🔍 ==== JAVDATABASE PORTRAIT SEARCH ====
+2025-07-28 22:58:10,801 - root - INFO - 🔍 Actress name: Yui Hatano
+2025-07-28 22:58:10,801 - root - INFO - 🔍 Actress slug: yui-hatano
+2025-07-28 22:58:10,801 - root - INFO - 🔍 Direct portrait URL: https://www.javdatabase.com/idolimages/thumb/yui-hatano.webp
+2025-07-28 22:58:10,801 - root - INFO - 📡 Checking if portrait exists...
+2025-07-28 22:58:11,074 - root - INFO - 📊 Response status: 200
+2025-07-28 22:58:11,074 - root - INFO - ✅ Portrait found at: https://www.javdatabase.com/idolimages/thumb/yui-hatano.webp
+2025-07-28 22:58:11,074 - root - INFO - 📥 Downloading webp image: https://www.javdatabase.com/idolimages/thumb/yui-hatano.webp
+2025-07-28 22:58:11,088 - root - INFO - ✅ Successfully converted webp to jpg: test_yui_hatano_portrait.jpg
+2025-07-28 22:58:11,088 - root - INFO - 🔍 ==== JAVDATABASE PORTRAIT SEARCH ====
+2025-07-28 22:58:11,088 - root - INFO - 🔍 Actress name: Rara Anzai
+2025-07-28 22:58:11,088 - root - INFO - 🔍 Actress slug: rara-anzai
+2025-07-28 22:58:11,088 - root - INFO - 🔍 Direct portrait URL: https://www.javdatabase.com/idolimages/thumb/rara-anzai.webp
+2025-07-28 22:58:11,088 - root - INFO - 📡 Checking if portrait exists...
+2025-07-28 22:58:11,102 - root - INFO - 📊 Response status: 200
+2025-07-28 22:58:11,102 - root - INFO - ✅ Portrait found at: https://www.javdatabase.com/idolimages/thumb/rara-anzai.webp
+2025-07-28 22:58:11,102 - root - INFO - 📥 Downloading webp image: https://www.javdatabase.com/idolimages/thumb/rara-anzai.webp
+2025-07-28 22:58:11,118 - root - INFO - ✅ Successfully converted webp to jpg: test_rara_anzai_portrait.jpg
+2025-07-28 23:05:19,653 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 23:05:19,653 - root - INFO - 🔍 JAV Code: MXBD-196
+2025-07-28 23:05:19,653 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 23:05:19,653 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 23:05:19,653 - root - INFO - 🌐 Adding JavGuru task for MXBD-196
+2025-07-28 23:05:19,653 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 23:05:19,653 - root - INFO - 🔍 Starting JavGuru scrape for MXBD-196
+2025-07-28 23:05:19,653 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=MXBD-196
+2025-07-28 23:05:19,653 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=MXBD-196
+2025-07-28 23:05:23,178 - root - INFO - ✅ Page loaded successfully
+2025-07-28 23:05:23,184 - root - INFO - 📄 Retrieved HTML length: 100894 characters
+2025-07-28 23:05:23,206 - root - INFO - ✅ JavGuru scrape completed for MXBD-196 (search results only)
+2025-07-28 23:05:23,206 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 23:05:23,206 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 23:05:23,206 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 23:05:23,206 - root - INFO -    📊 Has title: None (None)
+2025-07-28 23:05:23,206 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 23:05:23,206 - root - INFO -    📊 Has actress: None
+2025-07-28 23:05:23,206 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 23:05:23,206 - root - WARNING - ⚠️ All scraping sites failed for MXBD-196, trying fallback sites
+2025-07-28 23:05:23,206 - root - INFO - 🔍 Trying JAVmost for MXBD-196
+2025-07-28 23:05:23,207 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 23:05:23,207 - root - INFO - 🌐 JAV Code: MXBD-196
+2025-07-28 23:05:23,207 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 23:05:23,207 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 23:05:23,207 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/MXBD-196/
+2025-07-28 23:05:24,624 - root - INFO - 📊 Response status: 200
+2025-07-28 23:05:24,624 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 13:05:24 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=lEsG7gn%2BionHaLcZeGMfZFsVx%2FPmkAHyVXdmu5ebYCtXautqc3ZoSaN3Bxpp0feWoPiRfZD4eg2tUJEd8EJc0c9N8Yf2xMgjysgFKR1RLQ%3D%3D"}]}', 'Content-Encoding': 'gzip', 'Set-Cookie': 'ci_session=u3mqtf39niv625gl6l6bm6ad3m6l7390; HttpOnly; Path=/; Max-Age=7200; Expires=Mon, 28 Jul 2025 15:05:23 GMT', 'CF-RAY': '966496784c5157d5-SYD'}
+2025-07-28 23:05:24,625 - root - INFO - 📄 Received HTML length: 59227 characters
+2025-07-28 23:05:24,625 - root - INFO - ✅ HTML contains JAV code: MXBD-196
+2025-07-28 23:05:24,630 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 23:05:24,630 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 23:05:24,630 - root - INFO - 🔍 Found 0 divs with class 'card'
+2025-07-28 23:05:24,630 - root - INFO - 🔍 No 'card' divs found, trying 'result' class
+2025-07-28 23:05:24,630 - root - INFO - 🔍 Found 0 divs with 'result' in class
+2025-07-28 23:05:24,630 - root - INFO - 🔍 No 'result' divs found, searching for JAV code in text
+2025-07-28 23:05:24,630 - root - INFO - 🔍 Found 0 divs containing JAV code in text
+2025-07-28 23:05:24,630 - root - INFO - 🔍 No specific results found, using entire page
+2025-07-28 23:05:24,630 - root - INFO - 🔍 Using entire page as result
+2025-07-28 23:05:24,630 - root - INFO - ✅ Found 1 results for MXBD-196
+2025-07-28 23:05:24,630 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 23:05:24,630 - root - INFO - 🔍 Checking result 1/1
+2025-07-28 23:05:24,630 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 23:05:24,631 - root - INFO - ⚠️ No title element found in result 1
+2025-07-28 23:05:24,889 - root - INFO - ✅ JAVmost scrape completed for MXBD-196
+2025-07-28 23:05:24,890 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 23:05:24,890 - root - INFO -    🔍 Title: JAV MOST
+2025-07-28 23:05:24,890 - root - INFO -    🔍 Cover URL: 
+2025-07-28 23:05:24,890 - root - INFO -    🔍 Details Actress: 
+2025-07-28 23:05:24,890 - root - INFO -    🔍 Details Studio: 
+2025-07-28 23:05:24,890 - root - INFO -    🔍 Detailed Metadata Actress: 
+2025-07-28 23:05:24,890 - root - INFO -    🔍 Detailed Metadata Studio: 
+2025-07-28 23:05:24,890 - root - INFO -    🔍 Has meaningful data: 
+2025-07-28 23:05:24,890 - root - WARNING - ⚠️ JAVmost returned data but no meaningful content for MXBD-196
+2025-07-28 23:05:24,890 - root - WARNING - ⚠️ No actress information found, will try next fallback site
+2025-07-28 23:05:24,890 - root - INFO - 🔍 Trying JAV Trailers for MXBD-196
+2025-07-28 23:05:24,890 - root - INFO - 🎬 ==== JAVTRAILERS SCRAPING START ====
+2025-07-28 23:05:24,890 - root - INFO - 🎬 JAV Code: MXBD-196
+2025-07-28 23:05:24,890 - root - INFO - 🔍 Search URL: https://javtrailers.com/search/MXBD-196
+2025-07-28 23:05:24,890 - root - INFO - 🌐 Using Playwright to fetch: https://javtrailers.com/search/MXBD-196
+2025-07-28 23:05:28,912 - root - INFO - ✅ Page loaded successfully
+2025-07-28 23:05:28,918 - root - INFO - 📄 Retrieved HTML length: 66675 characters
+2025-07-28 23:05:28,946 - root - INFO - 🎯 Found detail URL: https://javtrailers.com/video/h_068mxbd00196
+2025-07-28 23:05:28,946 - root - INFO - 🎯 Link text: 1:58:00MXBD-196 Dirty And Tied Up: Cum Down Her Throat Kana Yume16 Nov 2014
+2025-07-28 23:05:28,946 - root - INFO - 📄 Fetching detail page: https://javtrailers.com/video/h_068mxbd00196
+2025-07-28 23:05:28,946 - root - INFO - 🌐 Using Playwright to fetch: https://javtrailers.com/video/h_068mxbd00196
+2025-07-28 23:05:32,888 - root - INFO - ✅ Page loaded successfully
+2025-07-28 23:05:32,893 - root - INFO - 📄 Retrieved HTML length: 49878 characters
+2025-07-28 23:05:32,915 - root - INFO - 📋 Title: MXBD-196 Dirty And Tied Up: Cum Down Her Throat Kana Yume
+2025-07-28 23:05:32,916 - root - INFO - 📋 Release Date: 16 Nov 2014
+2025-07-28 23:05:32,916 - root - INFO - 📋 Duration: 118 mins
+2025-07-28 23:05:32,916 - root - INFO - 📋 Studio: MAXING
+2025-07-28 23:05:32,917 - root - INFO - 📋 Categories: ['Hard Sex', 'Featured Actress', 'Bondage', 'Deep Throat', 'Hi-Def', 'StaffPicks04', 'SOD Create Sale']
+2025-07-28 23:05:32,918 - root - INFO - 📋 Original cast text: Kana Yume 由愛可奈
+2025-07-28 23:05:32,918 - root - INFO - 📋 Cleaned cast: Kana Yume
+2025-07-28 23:05:32,918 - root - INFO - 📋 Series: Inboku ~Semen Entangled In The Back Of The Throat And On The Face~
+2025-07-28 23:05:32,918 - root - INFO - 📋 Poster URL: https://pics.dmm.co.jp/digital/video/h_068mxbd00196/h_068mxbd00196ps.jpg
+2025-07-28 23:05:32,918 - root - INFO - 📋 Fanart URL: https://pics.dmm.co.jp/digital/video/h_068mxbd00196/h_068mxbd00196pl.jpg
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Original actress: Kana Yume
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Cleaned actress: Kana Yume
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Final actresses list: ['Kana Yume']
+2025-07-28 23:05:32,918 - root - INFO - ✅ JavTrailers scrape completed for MXBD-196
+2025-07-28 23:05:32,918 - root - INFO - ✅ JAV Trailers fallback successful with meaningful data
+2025-07-28 23:05:32,918 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Original actress name: Kana Yume
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Cleaned actress name: Kana Yume
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Actress source: detailed_metadata.actress
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Metadata source: unknown
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Enhancing metadata for actress: Kana Yume
+2025-07-28 23:05:32,918 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Actress name: Kana Yume
+2025-07-28 23:05:32,918 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → javdatabase.com
+2025-07-28 23:05:32,918 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 23:05:32,918 - root - INFO - 🔍 Searching javtiful.com for: Kana Yume
+2025-07-28 23:05:32,918 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Kana+Yume
+2025-07-28 23:05:37,213 - root - INFO - ✅ Page loaded successfully
+2025-07-28 23:05:37,218 - root - INFO - 📄 Retrieved HTML length: 59872 characters
+2025-07-28 23:05:37,244 - root - WARNING - ⚠️ No javtiful portrait found for Kana Yume
+2025-07-28 23:05:37,244 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 23:05:37,244 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 23:05:37,244 - root - INFO - 🔍 Searching javmost.com for: Kana Yume
+2025-07-28 23:05:37,942 - root - WARNING - ⚠️ No javmost portrait found for Kana Yume
+2025-07-28 23:05:37,942 - root - WARNING - ⚠️ No portrait found on javmost.com
+2025-07-28 23:05:37,942 - root - INFO - 🎭 ==== TRYING JAVDATABASE.COM (FINAL FALLBACK) ====
+2025-07-28 23:05:37,942 - root - INFO - 🔍 ==== JAVDATABASE PORTRAIT SEARCH ====
+2025-07-28 23:05:37,942 - root - INFO - 🔍 Actress name: Kana Yume
+2025-07-28 23:05:37,942 - root - INFO - 🔍 Actress slug: kana-yume
+2025-07-28 23:05:37,942 - root - INFO - 🔍 Direct portrait URL: https://www.javdatabase.com/idolimages/thumb/kana-yume.webp
+2025-07-28 23:05:37,942 - root - INFO - 📡 Checking if portrait exists...
+2025-07-28 23:05:38,005 - root - INFO - 📊 Response status: 200
+2025-07-28 23:05:38,005 - root - INFO - ✅ Portrait found at: https://www.javdatabase.com/idolimages/thumb/kana-yume.webp
+2025-07-28 23:05:38,005 - root - INFO - ✅ Found portrait on javdatabase.com: https://www.javdatabase.com/idolimages/thumb/kana-yume.webp
+2025-07-28 23:05:38,005 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 23:05:38,005 - root - INFO - ✅ Added actress portrait URL: https://www.javdatabase.com/idolimages/thumb/kana-yume.webp
+2025-07-28 23:05:38,005 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 23:05:38,005 - root - INFO - 🔍 JAV Code: SVDVD-436
+2025-07-28 23:05:38,005 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 23:05:38,005 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 23:05:38,005 - root - INFO - 🌐 Adding JavGuru task for SVDVD-436
+2025-07-28 23:05:38,005 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 23:05:38,005 - root - INFO - 🔍 Starting JavGuru scrape for SVDVD-436
+2025-07-28 23:05:38,005 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=SVDVD-436
+2025-07-28 23:05:38,005 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=SVDVD-436
+2025-07-28 23:05:41,060 - root - INFO - ✅ Page loaded successfully
+2025-07-28 23:05:41,066 - root - INFO - 📄 Retrieved HTML length: 100882 characters
+2025-07-28 23:05:41,092 - root - INFO - ✅ JavGuru scrape completed for SVDVD-436 (search results only)
+2025-07-28 23:05:41,092 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 23:05:41,092 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 23:05:41,092 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 23:05:41,092 - root - INFO -    📊 Has title: None (None)
+2025-07-28 23:05:41,092 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 23:05:41,092 - root - INFO -    📊 Has actress: None
+2025-07-28 23:05:41,092 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 23:05:41,092 - root - WARNING - ⚠️ All scraping sites failed for SVDVD-436, trying fallback sites
+2025-07-28 23:05:41,092 - root - INFO - 🔍 Trying JAVmost for SVDVD-436
+2025-07-28 23:05:41,092 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 23:05:41,092 - root - INFO - 🌐 JAV Code: SVDVD-436
+2025-07-28 23:05:41,092 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 23:05:41,092 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 23:05:41,092 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/SVDVD-436/
+2025-07-28 23:05:41,550 - root - INFO - 📊 Response status: 200
+2025-07-28 23:05:41,550 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 13:05:41 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=agSXCvC%2BTExuI2E8odxyvLOtD7MA%2BH0GIEaZGJEwl2Zz0p6z842BL6cv9eMfJOUZLj9LmJcxt8PNkUKjXQIeFOEqyn4EpDWg56B9jBuuFg%3D%3D"}]}', 'Content-Encoding': 'gzip', 'CF-RAY': '966496e7ec1b57d5-SYD'}
+2025-07-28 23:05:41,550 - root - INFO - 📄 Received HTML length: 67845 characters
+2025-07-28 23:05:41,550 - root - INFO - ✅ HTML contains JAV code: SVDVD-436
+2025-07-28 23:05:41,556 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 23:05:41,556 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 23:05:41,556 - root - INFO - 🔍 Found 2 divs with class 'card'
+2025-07-28 23:05:41,556 - root - INFO - ✅ Found 2 results for SVDVD-436
+2025-07-28 23:05:41,556 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 23:05:41,556 - root - INFO - 🔍 Checking result 1/2
+2025-07-28 23:05:41,556 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 23:05:41,556 - root - INFO - 🔍 Found title: 'SVDVD-436-UNCENSORED-EDIT'
+2025-07-28 23:05:41,556 - root - INFO - ⚠️ Title doesn't match JAV code: 'SVDVD-436-UNCENSORED-EDIT' != 'SVDVD-436'
+2025-07-28 23:05:41,556 - root - INFO - 🔍 Checking result 2/2
+2025-07-28 23:05:41,557 - root - INFO - ✅ Result 2 contains JAV code
+2025-07-28 23:05:41,557 - root - INFO - 🔍 Found title: 'SVDVD-436'
+2025-07-28 23:05:41,557 - root - INFO - ✅ Found exact match in result 2
+2025-07-28 23:05:41,557 - root - INFO - 🔍 Title is same as JAV code, searching Google for better title
+2025-07-28 23:05:41,557 - root - INFO - 🔍 Searching Google for title of SVDVD-436
+2025-07-28 23:05:41,948 - root - WARNING - ⚠️ No suitable title found for SVDVD-436
+2025-07-28 23:05:41,948 - root - INFO - 🎭 JAVmost original actress: Asahi Mizuno
+2025-07-28 23:05:41,948 - root - INFO - 🎭 JAVmost cleaned actress: Asahi Mizuno
+2025-07-28 23:05:41,949 - root - INFO - 🔗 Detail URL: https://www5.javmost.com/SVDVD-436/
+2025-07-28 23:05:42,198 - root - INFO - ✅ JAVmost scrape completed for SVDVD-436
+2025-07-28 23:05:42,198 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 23:05:42,198 - root - INFO -    🔍 Title: SVDVD-436
+2025-07-28 23:05:42,198 - root - INFO -    🔍 Cover URL: https://img3.javmost.com/images/SVDVD-436.webp
+2025-07-28 23:05:42,198 - root - INFO -    🔍 Details Actress: Asahi Mizuno
+2025-07-28 23:05:42,198 - root - INFO -    🔍 Details Studio: Sadistic Village
+2025-07-28 23:05:42,198 - root - INFO -    🔍 Detailed Metadata Actress: Asahi Mizuno
+2025-07-28 23:05:42,198 - root - INFO -    🔍 Detailed Metadata Studio: Sadistic Village
+2025-07-28 23:05:42,198 - root - INFO -    🔍 Has meaningful data: True
+2025-07-28 23:05:42,198 - root - INFO - ✅ JAVmost fallback successful with meaningful data
+2025-07-28 23:05:42,198 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 23:05:42,198 - root - INFO - 🎭 Original actress name: Asahi Mizuno
+2025-07-28 23:05:42,198 - root - INFO - 🎭 Cleaned actress name: Asahi Mizuno
+2025-07-28 23:05:42,198 - root - INFO - 🎭 Actress source: detailed_metadata.actress
+2025-07-28 23:05:42,198 - root - INFO - 🎭 Metadata source: unknown
+2025-07-28 23:05:42,198 - root - INFO - 🎭 Enhancing metadata for actress: Asahi Mizuno
+2025-07-28 23:05:42,198 - root - INFO - 🎭 ==== ACTRESS PORTRAIT SEARCH START ====
+2025-07-28 23:05:42,198 - root - INFO - 🎭 Actress name: Asahi Mizuno
+2025-07-28 23:05:42,198 - root - INFO - 🎭 Search strategy: javtiful.com → javmost.com → javdatabase.com
+2025-07-28 23:05:42,198 - root - INFO - 🎭 ==== TRYING JAVTIFUL.COM ====
+2025-07-28 23:05:42,198 - root - INFO - 🔍 Searching javtiful.com for: Asahi Mizuno
+2025-07-28 23:05:42,198 - root - INFO - 🌐 Using Playwright to fetch: https://javtiful.com/actresses?q=Asahi+Mizuno
+2025-07-28 23:05:46,235 - root - INFO - ✅ Page loaded successfully
+2025-07-28 23:05:46,241 - root - INFO - 📄 Retrieved HTML length: 59892 characters
+2025-07-28 23:05:46,265 - root - WARNING - ⚠️ No javtiful portrait found for Asahi Mizuno
+2025-07-28 23:05:46,265 - root - WARNING - ⚠️ No portrait found on javtiful.com
+2025-07-28 23:05:46,265 - root - INFO - 🎭 ==== TRYING JAVMOST.COM ====
+2025-07-28 23:05:46,265 - root - INFO - 🔍 Searching javmost.com for: Asahi Mizuno
+2025-07-28 23:05:46,970 - root - INFO - 🎯 Found potential javmost actress link: https://www5.javmost.com/star/Asahi Mizuno/ (Asahi Mizuno)
+2025-07-28 23:05:47,349 - root - INFO - 🖼️ Found javmost portrait: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 23:05:47,349 - root - INFO - ✅ Found portrait on javmost.com: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 23:05:47,349 - root - INFO - 🎭 Portrait search completed successfully
+2025-07-28 23:05:47,349 - root - INFO - ✅ Added actress portrait URL: https://nonecss.com/file_image/actress/Asahi Mizuno.jpg
+2025-07-28 23:05:47,349 - root - INFO - 🔍 ==== METADATA SCRAPING START ====
+2025-07-28 23:05:47,349 - root - INFO - 🔍 JAV Code: ABC-123
+2025-07-28 23:05:47,349 - root - INFO - 🔍 Config: {'sites': [{'name': 'javguru', 'url': 'https://jav.guru', 'enabled': True}, {'name': 'javtrailers', 'url': 'https://javtrailers.com', 'enabled': False}], 'max_threads': 5, 'timeout': 30, 'video_extensions': ['.mp4', '.avi', '.mkv', '.wmv', '.mov'], 'image_extensions': ['.jpg', '.jpeg', '.png', '.gif'], 'create_nfo': True, 'download_cover': True, 'download_fanart': True, 'create_folder_cover': True, 'translate_title': True, 'translate_description': True, 'language': 'en', 'organize_files': True, 'create_actor_folders': False, 'create_genre_folders': False}
+2025-07-28 23:05:47,349 - root - INFO - 🔍 Enabled sites: ['javguru']
+2025-07-28 23:05:47,349 - root - INFO - 🌐 Adding JavGuru task for ABC-123
+2025-07-28 23:05:47,349 - root - INFO - 📡 Starting 1 scraping tasks
+2025-07-28 23:05:47,349 - root - INFO - 🔍 Starting JavGuru scrape for ABC-123
+2025-07-28 23:05:47,350 - root - INFO - 📡 Requesting URL with Playwright: https://jav.guru/?s=ABC-123
+2025-07-28 23:05:47,350 - root - INFO - 🌐 Using Playwright to fetch: https://jav.guru/?s=ABC-123
+2025-07-28 23:05:51,717 - root - INFO - ✅ Page loaded successfully
+2025-07-28 23:05:51,723 - root - INFO - 📄 Retrieved HTML length: 100866 characters
+2025-07-28 23:05:51,746 - root - INFO - ✅ JavGuru scrape completed for ABC-123 (search results only)
+2025-07-28 23:05:51,746 - root - INFO - 📊 Scraping results: [{'title': None, 'cover_url': None, 'detail_url': None, 'tags': [], 'stats': '', 'date': '', 'source': 'javguru'}]
+2025-07-28 23:05:51,746 - root - INFO - 📊 Analyzing result 1: <class 'dict'>
+2025-07-28 23:05:51,746 - root - INFO - 📊 Result 1 analysis:
+2025-07-28 23:05:51,746 - root - INFO -    📊 Has title: None (None)
+2025-07-28 23:05:51,746 - root - INFO -    📊 Has cover: None (None)
+2025-07-28 23:05:51,746 - root - INFO -    📊 Has actress: None
+2025-07-28 23:05:51,746 - root - WARNING - ⚠️ ==== ALL ENABLED SITES FAILED, TRYING FALLBACK SITES ====
+2025-07-28 23:05:51,746 - root - WARNING - ⚠️ All scraping sites failed for ABC-123, trying fallback sites
+2025-07-28 23:05:51,746 - root - INFO - 🔍 Trying JAVmost for ABC-123
+2025-07-28 23:05:51,746 - root - INFO - 🌐 ==== JAVMOST SCRAPING START ====
+2025-07-28 23:05:51,746 - root - INFO - 🌐 JAV Code: ABC-123
+2025-07-28 23:05:51,746 - root - INFO - 🌐 Search URL: https://www5.javmost.com/search/ABC-123/
+2025-07-28 23:05:51,746 - root - INFO - 🌐 Using headers: ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Upgrade-Insecure-Requests']
+2025-07-28 23:05:51,746 - root - INFO - 📡 Requesting URL: https://www5.javmost.com/search/ABC-123/
+2025-07-28 23:05:55,006 - root - INFO - 📊 Response status: 200
+2025-07-28 23:05:55,006 - root - INFO - 📊 Response headers: {'Date': 'Mon, 28 Jul 2025 13:05:55 GMT', 'Content-Type': 'text/html; charset=UTF-8', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Server': 'cloudflare', 'Expires': 'Thu, 19 Nov 1981 08:52:00 GMT', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache', 'Cf-Cache-Status': 'DYNAMIC', 'Nel': '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}', 'Vary': 'Accept-Encoding,User-Agent', 'Report-To': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=ekI1Xby2OTAQ9w2%2BgHQ1QeT2JrK3ZAMNLpgkuyGxpP4aXy9gKDCOPkOQDt2A58FYUgffg8pELP7HEGMZey3RySomld9sQc8QxW2%2B%2B6144w%3D%3D"}]}', 'Content-Encoding': 'gzip', 'CF-RAY': '9664972a7d4d57d5-SYD'}
+2025-07-28 23:05:55,006 - root - INFO - 📄 Received HTML length: 59218 characters
+2025-07-28 23:05:55,006 - root - INFO - ✅ HTML contains JAV code: ABC-123
+2025-07-28 23:05:55,011 - root - INFO - 🔍 Parsed HTML with BeautifulSoup
+2025-07-28 23:05:55,011 - root - INFO - 🔍 ==== SEARCHING FOR RESULTS ====
+2025-07-28 23:05:55,011 - root - INFO - 🔍 Found 0 divs with class 'card'
+2025-07-28 23:05:55,011 - root - INFO - 🔍 No 'card' divs found, trying 'result' class
+2025-07-28 23:05:55,011 - root - INFO - 🔍 Found 0 divs with 'result' in class
+2025-07-28 23:05:55,011 - root - INFO - 🔍 No 'result' divs found, searching for JAV code in text
+2025-07-28 23:05:55,011 - root - INFO - 🔍 Found 0 divs containing JAV code in text
+2025-07-28 23:05:55,011 - root - INFO - 🔍 No specific results found, using entire page
+2025-07-28 23:05:55,011 - root - INFO - 🔍 Using entire page as result
+2025-07-28 23:05:55,011 - root - INFO - ✅ Found 1 results for ABC-123
+2025-07-28 23:05:55,011 - root - INFO - 🔍 ==== SEARCHING FOR EXACT MATCH ====
+2025-07-28 23:05:55,011 - root - INFO - 🔍 Checking result 1/1
+2025-07-28 23:05:55,011 - root - INFO - ✅ Result 1 contains JAV code
+2025-07-28 23:05:55,012 - root - INFO - ⚠️ No title element found in result 1
+2025-07-28 23:05:55,907 - root - INFO - ✅ JAVmost scrape completed for ABC-123
+2025-07-28 23:05:55,907 - root - INFO - 🔍 JAVmost meaningful data check:
+2025-07-28 23:05:55,907 - root - INFO -    🔍 Title: JAV MOST
+2025-07-28 23:05:55,907 - root - INFO -    🔍 Cover URL: 
+2025-07-28 23:05:55,907 - root - INFO -    🔍 Details Actress: 
+2025-07-28 23:05:55,907 - root - INFO -    🔍 Details Studio: 
+2025-07-28 23:05:55,907 - root - INFO -    🔍 Detailed Metadata Actress: 
+2025-07-28 23:05:55,907 - root - INFO -    🔍 Detailed Metadata Studio: 
+2025-07-28 23:05:55,907 - root - INFO -    🔍 Has meaningful data: 
+2025-07-28 23:05:55,907 - root - WARNING - ⚠️ JAVmost returned data but no meaningful content for ABC-123
+2025-07-28 23:05:55,907 - root - WARNING - ⚠️ No actress information found, will try next fallback site
+2025-07-28 23:05:55,907 - root - INFO - 🔍 Trying JAV Trailers for ABC-123
+2025-07-28 23:05:55,907 - root - INFO - 🎬 ==== JAVTRAILERS SCRAPING START ====
+2025-07-28 23:05:55,907 - root - INFO - 🎬 JAV Code: ABC-123
+2025-07-28 23:05:55,907 - root - INFO - 🔍 Search URL: https://javtrailers.com/search/ABC-123
+2025-07-28 23:05:55,907 - root - INFO - 🌐 Using Playwright to fetch: https://javtrailers.com/search/ABC-123
+2025-07-28 23:06:00,261 - root - INFO - ✅ Page loaded successfully
+2025-07-28 23:06:00,266 - root - INFO - 📄 Retrieved HTML length: 62098 characters
+2025-07-28 23:06:00,289 - root - WARNING - ⚠️ No detail page found for ABC-123
+2025-07-28 23:06:00,290 - root - WARNING - ⚠️ JAV Trailers fallback failed for ABC-123
+2025-07-28 23:06:00,290 - root - INFO - 🔍 Trying basic fallback for ABC-123
+2025-07-28 23:06:00,290 - root - INFO - 🔄 Using fallback scraper for ABC-123
+2025-07-28 23:06:00,290 - root - INFO - ✅ Fallback scraper completed for ABC-123
+2025-07-28 23:06:00,290 - root - INFO - ✅ Basic fallback successful
+2025-07-28 23:06:00,290 - root - INFO - ℹ️ No actress name found in metadata, skipping portrait search
+2025-07-28 23:06:00,290 - root - INFO - ℹ️ Metadata source: unknown

@@ -190,18 +190,18 @@ function displayFiles(files) {
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
                 <div class="file-item" data-jav-code="${file.jav_code}">
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-start">
                         <i class="fas ${fileIcon} file-icon"></i>
                         <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1">
                                     <strong>${file.jav_code}</strong>
                                     <br>
                                     <small class="text-muted">${file.filename}</small>
                                 </div>
                                 <span class="jav-code">${file.jav_code}</span>
                             </div>
-                            <div class="mt-2">
+                            <div>
                                 <small class="text-muted">${file.file_path}</small>
                             </div>
                         </div>

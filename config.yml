@@ -5,6 +5,9 @@ scraper:
     - name: "javguru"
       url: "https://jav.guru"
       enabled: true
+    - name: "javtrailers"
+      url: "https://javtrailers.com"
+      enabled: false  # Set to true to use as primary source
   
   # Threading settings
   max_threads: 5

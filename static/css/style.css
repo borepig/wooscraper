@@ -136,16 +136,45 @@ body {
     padding: 15px;
     margin-bottom: 10px;
     transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.file-item .d-flex {
+    height: 100%;
+    min-height: 0;
+}
+
+.file-item .flex-grow-1 {
+    min-width: 0;
+    overflow: hidden;
 }
 
 .file-item strong {
     color: #ffffff;
     font-weight: 600;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
 .file-item small {
     color: rgba(255, 255, 255, 0.8);
     font-weight: 400;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    display: block;
+}
+
+.file-item .jav-code {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.8em;
+    padding: 2px 6px;
+    margin-left: 8px;
 }
 
 .file-item:hover {
@@ -244,6 +273,19 @@ body {
     
     .main-content {
         padding: 10px;
+    }
+    
+    .file-item .jav-code {
+        font-size: 0.7em;
+        padding: 1px 4px;
+    }
+    
+    .file-item strong {
+        font-size: 0.9rem;
+    }
+    
+    .file-item small {
+        font-size: 0.8rem;
     }
 }
 
@@ -432,6 +474,16 @@ body {
     .file-item small {
         font-size: 0.7rem;
     }
+    
+    .file-item .jav-code {
+        font-size: 0.65em;
+        padding: 1px 3px;
+    }
+    
+    .file-icon {
+        font-size: 1em;
+        margin-right: 6px;
+    }
 }
 
 /* Loading animation */
@@ -454,6 +506,16 @@ body {
     font-size: 1.2em;
     margin-right: 10px;
     color: #00d4ff;
+    flex-shrink: 0;
+}
+
+/* File grid layout improvements */
+.col-md-6.col-lg-4 {
+    display: flex;
+}
+
+.col-md-6.col-lg-4 .file-item {
+    width: 100%;
 }
 
 /* Results styling */
