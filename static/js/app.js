@@ -1,5 +1,11 @@
-// JAV Scraper Frontend JavaScript
+/**
+ * JAV Scraper Frontend JavaScript
+ * @description Main JavaScript file for the JAV metadata scraper web interface
+ * @author JAV Scraper Team
+ * @version 1.0
+ */
 
+// Global variables for the application
 let currentFolder = localStorage.getItem('lastFolderPath') || '';
 let scannedFiles = [];
 let jobStatusInterval = null;
@@ -18,7 +24,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-// Browse folder function
+/**
+ * Opens the folder browser dialog
+ * @description Triggers the hidden file input to select a folder
+ * @returns {void}
+ */
 function browseFolder() {
     // For web browsers, we'll use a simple input
     // In a real desktop app, you'd use a native file dialog
@@ -106,25 +116,30 @@ function convertToAbsolutePath(path) {
     return path;
 }
 
-// Scan folder for JAV files
+/**
+ * Scans a folder for JAV files and displays the results
+ * @description Sends a request to the backend API to scan a folder for JAV video files
+ * @param {string} folderPath - The path of the folder to scan
+ * @returns {Promise<void>}
+ */
 async function scanFolder() {
     const folderPath = document.getElementById('folderPath').value.trim();
-    
+
     if (!folderPath) {
         showNotification('Please enter a folder path', 'error');
         return;
     }
-    
+
     // Save folder path to localStorage
     localStorage.setItem('lastFolderPath', folderPath);
     currentFolder = folderPath;
-    
+
     updateStatus('Scanning folder...');
     showLoading(true);
     clearDebugLog();
     showDebugSection(true);
     addDebugLog(`🔍 Starting folder scan: ${folderPath}`, 'info');
-    
+
     try {
         const response = await fetch('/api/scan-folder', {
             method: 'POST',
@@ -133,23 +148,23 @@ async function scanFolder() {
             },
             body: JSON.stringify({ folder_path: folderPath })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             scannedFiles = data.files;
             currentFolder = data.resolved_path || folderPath;
-            
+
             // Update the input with the resolved path
             document.getElementById('folderPath').value = currentFolder;
-            
+
             addDebugLog(`✅ Found ${data.count} JAV files`, 'success');
             addDebugLog(`📁 Resolved path: ${currentFolder}`, 'info');
-            
+
             displayFiles(data.files);
             showNotification(`Found ${data.count} JAV files`, 'success');
             updateStatus(`Found ${data.count} JAV files in ${currentFolder}`);
-            
+
             // Enable start button
             document.getElementById('startBtn').disabled = false;
         } else {
@@ -229,51 +244,56 @@ function getFileIcon(extension) {
     return iconMap[extension] || 'fa-file';
 }
 
-// Start scraping process
+/**
+ * Starts the scraping process for JAV files
+ * @description Sends a request to the backend API to start scraping metadata for JAV files in the selected folder
+ * @param {string} folderPath - The path of the folder containing JAV files
+ * @returns {Promise<void>}
+ */
 async function startScraping() {
     const folderPath = document.getElementById('folderPath').value.trim();
-    
+
     if (!folderPath) {
         showNotification('Please select a folder first', 'error');
         return;
     }
-    
+
     addDebugLog(`🚀 Starting scraping process for: ${folderPath}`, 'info');
     addDebugLog(`📁 Files to process: ${scannedFiles.length}`, 'info');
-    
+
     try {
         // Get UI settings
         const createNfo = document.getElementById('createNfo').checked;
         const downloadCover = document.getElementById('downloadCover').checked;
         const organizeFiles = document.getElementById('organizeFiles').checked;
-        
+
         addDebugLog(`⚙️ UI Settings:`, 'info');
         addDebugLog(`   - Create NFO: ${createNfo}`, 'info');
         addDebugLog(`   - Download Cover: ${downloadCover}`, 'info');
         addDebugLog(`   - Organize Files: ${organizeFiles}`, 'info');
-        
+
         const response = await fetch('/api/start-scraping', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 folder_path: folderPath,
                 create_nfo: createNfo,
                 download_cover: downloadCover,
                 organize_files: organizeFiles
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             addDebugLog(`✅ Scraping job started successfully`, 'success');
             showNotification('Scraping started successfully', 'success');
             document.getElementById('startBtn').style.display = 'none';
             document.getElementById('stopBtn').style.display = 'inline-block';
             document.getElementById('progressSection').style.display = 'block';
-            
+
             // Start monitoring job status
             startJobStatusMonitoring();
         } else {
@@ -364,36 +384,108 @@ function stopJobStatusMonitoring() {
 function updateProgress(status) {
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
-    
+
     if (status.total_files > 0) {
         const progress = Math.round((status.processed_files / status.total_files) * 100);
         progressBar.style.width = progress + '%';
         progressBar.textContent = progress + '%';
-        
+
         progressText.textContent = `${status.current_file} (${status.processed_files}/${status.total_files})`;
     }
-    
+
     updateStatus(status.current_file || 'Processing...');
+}
+
+// Efficient file listing display for large folders
+function displayFilesEfficiently(files) {
+    const fileList = document.getElementById('fileList');
+
+    if (files.length === 0) {
+        fileList.innerHTML = `
+            <p class="text-muted text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i><br>
+                No JAV files found in the selected folder
+            </p>
+        `;
+        return;
+    }
+
+    // For large lists, use virtual scrolling or pagination to improve performance
+    if (files.length > 50) {
+        fileList.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Large folder detected (${files.length} files).
+                Showing first 50 files for performance reasons.
+            </div>
+        `;
+
+        // Display only first 50 files
+        const displayFiles = files.slice(0, 50);
+        renderFileList(displayFiles);
+    } else {
+        renderFileList(files);
+    }
+}
+
+// Helper function to render file list
+function renderFileList(files) {
+    const fileList = document.getElementById('fileList');
+
+    let html = '<div class="row">';
+
+    files.forEach((file, index) => {
+        const fileExtension = file.filename.split('.').pop().toLowerCase();
+        const fileIcon = getFileIcon(fileExtension);
+
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="file-item" data-jav-code="${file.jav_code}">
+                    <div class="d-flex align-items-start">
+                        <i class="fas ${fileIcon} file-icon"></i>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1">
+                                    <strong>${file.jav_code}</strong>
+                                    <br>
+                                    <small class="text-muted">${file.filename}</small>
+                                </div>
+                                <span class="jav-code">${file.jav_code}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted">${file.file_path}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    fileList.innerHTML = html;
 }
 
 // Display results
 function displayResults(results) {
     const resultsSection = document.getElementById('resultsSection');
     const resultsList = document.getElementById('resultsList');
-    
+
     if (!results || results.length === 0) {
         resultsList.innerHTML = '<p class="text-muted text-center">No results to display</p>';
         resultsSection.style.display = 'block';
         return;
     }
-    
+
+    // For large result sets, show only the first 50 items for performance
+    const displayResults = results.length > 50 ? results.slice(0, 50) : results;
+
     let html = '<div class="row">';
-    
-    results.forEach((result, index) => {
+
+    displayResults.forEach((result, index) => {
         const statusClass = result.error ? 'error' : 'success';
         const statusText = result.error ? 'Error' : 'Success';
         const statusIcon = result.error ? 'fa-exclamation-triangle' : 'fa-check-circle';
-        
+
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
                 <div class="result-item ${statusClass}">
@@ -411,7 +503,19 @@ function displayResults(results) {
             </div>
         `;
     });
-    
+
+    // Add a notice if results were truncated
+    if (results.length > 50) {
+        html += `
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Showing first 50 of ${results.length} results for performance reasons.
+                </div>
+            </div>
+        `;
+    }
+
     html += '</div>';
     resultsList.innerHTML = html;
     resultsSection.style.display = 'block';

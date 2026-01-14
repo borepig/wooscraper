@@ -1,3 +1,13 @@
+"""
+JAV Scraper Engine
+==================
+
+A module for scraping metadata from JAV (Japanese Adult Video) content.
+
+This engine handles the core functionality of scanning folders for JAV files,
+extracting metadata, and generating NFO files for media servers.
+"""
+
 import re
 import os
 import asyncio
@@ -15,23 +25,48 @@ import urllib.parse
 import tempfile
 
 class JAVScraperEngine:
+    """
+    Main class for the JAV Scraper Engine.
+
+    This class provides all the functionality for scanning folders for JAV files,
+    extracting metadata from various sources, and generating NFO files for media servers.
+    """
+
     def __init__(self, config_path: str = "config.yml"):
-        """Initialize the JAV scraper engine."""
+        """
+        Initialize the JAV scraper engine.
+
+        Args:
+            config_path (str): Path to the configuration file. Defaults to "config.yml"
+        """
         self.config = self._load_config(config_path)
         self.setup_logging()
         self.session = None
-        
+
     def _load_config(self, config_path: str) -> Dict:
-        """Load configuration from YAML file."""
+        """
+        Load configuration from YAML file.
+
+        Args:
+            config_path (str): Path to the configuration file
+
+        Returns:
+            Dict: Configuration dictionary or empty dict if file not found
+        """
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
             logging.error(f"Config file {config_path} not found")
             return {}
-            
+
     def setup_logging(self):
-        """Setup logging configuration."""
+        """
+        Setup logging configuration.
+
+        Configures the logging system based on the application's configuration.
+        This includes setting log level, format, and output handlers (file and console).
+        """
         log_config = self.config.get('logging', {})
         logging.basicConfig(
             level=getattr(logging, log_config.get('level', 'INFO')),
@@ -41,19 +76,35 @@ class JAVScraperEngine:
                 logging.StreamHandler()
             ]
         )
-        
+
     async def __aenter__(self):
-        """Async context manager entry."""
+        """
+        Async context manager entry.
+
+        Sets up the HTTP client session for making web requests during scraping operations.
+
+        Returns:
+            JAVScraperEngine: The instance of the scraper engine
+        """
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.config.get('scraper', {}).get('timeout', 30))
         )
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit."""
+        """
+        Async context manager exit.
+
+        Closes the HTTP client session and performs cleanup operations.
+
+        Args:
+            exc_type: Exception type (if any)
+            exc_val: Exception value (if any)
+            exc_tb: Exception traceback (if any)
+        """
         if self.session:
             await self.session.close()
-            
+
     def extract_jav_code(self, filename: str) -> Optional[str]:
         """
         Extract JAV code from filename.
@@ -61,22 +112,22 @@ class JAVScraperEngine:
         """
         # Remove file extension
         name_without_ext = os.path.splitext(filename)[0]
-        
+
         # Pattern for JAV codes: letters-numbers (e.g., ABC-1234, ABC1234, ABC-123)
         patterns = [
             r'([A-Z]{2,5})-?(\d{2,5})',  # ABC-1234, ABC1234
             r'([A-Z]{2,5})[-_](\d{2,5})',  # ABC_1234
             r'([A-Z]{2,5})(\d{2,5})',  # ABC1234
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, name_without_ext.upper())
             if match:
                 prefix, number = match.groups()
                 return f"{prefix}-{number}"
-                
+
         return None
-        
+
     def clean_actress_name(self, actress_name: str) -> str:
         """
         Clean actress name by removing Japanese characters and keeping only English/Romanized names.
@@ -87,7 +138,7 @@ class JAVScraperEngine:
         """
         if not actress_name:
             return ""
-            
+
         # Remove Japanese characters (Hiragana, Katakana, Kanji)
         # Japanese Unicode ranges:
         # Hiragana: 3040-309F
@@ -95,31 +146,31 @@ class JAVScraperEngine:
         # Kanji: 4E00-9FAF
         # Full-width characters: FF00-FFEF
         cleaned_name = re.sub(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\uFF00-\uFFEF]', '', actress_name)
-        
+
         # Remove any remaining parentheses and their contents
         cleaned_name = re.sub(r'\s*\([^)]*\)', '', cleaned_name)
-        
+
         # Remove extra whitespace and normalize
         cleaned_name = re.sub(r'\s+', ' ', cleaned_name).strip()
-        
+
         # Remove any remaining special characters that might be left
         cleaned_name = re.sub(r'[^\w\s\-\.]', '', cleaned_name)
-        
+
         # Final cleanup of extra spaces
         cleaned_name = re.sub(r'\s+', ' ', cleaned_name).strip()
-        
+
         return cleaned_name
-        
+
     def scan_folder(self, folder_path: str) -> List[Dict]:
         """Scan folder for video files and extract JAV codes."""
         video_extensions = self.config.get('scraper', {}).get('video_extensions', ['.mp4', '.avi', '.mkv'])
         results = []
-        
+
         folder = Path(folder_path)
         if not folder.exists():
             logging.error(f"Folder {folder_path} does not exist")
             return results
-            
+
         for file_path in folder.rglob('*'):
             if file_path.is_file() and file_path.suffix.lower() in video_extensions:
                 jav_code = self.extract_jav_code(file_path.name)
@@ -130,9 +181,9 @@ class JAVScraperEngine:
                         'jav_code': jav_code,
                         'folder': str(file_path.parent)
                     })
-                    
+
         return results
-        
+
     async def fetch_html_with_playwright(self, url: str) -> Optional[str]:
         """Fetch HTML content using Playwright to bypass bot detection."""
         try:
@@ -140,7 +191,7 @@ class JAVScraperEngine:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
                 page = await browser.new_page()
-                
+
                 # Set user agent to look like a real browser
                 await page.set_extra_http_headers({
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -150,15 +201,15 @@ class JAVScraperEngine:
                     'Connection': 'keep-alive',
                     'Upgrade-Insecure-Requests': '1',
                 })
-                
+
                 # Navigate to the page
                 await page.goto(url, wait_until='networkidle', timeout=30000)
                 logging.info(f"✅ Page loaded successfully")
-                
+
                 # Get the HTML content
                 html = await page.content()
                 logging.info(f"📄 Retrieved HTML length: {len(html)} characters")
-                
+
                 await browser.close()
                 return html
         except Exception as e:
@@ -170,7 +221,7 @@ class JAVScraperEngine:
         try:
             logging.info(f"🔍 Starting JavGuru scrape for {jav_code}")
             url = f"https://jav.guru/?s={jav_code}"
-            
+
             logging.info(f"📡 Requesting URL with Playwright: {url}")
             html = await self.fetch_html_with_playwright(url)
             if not html:
@@ -203,20 +254,20 @@ class JAVScraperEngine:
             if detail_url:
                 logging.info(f"🔗 Fetching detail page: {detail_url}")
                 detail_html = await self.fetch_html_with_playwright(detail_url)
-                
+
                 if detail_html:
                     logging.info(f"📄 Detail page HTML length: {len(detail_html)} characters")
-                    
+
                     # Parse detail page for comprehensive metadata
                     detail_soup = BeautifulSoup(detail_html, 'html.parser')
-                    
+
                     # Extract detailed metadata
                     detailed_metadata = self._extract_detailed_metadata(detail_soup, jav_code)
-                    
+
                     # Merge search result with detailed metadata
                     # Use fanart URL as the primary image source
                     fanart_url = detailed_metadata.get('fanart_url', cover_url)
-                    
+
                     result = {
                         'title': title,
                         'cover_url': cover_url,  # Keep original cover for fallback
@@ -233,7 +284,7 @@ class JAVScraperEngine:
                     return result
                 else:
                     logging.warning(f"❌ Failed to fetch detail page for {jav_code}")
-            
+
             # Return search result only if detail page failed
             result = {
                 'title': title,
@@ -254,34 +305,34 @@ class JAVScraperEngine:
         """Extract comprehensive metadata from detail page."""
         try:
             metadata = {}
-            
+
             # Find the infoleft section containing movie information
             infoleft = soup.find('div', class_='infoleft')
             if not infoleft:
                 logging.warning(f"⚠️ Could not find infoleft section for {jav_code}")
                 return metadata
-            
+
             # Extract all list items from the movie information section
             info_items = infoleft.find_all('li')
-            
+
             for item in info_items:
                 # Get the strong tag which contains the field name
                 strong_tag = item.find('strong')
                 if not strong_tag:
                     continue
-                
+
                 # Extract field name (remove any span tags and get clean text)
                 field_name = strong_tag.get_text(strip=True).replace(':', '').lower()
-                
+
                 # Extract field value (everything after the strong tag)
                 field_value = item.get_text()
                 # Remove the field name from the value
                 if ':' in field_value:
                     field_value = field_value.split(':', 1)[1].strip()
-                
+
                 # Clean up the field name
                 field_name = field_name.replace(' ', '_').replace('-', '_')
-                
+
                 # Clean actress names if this is an actress-related field
                 if field_name in ['actress', 'actresses', 'cast', 'star', 'stars']:
                     original_value = field_value
@@ -289,16 +340,16 @@ class JAVScraperEngine:
                     logging.info(f"📋 Extracted {field_name}: {original_value} -> {field_value}")
                 else:
                     logging.info(f"📋 Extracted {field_name}: {field_value}")
-                
+
                 # Store the metadata
                 metadata[field_name] = field_value
-            
+
             # Also extract the main title from the page
             title_tag = soup.find('h1', class_='titl')
             if title_tag:
                 metadata['full_title'] = title_tag.get_text(strip=True)
                 logging.info(f"📋 Extracted full_title: {metadata['full_title']}")
-            
+
             # Extract cover image from the large screenshot (this will be used as fanart)
             large_screenshot = soup.find('div', class_='large-screenshot')
             if large_screenshot:
@@ -307,7 +358,7 @@ class JAVScraperEngine:
                     metadata['fanart_url'] = img_tag['src']  # Use as fanart
                     metadata['large_cover_url'] = img_tag['src']  # Keep for compatibility
                     logging.info(f"📋 Extracted fanart_url: {metadata['fanart_url']}")
-            
+
             # Extract plot/synopsis from wp-content
             wp_content = soup.find('div', class_='wp-content')
             if wp_content:
@@ -317,14 +368,14 @@ class JAVScraperEngine:
                     text = p.get_text(strip=True)
                     if text and not text.startswith('http'):  # Skip image URLs
                         plot_text.append(text)
-                
+
                 if plot_text:
                     metadata['plot'] = ' '.join(plot_text)
                     logging.info(f"📋 Extracted plot: {metadata['plot'][:100]}...")
-            
+
             logging.info(f"✅ Extracted {len(metadata)} detailed metadata fields for {jav_code}")
             return metadata
-            
+
         except Exception as e:
             logging.error(f"❌ Error extracting detailed metadata for {jav_code}: {e}")
             return {}
@@ -771,10 +822,21 @@ class JAVScraperEngine:
         
         # Get actresses (female performers) from detailed metadata
         actresses = []
-        actress_text = (metadata.get('detailed_metadata', {}).get('actress') or 
+        actress_text = (metadata.get('detailed_metadata', {}).get('actress') or
                        metadata.get('all_details', {}).get('Actress', ''))
         if actress_text:
             actresses = [actress.strip() for actress in actress_text.split(',') if actress.strip()]
+
+        # Remove duplicates from actresses list while preserving order
+        seen_actresses = set()
+        unique_actresses = []
+        for actress in actresses:
+            # Normalize the actress name for duplicate detection (lowercase, strip whitespace)
+            normalized_actress = actress.strip().lower()
+            if normalized_actress not in seen_actresses:
+                seen_actresses.add(normalized_actress)
+                unique_actresses.append(actress)  # Keep original case
+        actresses = unique_actresses
         
         # Get tags from detailed metadata
         tags = []
