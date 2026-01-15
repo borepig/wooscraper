@@ -1848,11 +1848,10 @@ class JAVScraperEngine:
                 else:
                     logging.warning(f"⚠️ JAVmost returned status {response.status} for {jav_code}")
                     return None
-                    
+
         except Exception as e:
             logging.error(f"❌ Error in JAVmost scraper for {jav_code}: {e}")
-            return None 
-            return None 
+            return None
 
     async def scrape_javtrailers(self, jav_code: str) -> Optional[Dict]:
         """Scrape metadata from JavTrailers.com."""

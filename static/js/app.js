@@ -123,12 +123,13 @@ function convertToAbsolutePath(path) {
  * @returns {Promise<void>}
  */
 async function scanFolder() {
-    const folderPath = document.getElementById('folderPath').value.trim();
+    try {
+        const folderPath = document.getElementById('folderPath').value.trim();
 
-    if (!folderPath) {
-        showNotification('Please enter a folder path', 'error');
-        return;
-    }
+        if (!folderPath) {
+            showNotification('Please enter a folder path', 'error');
+            return;
+        }
 
     // Save folder path to localStorage
     localStorage.setItem('lastFolderPath', folderPath);
@@ -579,38 +580,82 @@ function showLoading(show) {
     }
 }
 
+
 // Show notification toast
 function showNotification(message, type = 'info') {
-    const toast = document.getElementById('notificationToast');
-    const toastMessage = document.getElementById('toastMessage');
-    
-    // Set message and type
-    toastMessage.textContent = message;
-    toast.className = `toast ${type === 'error' ? 'bg-danger' : type === 'success' ? 'bg-success' : 'bg-info'}`;
-    
-    // Show toast
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
+    try {
+        const toast = document.getElementById('notificationToast');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        if (!toast || !toastMessage) {
+            console.warn('Notification elements not found:', message);
+            return;
+        }
+        
+        // Set message and type
+        toastMessage.textContent = message;
+        toast.className = `toast ${type === 'error' ? 'bg-danger' : type === 'success' ? 'bg-success' : 'bg-info'}`;
+        
+        // Show toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+    } catch (error) {
+        console.warn('Failed to show notification:', error.message);
+    }
 }
-
 // Debug logging functions
 function addDebugLog(message, type = 'info') {
-    const debugLog = document.getElementById('debugLog');
-    if (!debugLog) return;
-    
-    const timestamp = new Date().toLocaleTimeString();
-    const logEntry = document.createElement('div');
-    logEntry.className = `log-entry log-${type}`;
-    logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
-    
-    debugLog.appendChild(logEntry);
-    debugLog.scrollTop = debugLog.scrollHeight;
+    try {
+        const debugLog = document.getElementById('debugLog');
+        if (!debugLog) return;
+        
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry log-${type}`;
+        logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+        
+        debugLog.appendChild(logEntry);
+        debugLog.scrollTop = debugLog.scrollHeight;
+        
+        // Apply theme to the new entry if needed
+        const isLightTheme = document.body.classList.contains('light-theme');
+        if (isLightTheme) {
+            logEntry.classList.add('light-theme');
+        }
+    } catch (error) {
+        console.warn('Failed to add debug log entry:', error.message);
+    }
 }
 
 function showDebugSection(show = true) {
     const debugSection = document.getElementById('debugSection');
     if (debugSection) {
         debugSection.style.display = show ? 'block' : 'none';
+        if (show) {
+            updateDebugTheme();
+        }
+    }
+}
+
+// Update theme when debug section visibility changes
+function updateDebugTheme() {
+    try {
+        const debugSection = document.getElementById('debugSection');
+        if (debugSection) {
+            const isLightTheme = document.body.classList.contains('light-theme');
+            const debugLog = document.getElementById('debugLog');
+            
+            if (debugLog && debugSection.style.display !== 'none') {
+                // Apply theme to debug log when it's visible
+                if (isLightTheme) {
+                    debugLog.classList.add('light-theme');
+                } else {
+                    debugLog.classList.remove('light-theme');
+                }
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to update debug theme:', error.message);
     }
 }
 
@@ -675,4 +720,75 @@ document.getElementById('highContrast').addEventListener('change', function() {
         body.classList.remove('high-contrast');
         showNotification('High contrast mode disabled', 'info');
     }
-}); 
+});
+
+// Theme toggle
+const themeToggle = document.getElementById('themeToggle');
+if (themeToggle) {
+    themeToggle.addEventListener('change', function() {
+        const body = document.body;
+        if (this.checked) {
+            body.classList.add('light-theme');
+            showNotification('Light theme enabled', 'info');
+            localStorage.setItem('theme', 'light');
+        } else {
+            body.classList.remove('light-theme');
+            showNotification('Dark theme enabled', 'info');
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+}
+
+// Initialize theme on page load
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const savedTheme = localStorage.getItem('theme');
+        const themeToggle = document.getElementById('themeToggle');
+        
+        if (themeToggle) {
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                themeToggle.checked = true;
+            } else {
+                document.body.classList.remove('light-theme');
+                themeToggle.checked = false;
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to initialize theme:', error.message);
+    }
+});
+
+// Ensure theme is properly initialized after DOM content is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTheme);
+} else {
+    initializeTheme();
+}
+
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const themeToggle = document.getElementById('themeToggle');
+    
+    if (themeToggle) {
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            themeToggle.checked = true;
+        } else {
+            document.body.classList.remove('light-theme');
+            themeToggle.checked = false;
+        }
+    }
+}
+
+// Add theme toggle to the page load event for better reliability
+window.addEventListener('load', function() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        document.getElementById('themeToggle').checked = true;
+    } else {
+        document.body.classList.remove('light-theme');
+        document.getElementById('themeToggle').checked = false;
+    }
+});

@@ -1,10 +1,36 @@
 /* Custom styles for JAV Scraper */
 
+:root {
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #2d2d44;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --card-bg: rgba(0, 0, 0, 0.3);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --primary-color: #00d4ff;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --warning-color: #ffc107;
+}
+
+.light-theme {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --text-primary: #000000;
+    --text-secondary: rgba(0, 0, 0, 0.7);
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --border-color: rgba(0, 0, 0, 0.1);
+    --primary-color: #007bff;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --warning-color: #ffc107;
+}
+
 body {
-    background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
     min-height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #ffffff;
+    color: var(--text-primary);
     font-weight: 400;
 }
 
@@ -584,6 +610,7 @@ body {
 }
 
 /* High contrast mode */
+
 .high-contrast {
     background: #000000 !important;
 }
@@ -641,6 +668,36 @@ body {
     text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
+/* Theme toggle button */
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.light-theme .theme-toggle {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.light-theme .theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
 /* Debug log styling */
 #debugLog {
     background-color: #1a1a1a;
@@ -676,4 +733,103 @@ body {
 
 .log-warning {
     color: #ff9800;
-} 
+}
+
+/* Light theme adjustments for debug log */
+.light-theme #debugLog {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.light-theme .log-entry .timestamp {
+    color: #6c757d;
+}
+
+.light-theme .log-info {
+    color: #0d6efd;
+}
+
+.light-theme .log-success {
+    color: #198754;
+}
+
+.light-theme .log-error {
+    color: #dc3545;
+}
+
+.light-theme .log-warning {
+    color: #ffc107;
+}
+
+/* Light theme adjustments for cards and inputs */
+.light-theme .card {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.light-theme .card-header {
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.light-theme .form-control {
+    background-color: #fff;
+    color: #212529;
+    border: 1px solid #ced4da;
+}
+
+.light-theme .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.light-theme .btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.light-theme .btn-outline-primary:hover {
+    color: #fff;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.light-theme .btn-outline-warning {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+.light-theme .btn-outline-warning:hover {
+    color: #212529;
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+.light-theme .btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.light-theme .btn-outline-danger:hover {
+    color: #fff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.light-theme .toast {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.light-theme .modal-content {
+    background-color: #fff;
+    border: 1px solid rgba(0,0,0,.2);
+}
+
+.light-theme .modal-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.light-theme .modal-footer {
+    border-top: 1px solid #dee2e6;
+}

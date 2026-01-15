@@ -8,7 +8,10 @@ scraper:
     - name: "javtrailers"
       url: "https://javtrailers.com"
       enabled: false  # Set to true to use as primary source
-  
+    - name: "sehuatang"
+      url: "https://sehuatang.org"
+      enabled: false  # Set to true to use this site
+
   # Threading settings
   max_threads: 5
   timeout: 30
