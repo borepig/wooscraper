@@ -96,12 +96,6 @@ def scan_folder():
             # Resolve the absolute path
             resolved_path = os.path.abspath(folder_path)
 
-            # Security check: Ensure path doesn't go above current working directory
-            cwd = os.getcwd()
-            if not resolved_path.startswith(cwd):
-                logging.warning(f"Security warning: Path {resolved_path} is outside of working directory {cwd}")
-                return jsonify({'error': 'Invalid folder path - security restriction'}), 400
-
             # Check if path exists and is a directory
             if not os.path.exists(resolved_path):
                 return jsonify({'error': f'Folder does not exist: {resolved_path}'}), 400
@@ -409,83 +403,93 @@ def run_scraping_job(folder_path, ui_settings):
                             logging.warning(f"⚠️ No fanart URL found in metadata")
                             logging.info(f"📊 Available metadata keys: {list(metadata.get('detailed_metadata', {}).keys())}")
                             job_status['message'] = f'⚠️ No fanart URL found'
-                        
+
                         if ui_settings.get('download_cover', True) and fanart_url:
                             fanart_path = output_folder / "fanart.jpg"
                             poster_path = output_folder / "poster.jpg"
-                            
+
                             logging.info(f"🎨 Fanart download path: {fanart_path}")
                             logging.info(f"🎨 Poster creation path: {poster_path}")
-                            
+
                             # Check if webp conversion is needed (for JAVmost)
                             needs_webp_conversion = metadata.get('detailed_metadata', {}).get('needs_webp_conversion', False)
                             webp_url = metadata.get('detailed_metadata', {}).get('webp_url')
-                            
+
                             logging.info(f"🔄 Webp conversion check:")
                             logging.info(f"   🔄 needs_webp_conversion: {needs_webp_conversion}")
                             logging.info(f"   🔄 webp_url: {webp_url}")
-                            
+
                             if needs_webp_conversion and webp_url:
                                 job_status['message'] = f'🔄 Converting WebP image for {jav_code}...'
                                 logging.info(f"🔄 ==== WEBP CONVERSION MODE ====")
                                 logging.info(f"🔄 Converting webp to jpg: {webp_url}")
                                 logging.info(f"🔄 Target fanart path: {fanart_path}")
-                                
-                                if await engine.download_and_convert_webp_to_jpg(webp_url, str(fanart_path)):
-                                    logging.info(f"✅ Webp conversion successful")
-                                    job_status['message'] = f'🎨 Creating poster from fanart...'
-                                    # Create poster by cropping the right 47.125% of fanart
-                                    logging.info(f"🎨 Creating poster from fanart...")
-                                    engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
-                                    logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
-                                    logging.info(f"✅ Fanart location: {fanart_path}")
-                                    logging.info(f"✅ Poster location: {poster_path}")
-                                    
-                                    # Verify file sizes
-                                    if fanart_path.exists():
-                                        fanart_size = fanart_path.stat().st_size
-                                        logging.info(f"📏 Fanart file size: {fanart_size} bytes")
-                                    if poster_path.exists():
-                                        poster_size = poster_path.stat().st_size
-                                        logging.info(f"📏 Poster file size: {poster_size} bytes")
-                                    
-                                    job_status['message'] = f'✅ Images created successfully'
-                                else:
-                                    logging.error(f"❌ Failed to convert webp for {jav_code}")
-                                    job_status['message'] = f'❌ Failed to convert WebP image'
+
+                                try:
+                                    # Call the function directly without await since we're already in an async context
+                                    if engine.download_and_convert_webp_to_jpg(webp_url, str(fanart_path)):
+                                        logging.info(f"✅ Webp conversion successful")
+                                        job_status['message'] = f'🎨 Creating poster from fanart...'
+                                        # Create poster by cropping the right 47.125% of fanart
+                                        logging.info(f"🎨 Creating poster from fanart...")
+                                        engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
+                                        logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
+                                        logging.info(f"✅ Fanart location: {fanart_path}")
+                                        logging.info(f"✅ Poster location: {poster_path}")
+
+                                        # Verify file sizes
+                                        if fanart_path.exists():
+                                            fanart_size = fanart_path.stat().st_size
+                                            logging.info(f"📏 Fanart file size: {fanart_size} bytes")
+                                        if poster_path.exists():
+                                            poster_size = poster_path.stat().st_size
+                                            logging.info(f"📏 Poster file size: {poster_size} bytes")
+
+                                        job_status['message'] = f'✅ Images created successfully'
+                                    else:
+                                        logging.error(f"❌ Failed to convert webp for {jav_code}")
+                                        job_status['message'] = f'❌ Failed to convert WebP image'
+                                except Exception as e:
+                                    logging.error(f"❌ Error in webp conversion: {e}")
+                                    job_status['message'] = f'❌ Error converting webp image: {str(e)}'
                             else:
                                 job_status['message'] = f'📄 Downloading image for {jav_code}...'
                                 logging.info(f"📄 ==== REGULAR IMAGE DOWNLOAD MODE ====")
                                 # Regular image download
                                 logging.info(f"📄 Downloading regular image: {fanart_url}")
-                                if await engine.download_image(fanart_url, str(fanart_path)):
-                                    logging.info(f"✅ Regular image download successful")
-                                    job_status['message'] = f'🎨 Creating poster from fanart...'
-                                    # Create poster by cropping the right 47.125% of fanart
-                                    logging.info(f"🎨 Creating poster from fanart...")
-                                    engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
-                                    logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
-                                    logging.info(f"✅ Fanart location: {fanart_path}")
-                                    logging.info(f"✅ Poster location: {poster_path}")
-                                    
-                                    # Verify file sizes
-                                    if fanart_path.exists():
-                                        fanart_size = fanart_path.stat().st_size
-                                        logging.info(f"📏 Fanart file size: {fanart_size} bytes")
-                                    if poster_path.exists():
-                                        poster_size = poster_path.stat().st_size
-                                        logging.info(f"📏 Poster file size: {poster_size} bytes")
-                                    
-                                    job_status['message'] = f'✅ Images created successfully'
-                                else:
-                                    logging.error(f"❌ Failed to download fanart for {jav_code}")
-                                    job_status['message'] = f'❌ Failed to download image'
+                                try:
+                                    # Call the function directly without await since we're already in an async context
+                                    if engine.download_image(fanart_url, str(fanart_path)):
+                                        logging.info(f"✅ Regular image download successful")
+                                        job_status['message'] = f'🎨 Creating poster from fanart...'
+                                        # Create poster by cropping the right 47.125% of fanart
+                                        logging.info(f"🎨 Creating poster from fanart...")
+                                        engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
+                                        logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
+                                        logging.info(f"✅ Fanart location: {fanart_path}")
+                                        logging.info(f"✅ Poster location: {poster_path}")
+
+                                        # Verify file sizes
+                                        if fanart_path.exists():
+                                            fanart_size = fanart_path.stat().st_size
+                                            logging.info(f"📏 Fanart file size: {fanart_size} bytes")
+                                        if poster_path.exists():
+                                            poster_size = poster_path.stat().st_size
+                                            logging.info(f"📏 Poster file size: {poster_size} bytes")
+
+                                        job_status['message'] = f'✅ Images created successfully'
+                                    else:
+                                        logging.error(f"❌ Failed to download fanart for {jav_code}")
+                                        job_status['message'] = f'❌ Failed to download image'
+                                except Exception as e:
+                                    logging.error(f"❌ Error in image download: {e}")
+                                    job_status['message'] = f'❌ Error downloading image: {str(e)}'
                         else:
                             if not ui_settings.get('download_cover', True):
                                 logging.info(f"ℹ️ Cover download disabled in UI settings")
                             else:
                                 logging.warning(f"⚠️ No fanart URL available for {jav_code}")
-                        
+
                         # Download actress portrait if available
                         job_status['message'] = f'🎭 Checking for actress portrait for {jav_code}...'
                         logging.info(f"🎭 ==== ACTRESS PORTRAIT DOWNLOAD ====")
@@ -498,7 +502,7 @@ def run_scraping_job(folder_path, ui_settings):
                             logging.info(f"🎭 Found actress in actresses field: '{actress_name}'")
                         else:
                             logging.info(f"ℹ️ No actress name found in metadata")
-                        
+
                         if actress_name and ui_settings.get('download_cover', True):
                             job_status['message'] = f'🎭 Processing portrait for {actress_name}...'
                             # Clean actress name for filename
@@ -507,58 +511,68 @@ def run_scraping_job(folder_path, ui_settings):
                             clean_actress_name = re.sub(r'[<>:"/\\|?*]', '', actress_name)
                             clean_actress_name = clean_actress_name.replace(' ', '_')
                             logging.info(f"🎭 Actress name cleaned: '{original_actress_name}' → '{clean_actress_name}'")
-                            
+
                             portrait_path = output_folder / f"{clean_actress_name}_portrait.jpg"
                             logging.info(f"🎭 Portrait save path: {portrait_path}")
-                            
+
                             # Get portrait URL from metadata (already found by enhance_actress_metadata)
-                            actress_portrait_url = (metadata.get('detailed_metadata', {}).get('thumb_url') or 
+                            actress_portrait_url = (metadata.get('detailed_metadata', {}).get('thumb_url') or
                                                   metadata.get('all_details', {}).get('Actress Portrait'))
-                            
+
                             if not actress_portrait_url:
                                 logging.warning(f"⚠️ No portrait URL found in metadata for {actress_name}")
                                 logging.warning(f"⚠️ This should not happen - enhance_actress_metadata should have found it")
                                 job_status['message'] = f'⚠️ No portrait URL in metadata for {actress_name}'
                             else:
                                 logging.info(f"🎭 Found portrait URL in metadata: {actress_portrait_url}")
-                            
+
                             if actress_portrait_url:
                                 job_status['message'] = f'🎭 Downloading portrait of {actress_name}...'
                                 logging.info(f"🎭 Attempting to download portrait from: {actress_portrait_url}")
-                                
+
                                 # Check if it's a webp file from JAV Database
                                 if actress_portrait_url.endswith('.webp'):
                                     logging.info(f"🎭 Detected webp file, converting to jpg...")
-                                    if await engine.download_and_convert_webp_to_jpg(actress_portrait_url, str(portrait_path)):
-                                        logging.info(f"✅ Successfully downloaded and converted webp portrait: {portrait_path}")
-                                        # Check file size
-                                        if portrait_path.exists():
-                                            size = portrait_path.stat().st_size
-                                            logging.info(f"📏 Portrait file size: {size} bytes")
-                                            job_status['message'] = f'✅ Portrait downloaded and converted ({size} bytes)'
+                                    try:
+                                        # Call the function directly without await since we're already in an async context
+                                        if engine.download_and_convert_webp_to_jpg(actress_portrait_url, str(portrait_path)):
+                                            logging.info(f"✅ Successfully downloaded and converted webp portrait: {portrait_path}")
+                                            # Check file size
+                                            if portrait_path.exists():
+                                                size = portrait_path.stat().st_size
+                                                logging.info(f"📏 Portrait file size: {size} bytes")
+                                                job_status['message'] = f'✅ Portrait downloaded and converted ({size} bytes)'
+                                            else:
+                                                job_status['message'] = f'❌ Portrait file not found after conversion'
                                         else:
-                                            job_status['message'] = f'❌ Portrait file not found after conversion'
-                                    else:
-                                        logging.error(f"❌ Failed to download and convert webp portrait for {actress_name}")
-                                        logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
-                                        logging.error(f"❌ Portrait path: {portrait_path}")
-                                        job_status['message'] = f'❌ Failed to download and convert portrait'
+                                            logging.error(f"❌ Failed to download and convert webp portrait for {actress_name}")
+                                            logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
+                                            logging.error(f"❌ Portrait path: {portrait_path}")
+                                            job_status['message'] = f'❌ Failed to download and convert portrait'
+                                    except Exception as e:
+                                        logging.error(f"❌ Error in webp conversion for portrait: {e}")
+                                        job_status['message'] = f'❌ Error converting webp portrait: {str(e)}'
                                 else:
                                     # Regular image download
-                                    if await engine.download_image(actress_portrait_url, str(portrait_path)):
-                                        logging.info(f"✅ Successfully downloaded actress portrait: {portrait_path}")
-                                        # Check file size
-                                        if portrait_path.exists():
-                                            size = portrait_path.stat().st_size
-                                            logging.info(f"📏 Portrait file size: {size} bytes")
-                                            job_status['message'] = f'✅ Portrait downloaded ({size} bytes)'
+                                    try:
+                                        # Call the function directly without await since we're already in an async context
+                                        if engine.download_image(actress_portrait_url, str(portrait_path)):
+                                            logging.info(f"✅ Successfully downloaded actress portrait: {portrait_path}")
+                                            # Check file size
+                                            if portrait_path.exists():
+                                                size = portrait_path.stat().st_size
+                                                logging.info(f"📏 Portrait file size: {size} bytes")
+                                                job_status['message'] = f'✅ Portrait downloaded ({size} bytes)'
+                                            else:
+                                                job_status['message'] = f'❌ Portrait file not found after download'
                                         else:
-                                            job_status['message'] = f'❌ Portrait file not found after download'
-                                    else:
-                                        logging.error(f"❌ Failed to download actress portrait for {actress_name}")
-                                        logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
-                                        logging.error(f"❌ Portrait path: {portrait_path}")
-                                        job_status['message'] = f'❌ Failed to download portrait'
+                                            logging.error(f"❌ Failed to download actress portrait for {actress_name}")
+                                            logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
+                                            logging.error(f"❌ Portrait path: {portrait_path}")
+                                            job_status['message'] = f'❌ Failed to download portrait'
+                                    except Exception as e:
+                                        logging.error(f"❌ Error in image download for portrait: {e}")
+                                        job_status['message'] = f'❌ Error downloading portrait: {str(e)}'
                             else:
                                 logging.warning(f"⚠️ No actress portrait URL in metadata for {actress_name}")
                                 logging.warning(f"⚠️ Portrait search was already done by enhance_actress_metadata")
@@ -805,55 +819,65 @@ def process_file_metadata(engine, file_info, metadata, ui_settings, job_status, 
             logging.info(f"🔄 Converting webp to jpg: {webp_url}")
             logging.info(f"🔄 Target fanart path: {fanart_path}")
 
-            if await engine.download_and_convert_webp_to_jpg(webp_url, str(fanart_path)):
-                logging.info(f"✅ Webp conversion successful")
-                job_status['message'] = f'🎨 Creating poster from fanart...'
-                # Create poster by cropping the right 47.125% of fanart
-                logging.info(f"🎨 Creating poster from fanart...")
-                engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
-                logging.info(f"✅ Successfully created fanart.jpg and poster.jpg")
-                logging.info(f"✅ Fanart location: {fanart_path}")
-                logging.info(f"✅ Poster location: {poster_path}")
+            try:
+                # Call the function directly without await since we're already in an async context
+                if engine.download_and_convert_webp_to_jpg(webp_url, str(fanart_path)):
+                    logging.info(f"✅ Webp conversion successful")
+                    job_status['message'] = f'🎨 Creating poster from fanart...'
+                    # Create poster by cropping the right 47.125% of fanart
+                    logging.info(f"🎨 Creating poster from fanart...")
+                    engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
+                    logging.info(f"✅ Successfully created fanart.jpg and poster.jpg")
+                    logging.info(f"✅ Fanart location: {fanart_path}")
+                    logging.info(f"✅ Poster location: {poster_path}")
 
-                # Verify file sizes
-                if fanart_path.exists():
-                    fanart_size = fanart_path.stat().st_size
-                    logging.info(f"📏 Fanart file size: {fanart_size} bytes")
-                if poster_path.exists():
-                    poster_size = poster_path.stat().st_size
-                    logging.info(f"📏 Poster file size: {poster_size} bytes")
+                    # Verify file sizes
+                    if fanart_path.exists():
+                        fanart_size = fanart_path.stat().st_size
+                        logging.info(f"📏 Fanart file size: {fanart_size} bytes")
+                    if poster_path.exists():
+                        poster_size = poster_path.stat().st_size
+                        logging.info(f"📏 Poster file size: {poster_size} bytes")
 
-                job_status['message'] = f'✅ Images created successfully'
-            else:
-                logging.error(f"❌ Failed to convert webp")
-                job_status['message'] = f'❌ Failed to convert WebP image'
+                    job_status['message'] = f'✅ Images created successfully'
+                else:
+                    logging.error(f"❌ Failed to convert webp")
+                    job_status['message'] = f'❌ Failed to convert WebP image'
+            except Exception as e:
+                logging.error(f"❌ Error in webp conversion: {e}")
+                job_status['message'] = f'❌ Error converting webp image: {str(e)}'
         else:
             job_status['message'] = f'📄 Downloading image...'
             logging.info(f"📄 ==== REGULAR IMAGE DOWNLOAD MODE ====")
             # Regular image download
             logging.info(f"📄 Downloading regular image: {fanart_url}")
-            if await engine.download_image(fanart_url, str(fanart_path)):
-                logging.info(f"✅ Regular image download successful")
-                job_status['message'] = f'🎨 Creating poster from fanart...'
-                # Create poster by cropping the right 47.125% of fanart
-                logging.info(f"🎨 Creating poster from fanart...")
-                engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
-                logging.info(f"✅ Successfully created fanart.jpg and poster.jpg")
-                logging.info(f"✅ Fanart location: {fanart_path}")
-                logging.info(f"✅ Poster location: {poster_path}")
+            try:
+                # Call the function directly without await since we're already in an async context
+                if engine.download_image(fanart_url, str(fanart_path)):
+                    logging.info(f"✅ Regular image download successful")
+                    job_status['message'] = f'🎨 Creating poster from fanart...'
+                    # Create poster by cropping the right 47.125% of fanart
+                    logging.info(f"🎨 Creating poster from fanart...")
+                    engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
+                    logging.info(f"✅ Successfully created fanart.jpg and poster.jpg")
+                    logging.info(f"✅ Fanart location: {fanart_path}")
+                    logging.info(f"✅ Poster location: {poster_path}")
 
-                # Verify file sizes
-                if fanart_path.exists():
-                    fanart_size = fanart_path.stat().st_size
-                    logging.info(f"📏 Fanart file size: {fanart_size} bytes")
-                if poster_path.exists():
-                    poster_size = poster_path.stat().st_size
-                    logging.info(f"📏 Poster file size: {poster_size} bytes")
+                    # Verify file sizes
+                    if fanart_path.exists():
+                        fanart_size = fanart_path.stat().st_size
+                        logging.info(f"📏 Fanart file size: {fanart_size} bytes")
+                    if poster_path.exists():
+                        poster_size = poster_path.stat().st_size
+                        logging.info(f"📏 Poster file size: {poster_size} bytes")
 
-                job_status['message'] = f'✅ Images created successfully'
-            else:
-                logging.error(f"❌ Failed to download fanart")
-                job_status['message'] = f'❌ Failed to download image'
+                    job_status['message'] = f'✅ Images created successfully'
+                else:
+                    logging.error(f"❌ Failed to download fanart")
+                    job_status['message'] = f'❌ Failed to download image'
+            except Exception as e:
+                logging.error(f"❌ Error in image download: {e}")
+                job_status['message'] = f'❌ Error downloading image: {str(e)}'
     else:
         if not ui_settings.get('download_cover', True):
             logging.info(f"ℹ️ Cover download disabled in UI settings")
@@ -903,36 +927,46 @@ def process_file_metadata(engine, file_info, metadata, ui_settings, job_status, 
             # Check if it's a webp file from JAV Database
             if actress_portrait_url.endswith('.webp'):
                 logging.info(f"🎭 Detected webp file, converting to jpg...")
-                if await engine.download_and_convert_webp_to_jpg(actress_portrait_url, str(portrait_path)):
-                    logging.info(f"✅ Successfully downloaded and converted webp portrait: {portrait_path}")
-                    # Check file size
-                    if portrait_path.exists():
-                        size = portrait_path.stat().st_size
-                        logging.info(f"📏 Portrait file size: {size} bytes")
-                        job_status['message'] = f'✅ Portrait downloaded and converted ({size} bytes)'
+                try:
+                    # Call the function directly without await since we're already in an async context
+                    if engine.download_and_convert_webp_to_jpg(actress_portrait_url, str(portrait_path)):
+                        logging.info(f"✅ Successfully downloaded and converted webp portrait: {portrait_path}")
+                        # Check file size
+                        if portrait_path.exists():
+                            size = portrait_path.stat().st_size
+                            logging.info(f"📏 Portrait file size: {size} bytes")
+                            job_status['message'] = f'✅ Portrait downloaded and converted ({size} bytes)'
+                        else:
+                            job_status['message'] = f'❌ Portrait file not found after conversion'
                     else:
-                        job_status['message'] = f'❌ Portrait file not found after conversion'
-                else:
-                    logging.error(f"❌ Failed to download and convert webp portrait for {actress_name}")
-                    logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
-                    logging.error(f"❌ Portrait path: {portrait_path}")
-                    job_status['message'] = f'❌ Failed to download and convert portrait'
+                        logging.error(f"❌ Failed to download and convert webp portrait for {actress_name}")
+                        logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
+                        logging.error(f"❌ Portrait path: {portrait_path}")
+                        job_status['message'] = f'❌ Failed to download and convert portrait'
+                except Exception as e:
+                    logging.error(f"❌ Error in webp conversion for portrait: {e}")
+                    job_status['message'] = f'❌ Error converting webp portrait: {str(e)}'
             else:
                 # Regular image download
-                if await engine.download_image(actress_portrait_url, str(portrait_path)):
-                    logging.info(f"✅ Successfully downloaded actress portrait: {portrait_path}")
-                    # Check file size
-                    if portrait_path.exists():
-                        size = portrait_path.stat().st_size
-                        logging.info(f"📏 Portrait file size: {size} bytes")
-                        job_status['message'] = f'✅ Portrait downloaded ({size} bytes)'
+                try:
+                    # Call the function directly without await since we're already in an async context
+                    if engine.download_image(actress_portrait_url, str(portrait_path)):
+                        logging.info(f"✅ Successfully downloaded actress portrait: {portrait_path}")
+                        # Check file size
+                        if portrait_path.exists():
+                            size = portrait_path.stat().st_size
+                            logging.info(f"📏 Portrait file size: {size} bytes")
+                            job_status['message'] = f'✅ Portrait downloaded ({size} bytes)'
+                        else:
+                            job_status['message'] = f'❌ Portrait file not found after download'
                     else:
-                        job_status['message'] = f'❌ Portrait file not found after download'
-                else:
-                    logging.error(f"❌ Failed to download actress portrait for {actress_name}")
-                    logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
-                    logging.error(f"❌ Portrait path: {portrait_path}")
-                    job_status['message'] = f'❌ Failed to download portrait'
+                        logging.error(f"❌ Failed to download actress portrait for {actress_name}")
+                        logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
+                        logging.error(f"❌ Portrait path: {portrait_path}")
+                        job_status['message'] = f'❌ Failed to download portrait'
+                except Exception as e:
+                    logging.error(f"❌ Error in image download for portrait: {e}")
+                    job_status['message'] = f'❌ Error downloading portrait: {str(e)}'
         else:
             logging.warning(f"⚠️ No actress portrait URL in metadata for {actress_name}")
             logging.warning(f"⚠️ Portrait search was already done by enhance_actress_metadata")
