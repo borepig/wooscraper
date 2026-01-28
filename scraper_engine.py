@@ -113,11 +113,23 @@ class JAVScraperEngine:
         # Remove file extension
         name_without_ext = os.path.splitext(filename)[0]
 
+        # Special handling for FC2PPV codes first (since they contain numbers in the prefix)
+        # Match: FC2PPV-123456, FC2-PPV-123456, FC2PPV123456, FC2-123456, etc.
+        fc2ppv_match = re.search(r'FC2[-_]?PPV[-_-]?(\d{4,7})', name_without_ext.upper())
+        if fc2ppv_match:
+            number = fc2ppv_match.group(1)
+            return f"FC2PPV-{number}"
+        # Match FC2-123456 format (without PPV)
+        fc2_match = re.search(r'FC2[-_-](\d{4,7})', name_without_ext.upper())
+        if fc2_match:
+            number = fc2_match.group(1)
+            return f"FC2PPV-{number}"
+
         # Pattern for JAV codes: letters-numbers (e.g., ABC-1234, ABC1234, ABC-123)
         patterns = [
-            r'([A-Z]{2,5})-?(\d{2,5})',  # ABC-1234, ABC1234
-            r'([A-Z]{2,5})[-_](\d{2,5})',  # ABC_1234
-            r'([A-Z]{2,5})(\d{2,5})',  # ABC1234
+            r'([A-Z]{2,7})-?(\d{2,5})',  # ABC-1234, etc.
+            r'([A-Z]{2,7})[-_](\d{2,5})',  # ABC_1234
+            r'([A-Z]{2,7})(\d{2,5})',  # ABC1234
         ]
 
         for pattern in patterns:
@@ -963,6 +975,11 @@ class JAVScraperEngine:
         try:
             logging.info(f"🖼️ Starting image download with Playwright: {url}")
             logging.info(f"💾 Save path: {save_path}")
+
+            # Ensure parent directory exists
+            from pathlib import Path
+            save_path_obj = Path(save_path)
+            save_path_obj.parent.mkdir(parents=True, exist_ok=True)
 
             # The referer should be the detail page where the image is shown
             # Try to guess the referer from the image URL if not provided

@@ -13,13 +13,34 @@ let jobStatusInterval = null;
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     console.log('JAV Scraper initialized');
-    
+
     // Load saved folder path
     if (currentFolder) {
         document.getElementById('folderPath').value = currentFolder;
     }
-    
+
     updateStatus('Ready to scan');
+
+    // Initialize path suggestions
+    addPathSuggestions();
+
+    // Initialize theme from localStorage
+    try {
+        const savedTheme = localStorage.getItem('theme');
+        const themeToggle = document.getElementById('themeToggle');
+
+        if (themeToggle) {
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                themeToggle.checked = true;
+            } else {
+                document.body.classList.remove('light-theme');
+                themeToggle.checked = false;
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to initialize theme:', error.message);
+    }
 });
 
 
@@ -123,13 +144,12 @@ function convertToAbsolutePath(path) {
  * @returns {Promise<void>}
  */
 async function scanFolder() {
-    try {
-        const folderPath = document.getElementById('folderPath').value.trim();
+    const folderPath = document.getElementById('folderPath').value.trim();
 
-        if (!folderPath) {
-            showNotification('Please enter a folder path', 'error');
-            return;
-        }
+    if (!folderPath) {
+        showNotification('Please enter a folder path', 'error');
+        return;
+    }
 
     // Save folder path to localStorage
     localStorage.setItem('lastFolderPath', folderPath);
@@ -696,11 +716,6 @@ function addPathSuggestions() {
     folderPathInput.parentNode.appendChild(helpText);
 }
 
-// Initialize path suggestions when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    addPathSuggestions();
-});
-
 // Handle Enter key in folder path input
 document.getElementById('folderPath').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
@@ -738,57 +753,3 @@ if (themeToggle) {
         }
     });
 }
-
-// Initialize theme on page load
-document.addEventListener('DOMContentLoaded', function() {
-    try {
-        const savedTheme = localStorage.getItem('theme');
-        const themeToggle = document.getElementById('themeToggle');
-        
-        if (themeToggle) {
-            if (savedTheme === 'light') {
-                document.body.classList.add('light-theme');
-                themeToggle.checked = true;
-            } else {
-                document.body.classList.remove('light-theme');
-                themeToggle.checked = false;
-            }
-        }
-    } catch (error) {
-        console.warn('Failed to initialize theme:', error.message);
-    }
-});
-
-// Ensure theme is properly initialized after DOM content is loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeTheme);
-} else {
-    initializeTheme();
-}
-
-function initializeTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    const themeToggle = document.getElementById('themeToggle');
-    
-    if (themeToggle) {
-        if (savedTheme === 'light') {
-            document.body.classList.add('light-theme');
-            themeToggle.checked = true;
-        } else {
-            document.body.classList.remove('light-theme');
-            themeToggle.checked = false;
-        }
-    }
-}
-
-// Add theme toggle to the page load event for better reliability
-window.addEventListener('load', function() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-        document.body.classList.add('light-theme');
-        document.getElementById('themeToggle').checked = true;
-    } else {
-        document.body.classList.remove('light-theme');
-        document.getElementById('themeToggle').checked = false;
-    }
-});
