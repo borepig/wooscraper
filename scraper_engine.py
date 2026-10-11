@@ -10,6 +10,7 @@ extracting metadata, and generating NFO files for media servers.
 
 import re
 import os
+import shutil
 import asyncio
 import aiohttp
 import yaml
@@ -20,9 +21,511 @@ from pathlib import Path
 import json
 from datetime import datetime
 from PIL import Image
-from playwright.async_api import async_playwright
 import urllib.parse
 import tempfile
+from xml.sax.saxutils import escape as xml_escape
+
+try:
+    from playwright.async_api import async_playwright
+except ImportError:
+    async_playwright = None
+
+
+def image_request_headers(url: str) -> dict:
+    """Headers that the cover CDNs accept. The referer has to match the host."""
+    host = (urllib.parse.urlparse(url).hostname or '').lower()
+    if host.endswith('dmm.co.jp'):
+        referer = 'https://www.dmm.co.jp/'
+    elif 'javtrailers.com' in host:
+        referer = 'https://javtrailers.com/'
+    elif 'javdatabase.com' in host:
+        referer = 'https://www.javdatabase.com/'
+    elif 'myanimelist.net' in host:
+        referer = 'https://myanimelist.net/'
+    elif 'anilist.co' in host:
+        referer = 'https://anilist.co/'
+    else:
+        referer = 'https://jav.guru/'
+    return {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        'Referer': referer,
+        'Sec-Fetch-Dest': 'image',
+        'Sec-Fetch-Mode': 'no-cors',
+        'Sec-Fetch-Site': 'cross-site',
+    }
+
+
+def dmm_portrait_from_name(name: str) -> str:
+    """DMM headshot when the trailer site has the name but no portrait file.
+
+    The filename is family name then given name, with a few romanization
+    swaps (shi/si, tsu/tu). Either name order is tried, and only a real image counts.
+    """
+    tokens = re.findall(r'[A-Za-z]+', name or '')
+    if not tokens:
+        return ''
+    orders = [list(reversed(tokens)), tokens] if len(tokens) > 1 else [tokens]
+    urls = []
+    for order in orders:
+        raw = '_'.join(token.lower() for token in order)
+        converted = raw
+        for source, target in (('tsu', 'tu'), ('shi', 'si'), ('chi', 'ti'), ('fu', 'hu')):
+            converted = converted.replace(source, target)
+        for stem in (converted, raw):
+            url = f'https://pics.dmm.co.jp/mono/actjpgs/{stem}.jpg'
+            if url not in urls:
+                urls.append(url)
+    for url in urls:
+        if remote_image_size(url) > 1000:
+            return url
+    return ''
+
+
+def artwork_profile(server):
+    """Filenames each media server looks for beside the video."""
+    name = (server or 'plex').strip().lower()
+    profiles = {
+        'plex': {
+            'posters': ('poster.jpg',),
+            'backgrounds': ('background.jpg',),
+            'actor': 'url',
+        },
+        'jellyfin': {
+            'posters': ('poster.jpg', 'folder.jpg'),
+            'backgrounds': ('fanart.jpg', 'backdrop.jpg'),
+            'actor': 'local',
+        },
+        'emby': {
+            'posters': ('folder.jpg',),
+            'backgrounds': ('backdrop.jpg',),
+            'actor': 'local',
+        },
+        'kodi': {
+            'posters': ('poster.jpg', 'folder.jpg'),
+            'backgrounds': ('fanart.jpg',),
+            'actor': 'local',
+        },
+        'all': {
+            'posters': ('poster.jpg', 'folder.jpg'),
+            'backgrounds': ('fanart.jpg', 'background.jpg', 'backdrop.jpg'),
+            'actor': 'both',
+        },
+    }
+    return profiles.get(name, profiles['plex'])
+
+
+def prune_other_artwork(folder, server):
+    """Drop image names the chosen server does not use. All keeps every name."""
+    name = (server or 'plex').strip().lower()
+    if name == 'all':
+        return []
+    profile = artwork_profile(name)
+    folder = Path(folder)
+    removed = []
+    keep = set(profile['posters']) | set(profile['backgrounds'])
+    background_names = {'fanart.jpg', 'background.jpg', 'backdrop.jpg', 'art.jpg'}
+    poster_names = {'poster.jpg', 'folder.jpg', 'cover.jpg'}
+    background_ready = any((folder / item).is_file() for item in profile['backgrounds'])
+    poster_ready = any((folder / item).is_file() for item in profile['posters'])
+    for item in ('poster.jpg', 'folder.jpg', 'cover.jpg', 'fanart.jpg', 'background.jpg', 'backdrop.jpg', 'art.jpg'):
+        if item in keep or not (folder / item).is_file():
+            continue
+        if item in background_names and not background_ready:
+            continue
+        if item in poster_names and not poster_ready:
+            continue
+        (folder / item).unlink()
+        removed.append(item)
+    if profile['actor'] == 'url':
+        actors = folder / '.actors'
+        if actors.is_dir():
+            shutil.rmtree(actors)
+            removed.append('.actors')
+        for path in folder.glob('*_portrait.jpg'):
+            if path.is_file():
+                path.unlink()
+                removed.append(path.name)
+    return removed
+
+
+def actor_image_rel(name):
+    """Kodi, Jellyfin, and Emby read .actors/Name.jpg (spaces become underscores)."""
+    cleaned = re.sub(r'[<>:"/\\|?*]', '', name or '').strip()
+    cleaned = re.sub(r'\s+', '_', cleaned)
+    return f'.actors/{cleaned}.jpg' if cleaned else ''
+
+
+def copy_bytes_as(source_path, names):
+    """Write the same image under every filename a chosen server expects."""
+    source = Path(source_path)
+    if not source.is_file():
+        return
+    data = source.read_bytes()
+    for name in names:
+        dest = source.parent / name
+        if dest == source:
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
+
+
+def portrait_filename(name: str) -> str:
+    cleaned = re.sub(r'[<>:"/\\|?*]', '', name or '').strip()
+    cleaned = re.sub(r'\s+', '_', cleaned)
+    return f'{cleaned}_portrait.jpg' if cleaned else ''
+
+
+def actress_name_key(name: str) -> str:
+    """Same person even when the sites swap family name and given name."""
+    return ' '.join(sorted(re.findall(r'[a-z]+', (name or '').lower())))
+
+
+def actress_names_match(left: str, right: str) -> bool:
+    """True when two spellings are the same person, including joined names."""
+    def forms(value):
+        tokens = re.findall(r'[a-z]+', (value or '').lower())
+        if not tokens:
+            return set()
+        return {''.join(tokens), ''.join(reversed(tokens))}
+    return bool(forms(left) & forms(right))
+
+
+def _preview_host_ok(url: str, suffix: str) -> bool:
+    parsed = urllib.parse.urlparse(url)
+    return (
+        parsed.scheme == 'https'
+        and (parsed.hostname or '').lower() == 'media.javtrailers.com'
+        and parsed.path.startswith('/hlsvideo/freepv/')
+        and parsed.path.endswith(suffix)
+    )
+
+
+def _fetch_preview_text(url: str) -> str:
+    request = urllib.request.Request(url, headers=image_request_headers(url))
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return response.read().decode('utf-8', 'replace')
+
+
+def _pick_hls_variant(playlist: str, base: str) -> str:
+    """Choose the 720p stream when the preview offers several sizes."""
+    variants = []
+    width = 0
+    for line in playlist.splitlines():
+        line = line.strip()
+        if line.startswith('#EXT-X-STREAM-INF'):
+            match = re.search(r'RESOLUTION=(\d+)x(\d+)', line)
+            width = int(match.group(1)) if match else 0
+        elif line and not line.startswith('#') and width:
+            url = line if line.startswith('http') else urllib.parse.urljoin(base, line)
+            variants.append((width, url))
+            width = 0
+    if not variants:
+        return ''
+    variants.sort(key=lambda item: (abs(item[0] - 1280), -item[0]))
+    return variants[0][1]
+
+
+def hls_preview_segments(playlist_url: str) -> List[str]:
+    """Turn a preview playlist into the list of short video pieces it contains."""
+    if not _preview_host_ok(playlist_url, '.m3u8'):
+        return []
+    try:
+        playlist = _fetch_preview_text(playlist_url)
+    except Exception as error:
+        logging.warning(f"Preview playlist failed: {error}")
+        return []
+    base = playlist_url.rsplit('/', 1)[0] + '/'
+    if '#EXT-X-STREAM-INF' in playlist:
+        chosen = _pick_hls_variant(playlist, base)
+        if not chosen or not _preview_host_ok(chosen, '.m3u8'):
+            return []
+        try:
+            playlist = _fetch_preview_text(chosen)
+        except Exception as error:
+            logging.warning(f"Preview variant failed: {error}")
+            return []
+        base = chosen.rsplit('/', 1)[0] + '/'
+    segments = []
+    for line in playlist.splitlines():
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        url = line if line.startswith('http') else urllib.parse.urljoin(base, line)
+        if not _preview_host_ok(url, '.ts'):
+            continue
+        segments.append(url)
+        if len(segments) >= 80:
+            break
+    return segments
+
+
+def preview_from_page(html: str) -> Dict:
+    """An older preview is one MP4. A current one is a playlist of short pieces."""
+    mp4 = re.search(
+        r'https://media\.javtrailers\.com/litevideo/freepv/[A-Za-z0-9_./-]+\.mp4',
+        html,
+    )
+    if mp4:
+        return {'trailer_url': mp4.group(0), 'trailer_segments': []}
+    playlist = re.search(
+        r'https://media\.javtrailers\.com/hlsvideo/freepv/[A-Za-z0-9_./-]+\.m3u8',
+        html,
+    )
+    if not playlist:
+        return {'trailer_url': '', 'trailer_segments': []}
+    url = playlist.group(0)
+    return {'trailer_url': url, 'trailer_segments': hls_preview_segments(url)}
+
+
+def remote_image_size(url: str) -> int:
+    """Byte size of an image, used to pick the high-resolution package art."""
+    headers = image_request_headers(url)
+    headers['Range'] = 'bytes=0-0'
+    request = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            if 'now_printing' in (response.geturl() or ''):
+                return 0
+            span = response.headers.get('Content-Range') or ''
+            if '/' in span:
+                return int(span.rsplit('/', 1)[-1] or 0)
+            return int(response.headers.get('Content-Length') or 0)
+    except Exception:
+        return 0
+
+
+def fetch_html_urllib(url: str) -> Optional[str]:
+    """Plain HTTP fetch. Some sites answer this and refuse the async client."""
+    request = urllib.request.Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+    })
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            html = response.read().decode('utf-8', 'replace')
+    except Exception as error:
+        logging.warning(f"Plain HTTP fetch failed for {url}: {error}")
+        return None
+    if html and len(html) > 500 and 'Just a moment' not in html:
+        logging.info(f"Fetched {url} over plain HTTP ({len(html)} chars)")
+        return html
+    return None
+
+def image_dimensions(path) -> Tuple[int, int]:
+    """Width and height of a local image, or zeroes when the file cannot be read."""
+    try:
+        with Image.open(path) as img:
+            return int(img.size[0]), int(img.size[1])
+    except Exception:
+        return (0, 0)
+
+
+def image_pixels(path) -> int:
+    width, height = image_dimensions(path)
+    return width * height
+
+
+def settle_sidecar_trailers(folder) -> str:
+    """Move trailer.mp4 or trailer.ts into Trailers/. Return the preview path when one exists."""
+    library = Path(folder)
+    extras = library / 'Trailers'
+    have = ''
+    if (extras / 'Preview.mp4').is_file():
+        have = 'Trailers/Preview.mp4'
+    elif (extras / 'Preview.ts').is_file():
+        have = 'Trailers/Preview.ts'
+    for source_name, dest_name in (('trailer.mp4', 'Preview.mp4'), ('trailer.ts', 'Preview.ts')):
+        sidecar = library / source_name
+        if not sidecar.is_file():
+            continue
+        if have:
+            sidecar.unlink()
+            logging.info(f"Removed unused {sidecar}")
+            continue
+        extras.mkdir(parents=True, exist_ok=True)
+        sidecar.replace(extras / dest_name)
+        have = f'Trailers/{dest_name}'
+        logging.info(f"Moved sidecar trailer to {have}")
+    return have
+
+
+def title_assets_ready(folder, create_nfo=True, download_cover=True, download_trailer=True, media_server='plex') -> bool:
+    """True when this folder already has every file this run would write.
+
+    A repeat batch uses this so trailers that are already on disk are not
+    downloaded again.
+    """
+    library = Path(folder)
+    if not (create_nfo or download_cover or download_trailer):
+        return False
+    if create_nfo and not (library / 'movie.nfo').is_file():
+        return False
+    if download_cover:
+        profile = artwork_profile(media_server)
+        poster = library / profile['posters'][0]
+        background = library / profile['backgrounds'][0]
+        if not poster.is_file() or not background.is_file():
+            return False
+    if download_trailer:
+        extras = library / 'Trailers'
+        has_trailer = (
+            (extras / 'Preview.mp4').is_file()
+            or (extras / 'Preview.ts').is_file()
+            or (library / 'trailer.mp4').is_file()
+            or (library / 'trailer.ts').is_file()
+        )
+        if not has_trailer:
+            return False
+    return True
+
+
+def plot_repeats_title(plot: str, title: str) -> bool:
+    """True when the text is empty or only a restatement of the title."""
+    text = re.sub(r'\s+', ' ', plot or '').strip()
+    name = re.sub(r'\s+', ' ', title or '').strip()
+    if not text or text.lower().startswith('jav content:'):
+        return True
+    if not name:
+        return False
+    if text.casefold() == name.casefold():
+        return True
+    return name.casefold() in text.casefold() and len(text) <= len(name) + 24
+
+
+def _text_needs_english(text: str) -> bool:
+    letters = [ch for ch in text or '' if ch.isalpha()]
+    if not letters:
+        return False
+    cjk = sum(1 for ch in letters if '\u3040' <= ch <= '\u30ff' or '\u4e00' <= ch <= '\u9fff')
+    return cjk / len(letters) > 0.2
+
+
+def _google_english(text: str) -> str:
+    url = (
+        'https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=ja&tl=en&q='
+        + urllib.parse.quote(text)
+    )
+    request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(request, timeout=15) as response:
+        payload = json.loads(response.read().decode('utf-8', 'replace'))
+    if isinstance(payload, str):
+        return payload.strip()
+    if isinstance(payload, list) and payload and isinstance(payload[0], str):
+        return ''.join(part for part in payload if isinstance(part, str)).strip()
+    return ''
+
+
+def _mymemory_english(text: str) -> str:
+    url = 'https://api.mymemory.translated.net/get?langpair=ja|en&q=' + urllib.parse.quote(text)
+    request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(request, timeout=15) as response:
+        payload = json.loads(response.read().decode('utf-8', 'replace'))
+    return ((payload.get('responseData') or {}).get('translatedText') or '').strip()
+
+
+def translate_plot_to_english(text: str) -> str:
+    """English plot when the only real synopsis is Japanese. Already-English text stays."""
+    original = re.sub(r'\s+', ' ', text or '').strip()
+    if not original or not _text_needs_english(original):
+        return original
+    pieces = []
+    start = 0
+    while start < len(original):
+        pieces.append(original[start:start + 400])
+        start += 400
+    translated = []
+    for piece in pieces:
+        english = ''
+        for converter in (_google_english, _mymemory_english):
+            try:
+                english = converter(piece)
+            except Exception as error:
+                logging.info(f"Description translation failed: {error}")
+                english = ''
+            if english and not _text_needs_english(english):
+                break
+            english = ''
+        if not english:
+            return original
+        translated.append(english)
+    english_plot = re.sub(r'\s+', ' ', ' '.join(translated)).strip()
+    return english_plot.replace('``', '"').replace("''", '"')
+
+
+def plot_from_fanza(content_id: str) -> str:
+    """Official catalog blurb. The trailer page id is the FANZA content id."""
+    content_id = (content_id or '').strip()
+    if not content_id:
+        return ''
+    query = 'query($id:ID!){ ppvContent(id:$id){ title description(format:PLAIN) } }'
+    body = json.dumps({'query': query, 'variables': {'id': content_id}}).encode()
+    request = urllib.request.Request(
+        'https://api.video.dmm.co.jp/graphql',
+        data=body,
+        headers={
+            'User-Agent': 'Mozilla/5.0',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Origin': 'https://video.dmm.co.jp',
+            'Referer': 'https://video.dmm.co.jp/',
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            payload = json.loads(response.read().decode('utf-8', 'replace'))
+    except Exception as error:
+        logging.info(f"Catalog description unavailable for {content_id}: {error}")
+        return ''
+    item = ((payload.get('data') or {}).get('ppvContent')) or {}
+    description = re.sub(r'\s+', ' ', item.get('description') or '').strip()
+    if plot_repeats_title(description, item.get('title') or ''):
+        return ''
+    return description
+
+
+def rating_from_javdb(code: str):
+    """Community score for one code. The site uses 5 stars; Plex uses 10."""
+    cleaned = (code or '').strip().upper()
+    if not cleaned:
+        return None
+    url = 'https://javdb.com/search?q=' + urllib.parse.quote(cleaned) + '&f=all'
+    html = fetch_html_urllib(url)
+    if not html:
+        return None
+    for part in html.split('<a href="/v/')[1:]:
+        strong = re.search(r'<strong>\s*([^<]+?)\s*</strong>', part)
+        if not strong or strong.group(1).strip().upper() != cleaned:
+            continue
+        start = part.find('class="score"')
+        if start < 0:
+            return None
+        window = part[start:start + 700]
+        score = re.search(r'(\d+(?:\.\d+)?)\s*(?:分|,)', window)
+        if not score:
+            return None
+        five = float(score.group(1))
+        if five <= 0 or five > 5:
+            return None
+        votes = re.search(r'(?:by|由)\s*([\d,]+)', window)
+        vote_count = int(votes.group(1).replace(',', '')) if votes else 0
+        cover = re.search(r'https://c\d\.jdbstatic\.com/covers/[^"\'\s]+', part)
+        return round(five * 2, 1), vote_count, cover.group(0) if cover else ''
+    return None
+
+
+def remove_stray_audit_copies(video_path) -> str:
+    """Delete a leftover full copy beside the movie. The movie file is not opened or renamed."""
+    path = Path(video_path)
+    if not path.is_file():
+        return ''
+    parent = path.parent
+    extras = [item for item in parent.glob(path.name + '.audit-*') if item.is_file() and item != path]
+    for extra in extras:
+        extra.unlink()
+    return 'removed a leftover copy of the video' if extras else ''
+
 
 class JAVScraperEngine:
     """
@@ -68,13 +571,17 @@ class JAVScraperEngine:
         This includes setting log level, format, and output handlers (file and console).
         """
         log_config = self.config.get('logging', {})
+        handlers = [logging.StreamHandler()]
+        # Vercel's filesystem is read-only outside /tmp, so a log file is optional.
+        if not os.environ.get('VERCEL'):
+            try:
+                handlers.insert(0, logging.FileHandler(log_config.get('file', 'scraper.log')))
+            except OSError:
+                pass
         logging.basicConfig(
             level=getattr(logging, log_config.get('level', 'INFO')),
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_config.get('file', 'scraper.log')),
-                logging.StreamHandler()
-            ]
+            handlers=handlers
         )
 
     async def __aenter__(self):
@@ -166,7 +673,8 @@ class JAVScraperEngine:
         cleaned_name = re.sub(r'\s+', ' ', cleaned_name).strip()
 
         # Remove any remaining special characters that might be left
-        cleaned_name = re.sub(r'[^\w\s\-\.]', '', cleaned_name)
+        # Keep commas so "Aoi Tsukasa, Otoshiro Sayaka" stays two names.
+        cleaned_name = re.sub(r'[^\w\s\-\.,]', '', cleaned_name)
 
         # Final cleanup of extra spaces
         cleaned_name = re.sub(r'\s+', ' ', cleaned_name).strip()
@@ -195,6 +703,39 @@ class JAVScraperEngine:
                     })
 
         return results
+
+    async def fetch_html(self, url: str) -> Optional[str]:
+        """Fetch a page with a normal HTTP client, then a local browser if needed.
+
+        Hosted runs cannot launch Chromium, and jav.guru currently returns the
+        search page to a plain request. Playwright stays a local fallback.
+        """
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+        }
+        try:
+            if self.session is None:
+                timeout = self.config.get('scraper', {}).get('timeout', 30)
+                self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout))
+            async with self.session.get(url, headers=headers, allow_redirects=True) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    if html and len(html) > 500 and 'Just a moment' not in html:
+                        logging.info(f"Fetched {url} over HTTP ({len(html)} chars)")
+                        return html
+                logging.warning(f"HTTP fetch for {url} was not usable (status {response.status})")
+        except Exception as e:
+            logging.warning(f"HTTP fetch failed for {url}: {e}")
+
+        plain = fetch_html_urllib(url)
+        if plain:
+            return plain
+
+        if async_playwright is not None and not os.environ.get('VERCEL'):
+            return await self.fetch_html_with_playwright(url)
+        return None
 
     async def fetch_html_with_playwright(self, url: str) -> Optional[str]:
         """Fetch HTML content using Playwright to bypass bot detection."""
@@ -235,7 +776,7 @@ class JAVScraperEngine:
             url = f"https://jav.guru/?s={jav_code}"
 
             logging.info(f"📡 Requesting URL with Playwright: {url}")
-            html = await self.fetch_html_with_playwright(url)
+            html = await self.fetch_html(url)
             if not html:
                 logging.warning(f"❌ Failed to fetch HTML with Playwright for {jav_code}")
                 return None
@@ -265,7 +806,7 @@ class JAVScraperEngine:
             # Now fetch the detail page for comprehensive metadata
             if detail_url:
                 logging.info(f"🔗 Fetching detail page: {detail_url}")
-                detail_html = await self.fetch_html_with_playwright(detail_url)
+                detail_html = await self.fetch_html(detail_url)
 
                 if detail_html:
                     logging.info(f"📄 Detail page HTML length: {len(detail_html)} characters")
@@ -288,7 +829,6 @@ class JAVScraperEngine:
                         'tags': tags,
                         'stats': stats_text,
                         'date': date,
-                        'detail_html': detail_html,  # Include the full HTML for parsing
                         'detailed_metadata': detailed_metadata,  # Add comprehensive metadata
                         'source': 'javguru'
                     }
@@ -345,10 +885,15 @@ class JAVScraperEngine:
                 # Clean up the field name
                 field_name = field_name.replace(' ', '_').replace('-', '_')
 
-                # Clean actress names if this is an actress-related field
-                if field_name in ['actress', 'actresses', 'cast', 'star', 'stars']:
+                # Each linked name is one person. Flattened text can glue them together.
+                if field_name in ['actress', 'actresses', 'cast', 'star', 'stars', 'actor', 'actors']:
                     original_value = field_value
-                    field_value = self.clean_actress_name(field_value)
+                    linked = []
+                    for anchor in item.find_all('a'):
+                        cleaned = self.clean_actress_name(anchor.get_text(' ', strip=True))
+                        if cleaned and cleaned not in linked:
+                            linked.append(cleaned)
+                    field_value = ', '.join(linked) if linked else self.clean_actress_name(field_value)
                     logging.info(f"📋 Extracted {field_name}: {original_value} -> {field_value}")
                 else:
                     logging.info(f"📋 Extracted {field_name}: {field_value}")
@@ -393,201 +938,15 @@ class JAVScraperEngine:
             return {}
 
     async def scrape_fallback(self, jav_code: str) -> Optional[Dict]:
-        """Fallback scraper that generates basic metadata when sites are blocked."""
-        try:
-            logging.info(f"🔄 Using fallback scraper for {jav_code}")
-            
-            # Generate a basic cover URL using a more reliable service
-            # This is just for testing - in a real scenario you'd want to use a proper image service
-            cover_url = f"https://picsum.photos/300/450?random={jav_code}"
-            
-            result = {
-                'title': f"{jav_code} - JAV Content",
-                'cover_url': cover_url,
-                'details': {
-                    'Actor': 'Unknown',
-                    'Studio': 'Unknown',
-                    'Genre': 'Adult, JAV',
-                    'Plot': f'JAV content with code {jav_code}',
-                    'Runtime': '120',
-                    'Release Date': '2024-01-01'
-                },
-                'source': 'fallback'
-            }
-            
-            logging.info(f"✅ Fallback scraper completed for {jav_code}")
-            return result
-        except Exception as e:
-            logging.error(f"❌ Error in fallback scraper for {jav_code}: {e}")
-            return None
-        """Scrape metadata from JavGuru."""
-        try:
-            logging.info(f"🔍 Starting JavGuru scrape for {jav_code}")
-            url = f"https://jav.guru/?s={jav_code}"
-            
-            # Add headers to avoid blocking
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-            }
-            
-            logging.info(f"📡 Requesting URL: {url}")
-            async with self.session.get(url, headers=headers) as response:
-                logging.info(f"📊 Response status: {response.status}")
-                
-                if response.status == 200:
-                    html = await response.text()
-                    logging.info(f"📄 Received HTML length: {len(html)} characters")
-                    soup = BeautifulSoup(html, 'html.parser')
-                    
-                    # Since this is a search results page, we need to find the first result
-                    # Look for article elements or product cards
-                    first_result = soup.find('article') or \
-                        soup.find('div', {'class': 'product'}) or \
-                        soup.find('div', {'class': 'item'}) or \
-                        soup.find('div', {'class': 'result'})
-                    
-                    if first_result:
-                        logging.info(f"✅ Found first result for {jav_code}")
-                        
-                        # Extract title from the first result
-                        title_elem = first_result.find('h2') or first_result.find('h3') or \
-                                   first_result.find('a', href=True)
-                        title_text = title_elem.get_text().strip() if title_elem else f"{jav_code} - JAV Content"
-                        logging.info(f"📝 Title extracted: {title_text}")
-                        
-                        # Try to find the link to the detailed page
-                        detail_link = first_result.find('a', href=True)
-                        if detail_link:
-                            detail_url = detail_link.get('href')
-                            if detail_url.startswith('/'):
-                                detail_url = 'https://jav.guru' + detail_url
-                            elif not detail_url.startswith('http'):
-                                detail_url = 'https://jav.guru/' + detail_url
-                            
-                            logging.info(f"🔗 Detail URL: {detail_url}")
-                            
-                            # Now scrape the detailed page
-                            async with self.session.get(detail_url, headers=headers) as detail_response:
-                                logging.info(f"📊 Detail page status: {detail_response.status}")
-                                
-                                if detail_response.status == 200:
-                                    detail_html = await detail_response.text()
-                                    detail_soup = BeautifulSoup(detail_html, 'html.parser')
-                                    
-                                    # Extract cover image from detailed page
-                                    cover_url = None
-                                    cover_selectors = [
-                                        ('img', {'class': 'poster'}),
-                                        ('img', {'class': 'cover'}),
-                                        ('img', {'class': 'jacket'}),
-                                        ('img', {'id': 'poster'}),
-                                        ('img', {'alt': lambda x: x and 'cover' in x.lower()}),
-                                        ('img', {'src': lambda x: x and ('jpg' in x or 'png' in x) and 'logo' not in x and 'avatar' not in x})
-                                    ]
-                                    
-                                    for selector_name, selector in cover_selectors:
-                                        cover_img = detail_soup.find('img', selector)
-                                        if cover_img:
-                                            cover_url = cover_img.get('src')
-                                            if cover_url and 'logo' not in cover_url and 'avatar' not in cover_url:
-                                                # Make sure it's a full URL
-                                                if cover_url.startswith('//'):
-                                                    cover_url = 'https:' + cover_url
-                                                elif cover_url.startswith('/'):
-                                                    cover_url = 'https://jav.guru' + cover_url
-                                                logging.info(f"🖼️ Found cover URL: {cover_url}")
-                                                break
-                                    
-                                    if not cover_url:
-                                        logging.warning(f"⚠️ No cover URL found for {jav_code}")
-                                    
-                                    # Extract details from the detailed page
-                                    details = {}
-                                    
-                                    # Look for actor information
-                                    actor_elem = detail_soup.find('a', href=lambda x: x and '/actress/' in x) or \
-                                                detail_soup.find('span', text=lambda x: x and 'actress' in x.lower()) or \
-                                                detail_soup.find('div', text=lambda x: x and 'actress' in x.lower())
-                                    if actor_elem:
-                                        details['Actor'] = actor_elem.get_text().strip()
-                                        logging.info(f"👤 Actor: {details['Actor']}")
-                                    
-                                    # Look for studio information
-                                    studio_elem = detail_soup.find('a', href=lambda x: x and '/studio/' in x) or \
-                                                 detail_soup.find('span', text=lambda x: x and 'studio' in x.lower())
-                                    if studio_elem:
-                                        details['Studio'] = studio_elem.get_text().strip()
-                                        logging.info(f"🏢 Studio: {details['Studio']}")
-                                    
-                                    # Look for release date
-                                    date_elem = detail_soup.find('span', text=lambda x: x and 'date' in x.lower()) or \
-                                               detail_soup.find('div', text=lambda x: x and 'date' in x.lower())
-                                    if date_elem:
-                                        details['Release Date'] = date_elem.get_text().strip()
-                                        logging.info(f"📅 Release Date: {details['Release Date']}")
-                                    
-                                    # Look for runtime/duration
-                                    runtime_elem = detail_soup.find('span', text=lambda x: x and ('runtime' in x.lower() or 'duration' in x.lower())) or \
-                                                  detail_soup.find('div', text=lambda x: x and ('runtime' in x.lower() or 'duration' in x.lower()))
-                                    if runtime_elem:
-                                        details['Runtime'] = runtime_elem.get_text().strip()
-                                        logging.info(f"⏱️ Runtime: {details['Runtime']}")
-                                    
-                                    # Look for genre information
-                                    genre_elems = detail_soup.find_all('a', href=lambda x: x and '/genre/' in x) or \
-                                                 detail_soup.find_all('span', text=lambda x: x and 'genre' in x.lower())
-                                    if genre_elems:
-                                        genres = [elem.get_text().strip() for elem in genre_elems]
-                                        details['Genre'] = ', '.join(genres)
-                                        logging.info(f"🎭 Genres: {details['Genre']}")
-                                    
-                                    # Extract plot/description
-                                    plot_elem = detail_soup.find('div', {'class': 'description'}) or \
-                                               detail_soup.find('div', {'class': 'plot'}) or \
-                                               detail_soup.find('p', text=lambda x: x and len(x) > 50)
-                                    if plot_elem:
-                                        details['Plot'] = plot_elem.get_text().strip()
-                                        logging.info(f"📖 Plot length: {len(details['Plot'])} characters")
-                                    
-                                    result = {
-                                        'title': title_text,
-                                        'cover_url': cover_url,
-                                        'details': details,
-                                        'source': 'javguru'
-                                    }
-                                    
-                                    logging.info(f"✅ JavGuru scrape completed for {jav_code}")
-                                    return result
-                                else:
-                                    logging.warning(f"❌ Detail page returned status {detail_response.status} for {jav_code}")
-                        else:
-                            logging.warning(f"❌ No detail link found for {jav_code}")
-                    
-                    # If no detailed page found, return basic info from search results
-                    logging.warning(f"⚠️ No detailed page found for {jav_code}, returning basic info")
-                    return {
-                        'title': f"{jav_code} - JAV Content",
-                        'cover_url': None,
-                        'details': {'Actor': 'Unknown', 'Studio': 'Unknown'},
-                        'source': 'javguru'
-                    }
-                else:
-                    logging.warning(f"❌ JavGuru returned status {response.status} for {jav_code}")
-                    return None
-        except Exception as e:
-            logging.error(f"❌ Error scraping JavGuru for {jav_code}: {e}")
-            return None
-            
+        """Return nothing rather than invented metadata.
 
-            
+        A random cover and a made-up release date used to be written into NFO
+        files when every source failed. A miss is more useful than a lie.
+        """
+        logging.info(f"No metadata source returned a result for {jav_code}")
+        return None
 
-            
-    async def scrape_all_sites(self, jav_code: str) -> Dict:
+    async def scrape_all_sites(self, jav_code: str, enhance: bool = True) -> Dict:
         """Scrape metadata from all enabled sites."""
         logging.info(f"🔍 ==== METADATA SCRAPING START ====")
         logging.info(f"🔍 JAV Code: {jav_code}")
@@ -773,12 +1132,23 @@ class JAVScraperEngine:
                 if result.get('detailed_metadata'):
                     combined_data['detailed_metadata'] = result['detailed_metadata']
         
-        # Enhance metadata with actress portraits
-        combined_data = await self.enhance_actress_metadata(combined_data)
-        
+        # Portrait search hits extra sites. Callers that need a fast lookup can skip it.
+        if enhance:
+            combined_data = await self.enhance_actress_metadata(combined_data)
+
+        for site_result in combined_data.get('sources', {}).values():
+            if isinstance(site_result, dict) and site_result.get('source') and not combined_data.get('source'):
+                combined_data['source'] = site_result['source']
+        if combined_data.get('best_cover') and not combined_data['detailed_metadata'].get('fanart_url'):
+            combined_data['detailed_metadata']['fanart_url'] = combined_data['best_cover']
+
+        for site_result in combined_data.get('sources', {}).values():
+            if isinstance(site_result, dict):
+                site_result.pop('detail_html', None)
+
         return combined_data
         
-    def create_nfo_file(self, metadata: Dict, output_path: str):
+    def create_nfo_file(self, metadata: Dict, output_path: Optional[str] = None, media_server: Optional[str] = None):
         """Create comprehensive NFO file for media servers using metadata.json structure."""
         # Get JAV code from various possible locations
         jav_code = (metadata.get('jav_code') or 
@@ -792,8 +1162,13 @@ class JAVScraperEngine:
                 jav_code)
         
         # Get plot from detailed metadata
-        plot = (metadata.get('detailed_metadata', {}).get('plot') or 
-               metadata.get('all_details', {}).get('Plot', f'JAV content: {title}'))
+        plot = (
+            metadata.get('detailed_metadata', {}).get('plot')
+            or metadata.get('all_details', {}).get('Plot')
+            or ''
+        )
+        if plot_repeats_title(plot, title):
+            plot = ''
         
         # Get release date from detailed metadata
         release_date = (metadata.get('detailed_metadata', {}).get('release_date') or 
@@ -865,31 +1240,75 @@ class JAVScraperEngine:
         if not genres:
             genres = ['Adult', 'JAV']
         
-        # Get runtime (default to 0 if not available)
-        runtime = metadata.get('all_details', {}).get('Runtime', '0')
-        if runtime and runtime.isdigit():
-            runtime = runtime
-        else:
-            runtime = '0'
+        # Duration lives on the detailed record for jav.guru; older paths used Runtime.
+        runtime = str(
+            metadata.get('detailed_metadata', {}).get('runtime')
+            or metadata.get('detailed_metadata', {}).get('duration')
+            or metadata.get('all_details', {}).get('Runtime')
+            or '0'
+        )
+        runtime = ''.join(ch for ch in runtime if ch.isdigit()) or '0'
         
-        # Get trailer URL
-        trailer = metadata.get('all_details', {}).get('Trailer', '')
+        # A saved trailer.mp4 wins. Otherwise keep the remote preview address.
+        detailed_for_art = metadata.get('detailed_metadata') or {}
+        trailer = (
+            detailed_for_art.get('trailer_file')
+            or detailed_for_art.get('trailer_url')
+            or metadata.get('all_details', {}).get('Trailer', '')
+        )
+        profile = artwork_profile(media_server or metadata.get('media_server'))
+        actor_mode = profile['actor']
+        portrait_thumbs = {}
+        for item in detailed_for_art.get('portraits') or []:
+            url = item.get('url') or ''
+            local_thumb = actor_image_rel(item.get('name', ''))
+            # Plex only downloads an actress photo from an https address.
+            # Kodi, Jellyfin, and Emby use the file in .actors/.
+            if actor_mode in ('url', 'both') and url.startswith('http'):
+                portrait_thumbs[actress_name_key(item.get('name', ''))] = url
+            elif actor_mode == 'local' and local_thumb:
+                portrait_thumbs[actress_name_key(item.get('name', ''))] = local_thumb
+            elif item.get('file') and item.get('saved') is not False:
+                portrait_thumbs[actress_name_key(item.get('name', ''))] = item['file']
         
         # Get actor thumb URL
         actor_thumb = metadata.get('all_details', {}).get('Actor Thumb', '')
         
         # Get series/set information
-        series = metadata.get('all_details', {}).get('Series', '')
+        series = (
+            metadata.get('detailed_metadata', {}).get('series')
+            or metadata.get('all_details', {}).get('Series')
+            or ''
+        )
         
         # Get source information
         source = metadata.get('source', '')
-        
-        # Get fanart and cover URLs
-        fanart_url = metadata.get('detailed_metadata', {}).get('fanart_url', '')
-        large_cover_url = metadata.get('detailed_metadata', {}).get('large_cover_url', '')
-        
-        # Get actress portrait URL
-        actress_portrait_url = metadata.get('detailed_metadata', {}).get('thumb_url', '')
+
+        def _xml(value):
+            return xml_escape(str(value or ''))
+
+        title = _xml(title)
+        plot = _xml(plot)
+        release_date = _xml(release_date)
+        year = _xml(year)
+        director = _xml(director)
+        studio = _xml(studio)
+        label = _xml(label)
+        category = _xml(category)
+        jav_code = _xml(jav_code)
+        runtime = _xml(runtime)
+        source = _xml(source)
+        series = _xml(series)
+        trailer = _xml(trailer)
+        actor_thumb = _xml(actor_thumb)
+        actors = [_xml(actor) for actor in actors]
+        actress_names = list(actresses)
+        actresses = [_xml(actress) for actress in actress_names]
+        tags = [_xml(tag) for tag in tags]
+        genres = [_xml(genre) for genre in genres]
+
+        has_fanart = bool((metadata.get('detailed_metadata') or {}).get('fanart_url'))
+        has_poster = has_fanart or bool((metadata.get('detailed_metadata') or {}).get('poster_url'))
         
         nfo_content = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <movie>
@@ -915,15 +1334,15 @@ class JAVScraperEngine:
         for genre in genres:
             nfo_content += f"\n    <genre>{genre}</genre>"
         
-        # Add female performers (actresses)
-        for actress in actresses:
+        # Each actress points at her own portrait file sitting next to movie.nfo.
+        for index, (raw_name, actress) in enumerate(zip(actress_names, actresses)):
             nfo_content += f"\n    <actor>"
             nfo_content += f"\n        <name>{actress}</name>"
             nfo_content += f"\n        <role>Female Performer</role>"
-            nfo_content += f"\n        <order>0</order>"
-            # Add thumb tag for actresses if portrait URL is available
-            if actress_portrait_url:
-                nfo_content += f"\n        <thumb>{actress_portrait_url}</thumb>"
+            nfo_content += f"\n        <order>{index}</order>"
+            portrait_file = portrait_thumbs.get(actress_name_key(raw_name), '')
+            if portrait_file:
+                nfo_content += f"\n        <thumb>{_xml(portrait_file)}</thumb>"
             nfo_content += f"\n    </actor>"
         
         # Add additional metadata
@@ -935,12 +1354,26 @@ class JAVScraperEngine:
         
         if actor_thumb:
             nfo_content += f"\n    <actorthumb>{actor_thumb}</actorthumb>"
-        
-        if fanart_url:
-            nfo_content += f"\n    <fanart>{fanart_url}</fanart>"
-        
-        if large_cover_url:
-            nfo_content += f"\n    <cover>{large_cover_url}</cover>"
+
+        rating = (metadata.get('detailed_metadata') or {}).get('rating')
+        votes = (metadata.get('detailed_metadata') or {}).get('votes') or 0
+        if rating:
+            # The plain tag is what Kodi and the old XBMC importer read.
+            # Current Plex only draws a star from a named entry in <ratings>.
+            nfo_content += f"\n    <rating>{rating}</rating>"
+            nfo_content += f"\n    <votes>{int(votes)}</votes>"
+            nfo_content += "\n    <ratings>"
+            nfo_content += '\n        <rating name="imdb" max="10" default="true">'
+            nfo_content += f"\n            <value>{rating}</value>"
+            nfo_content += f"\n            <votes>{int(votes)}</votes>"
+            nfo_content += "\n        </rating>"
+            nfo_content += "\n    </ratings>"
+
+        if has_poster:
+            nfo_content += f"\n    <thumb aspect=\"poster\">{profile['posters'][0]}</thumb>"
+
+        if has_fanart:
+            nfo_content += f"\n    <fanart>\n        <thumb>{profile['backgrounds'][0]}</thumb>\n    </fanart>"
         
         # Add custom fields for additional metadata
         nfo_content += f"""
@@ -958,12 +1391,14 @@ class JAVScraperEngine:
     </custominfo>
 </movie>"""
         
-        # Write NFO file
+        if not output_path:
+            return nfo_content
+
         try:
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(nfo_content)
             logging.info(f"✅ NFO file created: {output_path}")
-            return True
+            return nfo_content
         except Exception as e:
             logging.error(f"❌ Error creating NFO file {output_path}: {e}")
             return False
@@ -980,6 +1415,25 @@ class JAVScraperEngine:
             from pathlib import Path
             save_path_obj = Path(save_path)
             save_path_obj.parent.mkdir(parents=True, exist_ok=True)
+
+            image_headers = image_request_headers(url)
+            try:
+                if self.session is None:
+                    self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30))
+                async with self.session.get(url, headers=image_headers) as response:
+                    if response.status == 200:
+                        image_bytes = await response.read()
+                        if image_bytes and len(image_bytes) > 1000:
+                            with open(save_path, 'wb') as f:
+                                f.write(image_bytes)
+                            logging.info(f"Downloaded image over HTTP: {save_path} ({len(image_bytes)} bytes)")
+                            return True
+            except Exception as http_error:
+                logging.warning(f"HTTP image download failed: {http_error}")
+
+            if async_playwright is None or os.environ.get('VERCEL'):
+                logging.error(f"Could not download image without a browser: {url}")
+                return False
 
             # The referer should be the detail page where the image is shown
             # Try to guess the referer from the image URL if not provided
@@ -1046,7 +1500,7 @@ class JAVScraperEngine:
                 
                 # Save as poster
                 cropped_img.save(poster_path, 'JPEG', quality=95)
-                logging.info(f"Created poster from fanart: {poster_path}")
+                logging.info(f"Created poster from fanart: {poster_path} ({cropped_img.size[0]}x{cropped_img.size[1]})")
                 return True
         except Exception as e:
             logging.error(f"Error creating poster from fanart: {e}")
@@ -1153,7 +1607,7 @@ class JAVScraperEngine:
             search_url = f"https://javtiful.com/actresses?q={clean_name.replace(' ', '+')}"
             
             # Fetch search results using Playwright
-            html = await self.fetch_html_with_playwright(search_url)
+            html = await self.fetch_html(search_url)
             if not html:
                 logging.warning(f"❌ Failed to fetch javtiful search results for {clean_name}")
                 return None
@@ -1174,7 +1628,7 @@ class JAVScraperEngine:
                     
                     # Fetch the actress profile page to get the portrait
                     profile_url = href if href.startswith('http') else f"https://javtiful.com{href}"
-                    profile_html = await self.fetch_html_with_playwright(profile_url)
+                    profile_html = await self.fetch_html(profile_url)
                     
                     if profile_html:
                         profile_soup = BeautifulSoup(profile_html, 'html.parser')
@@ -1329,13 +1783,19 @@ class JAVScraperEngine:
                 logging.info(f"🔍 Created new aiohttp session for JAV Database check")
             
             logging.info(f"📡 Checking if portrait exists...")
-            async with self.session.head(portrait_url, headers=headers) as response:
-                logging.info(f"📊 Response status: {response.status}")
-                
-                if response.status == 200:
-                    logging.info(f"✅ Portrait found at: {portrait_url}")
-                    return portrait_url
-                else:
+
+            async def _real_image(check_url: str) -> bool:
+                async with self.session.get(check_url, headers=headers) as response:
+                    if response.status != 200:
+                        return False
+                    kind = (response.headers.get('Content-Type') or '').lower()
+                    sample = await response.content.read(16)
+                    return kind.startswith('image/') or sample[:3] == b'\xff\xd8\xff' or sample[:4] == b'RIFF'
+
+            if await _real_image(portrait_url):
+                logging.info(f"✅ Portrait found at: {portrait_url}")
+                return portrait_url
+            else:
                     logging.warning(f"⚠️ Portrait not found at: {portrait_url}")
                     
                     # Try alternative slug formats if the first one doesn't work
@@ -1349,10 +1809,9 @@ class JAVScraperEngine:
                         alt_portrait_url = f"https://www.javdatabase.com/idolimages/thumb/{alt_slug}.webp"
                         logging.info(f"🔍 Trying alternative URL: {alt_portrait_url}")
                         
-                        async with self.session.head(alt_portrait_url, headers=headers) as alt_response:
-                            if alt_response.status == 200:
-                                logging.info(f"✅ Portrait found at alternative URL: {alt_portrait_url}")
-                                return alt_portrait_url
+                        if await _real_image(alt_portrait_url):
+                            logging.info(f"✅ Portrait found at alternative URL: {alt_portrait_url}")
+                            return alt_portrait_url
                     
                     logging.warning(f"⚠️ No portrait found for {clean_name} with any slug format")
                     return None
@@ -1375,6 +1834,525 @@ class JAVScraperEngine:
         except Exception as e:
             logging.error(f"❌ Error fetching profile page: {e}")
             return None
+
+    def content_id_candidates(self, jav_code: str) -> List[str]:
+        """DMM ids pad the number to five digits: SSIS-001 becomes ssis00001."""
+        match = re.match(r'^([A-Za-z]+)-?(\d+)$', (jav_code or '').strip())
+        if not match:
+            return []
+        prefix, number = match.group(1).lower(), match.group(2)
+        ordered = []
+        for item in (f'{prefix}{number.zfill(5)}', f'{prefix}{number.zfill(3)}', f'{prefix}{number}'):
+            if item not in ordered:
+                ordered.append(item)
+        return ordered
+
+    def trailer_slug_from_search(self, html: str, jav_code: str) -> str:
+        """Pick the trailer-page id. Some labels prefix it, so FNS-242 is 1fns00242."""
+        match = re.match(r'^([A-Za-z]+)-?(\d+)$', (jav_code or '').strip())
+        if not html or not match:
+            return ''
+        prefix, number = match.group(1).lower(), match.group(2)
+        exact = {f'{prefix}{number.zfill(5)}', f'{prefix}{number.zfill(3)}', f'{prefix}{number}'}
+        slugs = re.findall(r'/video/([a-z0-9]+)', html)
+        for slug in slugs:
+            if slug in exact:
+                return slug
+        padded = f'{prefix}{number.zfill(5)}'
+        prefixed = [
+            slug for slug in slugs
+            if slug.endswith(padded) and slug[:-len(padded)].isdigit()
+        ]
+        if not prefixed:
+            return ''
+        prefixed.sort(key=len)
+        return prefixed[0]
+
+    def portraits_from_trailer_page(self, html: str) -> List[Dict]:
+        """Read actress name and portrait URL pairs out of a javtrailers video page."""
+        patterns = (
+            # Name, then a short run of ids and profile fields, then the portrait.
+            # JUR-265 puts the Japanese name before the number; older pages do the reverse.
+            re.compile(
+                r'"[0-9a-f]{24}","[a-z0-9-]+","\d+","([^"]+)"'
+                r'(?:,(?:"[^"]*"|\d+)){0,16},"(https://pics\.dmm\.co\.jp/mono/actjpgs/[^"]+\.jpg)"'
+            ),
+            re.compile(
+                r'"[0-9a-f]{24}","[a-z0-9-]+","\d+","([^"]+)",\d+,"[^"]*"'
+                r'(?:,"[^"]*"){0,4},"[0-9a-f]{24}","(https://pics\.dmm\.co\.jp/mono/actjpgs/[^"]+\.jpg)"'
+            ),
+            re.compile(
+                r'"[0-9a-f]{24}","[a-z0-9-]+","\d+","([^"]+)","[^"]*",(?:\d+,)?'
+                r'"(https://pics\.dmm\.co\.jp/mono/actjpgs/[^"]+\.jpg)"'
+            ),
+        )
+        found = []
+        seen = set()
+        for pattern in patterns:
+            for name, url in pattern.findall(html):
+                cleaned = name.strip()
+                if not cleaned or url in seen or 'Jav' in cleaned or 'http' in cleaned:
+                    continue
+                seen.add(url)
+                found.append({
+                    'name': cleaned,
+                    'url': url,
+                    'file': portrait_filename(cleaned),
+                })
+        return found
+
+    def cast_refs_from_page(self, html: str) -> List[Tuple[str, str]]:
+        """Actress slug and English name pairs from a javtrailers video page."""
+        found = []
+        seen = set()
+
+        def add(slug, name):
+            cleaned = re.sub(r'\s+', ' ', re.sub(r'[^\x00-\x7F]+', ' ', name or '')).strip()
+            if not slug or slug in seen or 'http' in cleaned or not re.search(r'[A-Za-z]', cleaned):
+                return
+            seen.add(slug)
+            found.append((slug, cleaned))
+
+        record = re.compile(
+            r'"([a-z0-9]+(?:-[a-z0-9]+)+)",(?:(?:"[^"]{1,40}",)?"(\d+)","([^"]{2,80})")'
+        )
+        for slug, _digits, name in record.findall(html or ''):
+            add(slug, name)
+        cast_line = re.search(r'Cast\(s\):(.{0,2500}?)</p>', html or '', re.S)
+        if cast_line:
+            for slug, label in re.findall(
+                r'href="/casts/([a-z0-9-]+)"[^>]*>\s*([^<]+)',
+                cast_line.group(1),
+            ):
+                add(slug, label)
+        return found
+
+    def portrait_url_from_cast_html(self, html: str) -> str:
+        """The cast profile names a small webp. Prefer the original DMM jpeg."""
+        match = re.search(r'actjpgs/([a-z0-9_]+)\.(?:jpg|w\d+\.webp)', html or '')
+        if not match:
+            return ''
+        jpg = f'https://pics.dmm.co.jp/mono/actjpgs/{match.group(1)}.jpg'
+        if remote_image_size(jpg) > 1000:
+            return jpg
+        webp = re.search(r'https://images\.javtrailers\.com/mono/actjpgs/[^"\\]+\.webp', html or '')
+        return webp.group(0) if webp else ''
+
+    async def fill_cast_portraits(self, html: str, aligned: List[Dict], existing: List[str]) -> List[Dict]:
+        """Give every named actress her own portrait address."""
+        refs = self.cast_refs_from_page(html)
+        known = {actress_name_key(item.get('name', '')) for item in aligned}
+        for name in existing:
+            if actress_name_key(name) not in known:
+                aligned.append({
+                    'name': name,
+                    'url': '',
+                    'file': portrait_filename(name),
+                })
+                known.add(actress_name_key(name))
+        for item in aligned:
+            if item.get('url'):
+                continue
+            name = item.get('name') or ''
+            slug = next((item_slug for item_slug, item_name in refs if actress_names_match(name, item_name)), '')
+            url = ''
+            if slug:
+                page = await self.fetch_html(f'https://javtrailers.com/casts/{slug}')
+                url = self.portrait_url_from_cast_html(page or '')
+            if not url:
+                url = dmm_portrait_from_name(name)
+            if not url:
+                logging.info(f"No cast portrait for {name}" + (f" at {slug}" if slug else ''))
+                continue
+            item['url'] = url
+            logging.info(f"Cast portrait for {name}: {url}")
+        return aligned
+
+    async def _javtrailers_video_html(self, jav_code: str) -> Optional[Tuple[str, str]]:
+        candidates = self.content_id_candidates(jav_code)
+        if not candidates:
+            return None
+        search_html = await self.fetch_html(
+            f"https://javtrailers.com/search/{urllib.parse.quote(jav_code)}"
+        )
+        slug = self.trailer_slug_from_search(search_html or '', jav_code)
+        if not slug:
+            for candidate in candidates:
+                if search_html and f'/video/{candidate}' in search_html:
+                    slug = candidate
+                    break
+        if not slug:
+            slug = candidates[0]
+        html = await self.fetch_html(f'https://javtrailers.com/video/{slug}')
+        useful = ('litevideo', 'm3u8', 'actjpgs', '/casts/', 'pl.w')
+        if not html or not any(token in html for token in useful):
+            return None
+        return html, slug
+
+    async def attach_library_artwork(self, metadata: Dict) -> Dict:
+        """Add a downloadable cover, one portrait per actress, and a trailer URL.
+
+        jav.guru's cover CDN refuses server downloads. The trailer site publishes
+        the same title's package image, actress portraits, and preview file.
+        """
+        code = (
+            metadata.get('jav_code')
+            or (metadata.get('detailed_metadata') or {}).get('code')
+            or ''
+        )
+        detailed = metadata.setdefault('detailed_metadata', {})
+        try:
+            found_rating = rating_from_javdb(code)
+        except Exception as error:
+            logging.warning(f"Rating lookup failed for {code}: {error}")
+            found_rating = None
+        if found_rating:
+            score, vote_count, catalog_cover = found_rating
+            if score:
+                detailed['rating'] = score
+                detailed['votes'] = vote_count
+                logging.info(f"Rating for {code}: {score} from {vote_count} votes")
+            if catalog_cover:
+                detailed['catalog_cover'] = catalog_cover
+
+        def use_english_plot():
+            scraper = self.config.get('scraper') or {}
+            if not scraper.get('translate_description', True):
+                return
+            if not str(scraper.get('language') or 'en').lower().startswith('en'):
+                return
+            translated = translate_plot_to_english(detailed.get('plot') or '')
+            if not translated or translated == (detailed.get('plot') or ''):
+                return
+            detailed['plot'] = translated
+            metadata.setdefault('all_details', {})['Plot'] = translated
+            logging.info(f"English description for {code}: {len(translated)} chars")
+
+        def keep_catalog_cover():
+            if detailed.get('fanart_url') or not detailed.get('catalog_cover'):
+                return
+            detailed['fanart_url'] = detailed['catalog_cover']
+            detailed['large_cover_url'] = detailed['catalog_cover']
+            metadata['best_cover'] = detailed['catalog_cover']
+            logging.info(f"Using catalog cover for {code}")
+        try:
+            located = await self._javtrailers_video_html(code)
+        except Exception as error:
+            logging.warning(f"Trailer-page artwork lookup failed for {code}: {error}")
+            keep_catalog_cover()
+            use_english_plot()
+            return metadata
+        if not located:
+            logging.info(f"No trailer page for {code}")
+            keep_catalog_cover()
+            use_english_plot()
+            return metadata
+
+        html, content_id = located
+        current_title = (
+            detailed.get('full_title')
+            or metadata.get('best_title')
+            or metadata.get('title')
+            or ''
+        )
+        if plot_repeats_title(detailed.get('plot') or '', current_title):
+            blurb = plot_from_fanza(content_id)
+            if blurb:
+                detailed['plot'] = blurb
+                metadata.setdefault('all_details', {})['Plot'] = blurb
+                logging.info(f"Catalog description for {code}: {len(blurb)} chars")
+        use_english_plot()
+        standard = f'https://pics.dmm.co.jp/digital/video/{content_id}/{content_id}pl.jpg'
+        large = f'https://awsimgsrc.dmm.co.jp/pics_dig/digital/video/{content_id}/{content_id}pl.jpg'
+        if f'{content_id}pl' in html:
+            standard_size = remote_image_size(standard)
+            large_size = remote_image_size(large)
+            fanart = large if large_size > standard_size else standard
+            chosen_size = max(large_size, standard_size)
+            if chosen_size <= 1000:
+                webp = re.search(
+                    rf'https://images\.javtrailers\.com/digital/video/{re.escape(content_id)}/{re.escape(content_id)}pl[^"\'\s]+',
+                    html,
+                )
+                if webp:
+                    fanart = webp.group(0)
+                    chosen_size = remote_image_size(fanart)
+            if chosen_size > 1000:
+                detailed['fanart_url'] = fanart
+                detailed['large_cover_url'] = fanart
+                metadata['best_cover'] = fanart
+                # poster.jpg is cropped from this image. The separate ps.jpg is only 147px tall.
+                detailed.pop('poster_url', None)
+                logging.info(f"Using fanart for {code}: {fanart} ({chosen_size} bytes)")
+
+        preview = preview_from_page(html)
+        if preview.get('trailer_url'):
+            detailed['trailer_url'] = preview['trailer_url']
+            detailed['trailer_segments'] = preview.get('trailer_segments') or []
+            metadata.setdefault('all_details', {})['Trailer'] = detailed['trailer_url']
+            logging.info(
+                f"Found trailer for {code}: {len(detailed['trailer_segments'])} pieces"
+                if detailed['trailer_segments'] else f"Found trailer for {code}"
+            )
+
+        page_portraits = self.portraits_from_trailer_page(html)
+        actress_text = detailed.get('actress') or metadata.get('all_details', {}).get('Actress') or ''
+        people = [name.strip() for name in actress_text.split(',') if name.strip()]
+        for _slug, ref_name in self.cast_refs_from_page(html):
+            if not any(actress_names_match(ref_name, name) for name in people):
+                people.append(ref_name)
+        unused = list(page_portraits)
+        aligned = []
+        for name in people:
+            hit = next((item for item in unused if actress_names_match(name, item['name'])), None)
+            if hit:
+                unused.remove(hit)
+                aligned.append({
+                    'name': name,
+                    'url': hit['url'],
+                    'file': portrait_filename(name),
+                })
+            else:
+                aligned.append({
+                    'name': name,
+                    'url': '',
+                    'file': portrait_filename(name),
+                })
+        if len(people) == 1 and len(page_portraits) == 1 and not aligned[0].get('url'):
+            aligned[0]['url'] = page_portraits[0]['url']
+        elif not people and page_portraits:
+            aligned = page_portraits
+        aligned = await self.fill_cast_portraits(html, aligned, [item['name'] for item in aligned])
+        aligned = [item for item in aligned if item.get('name')]
+        detailed['portraits'] = aligned
+        if aligned:
+            detailed['actress'] = ', '.join(item['name'] for item in aligned)
+            metadata.setdefault('all_details', {})['Actress'] = detailed['actress']
+        linked = [item for item in aligned if item.get('url')]
+        if linked:
+            detailed['thumb_url'] = linked[0]['url']
+            metadata.setdefault('all_details', {})['Actress Portrait'] = linked[0]['url']
+        logging.info(f"Portraits for {code}: {[(item['name'], bool(item.get('url'))) for item in aligned]}")
+        keep_catalog_cover()
+        return metadata
+
+    async def replace_if_larger(self, url: str, dest: Path, webp: bool = False) -> str:
+        """Save url over dest only when dest is missing or the download has more pixels."""
+        dest = Path(dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        temp = dest.with_name(dest.name + '.audit')
+        try:
+            if webp:
+                saved = await self.download_and_convert_webp_to_jpg(url, str(temp))
+            else:
+                saved = await self.download_image(url, str(temp))
+            if not saved or not temp.exists():
+                return 'kept' if dest.exists() else 'failed'
+            if not dest.exists() or image_pixels(temp) > image_pixels(dest):
+                os.replace(temp, dest)
+                return 'replaced'
+            return 'kept'
+        finally:
+            temp.unlink(missing_ok=True)
+
+    async def audit_folder(self, metadata: Dict, output_folder, video_path, download_cover: bool, download_trailer: bool, media_server: str = 'plex') -> List[str]:
+        """Refresh artwork and the trailer beside a video. The video file is not opened."""
+        notes = []
+        stray = remove_stray_audit_copies(video_path)
+        if stray:
+            notes.append(stray)
+        folder = Path(output_folder)
+        folder.mkdir(parents=True, exist_ok=True)
+        detailed = metadata.setdefault('detailed_metadata', {})
+        profile = artwork_profile(media_server)
+        if download_cover:
+            fanart_url = detailed.get('fanart_url') or metadata.get('best_cover') or ''
+            webp = bool(detailed.get('needs_webp_conversion') and detailed.get('webp_url'))
+            if webp:
+                fanart_url = detailed.get('webp_url')
+            backgrounds = profile['backgrounds']
+            posters = profile['posters']
+            known_backgrounds = ('fanart.jpg', 'background.jpg', 'backdrop.jpg', 'art.jpg')
+            known_posters = ('poster.jpg', 'folder.jpg', 'cover.jpg')
+            existing = None
+            existing_pixels = -1
+            for name in known_backgrounds:
+                candidate = folder / name
+                if not candidate.is_file():
+                    continue
+                pixels = image_pixels(candidate)
+                if pixels > existing_pixels:
+                    existing = candidate
+                    existing_pixels = pixels
+            fanart_path = existing or (folder / backgrounds[0])
+            poster_path = next((folder / name for name in posters if (folder / name).is_file()), None)
+            if poster_path is None:
+                poster_path = next((folder / name for name in known_posters if (folder / name).is_file()), None)
+            if poster_path is None:
+                poster_path = folder / posters[0]
+            fanart_replaced = False
+            if fanart_url:
+                outcome = await self.replace_if_larger(fanart_url, fanart_path, webp=webp)
+                fanart_replaced = outcome == 'replaced'
+                if outcome == 'replaced':
+                    notes.append('fanart replaced with a higher-resolution image')
+                elif outcome == 'kept':
+                    notes.append('fanart kept; the current file is already as large')
+                else:
+                    notes.append('fanart could not be downloaded')
+            if fanart_path.exists():
+                copy_bytes_as(fanart_path, backgrounds)
+                notes.append('background names written for ' + (media_server or 'all'))
+            poster_width = image_dimensions(poster_path)[0]
+            poster_missing = any(not (folder / name).is_file() for name in posters)
+            if fanart_path.exists() and (fanart_replaced or poster_missing or poster_width <= 200):
+                if self.create_poster_from_fanart(str(fanart_path), str(poster_path)):
+                    copy_bytes_as(poster_path, posters)
+                    notes.append('poster rebuilt from fanart')
+            if profile['actor'] in ('local', 'both'):
+                for item in detailed.get('portraits') or []:
+                    portrait_url = item.get('url') or ''
+                    portrait_name = actor_image_rel(item.get('name', ''))
+                    if not portrait_url or not portrait_name:
+                        item['saved'] = False
+                        continue
+                    portrait_path = folder / portrait_name
+                    portrait_path.parent.mkdir(parents=True, exist_ok=True)
+                    outcome = await self.replace_if_larger(
+                        portrait_url,
+                        portrait_path,
+                        webp=portrait_url.endswith('.webp'),
+                    )
+                    item['saved'] = portrait_path.exists()
+                    item['file'] = portrait_name
+                    if not item['saved']:
+                        item['url'] = ''
+                        notes.append(f"portrait missing for {item.get('name', '')}")
+                    elif outcome == 'replaced':
+                        notes.append(f"portrait updated for {item.get('name', '')}")
+                    else:
+                        notes.append(f"portrait kept for {item.get('name', '')}")
+        else:
+            for item in detailed.get('portraits') or []:
+                item['saved'] = False
+
+        removed = prune_other_artwork(folder, media_server)
+        if removed:
+            notes.append('removed ' + ', '.join(removed))
+
+        trailer_name = settle_sidecar_trailers(folder)
+        if trailer_name:
+            detailed['trailer_file'] = trailer_name
+            notes.append('trailer is in Trailers/')
+        elif download_trailer:
+            segments = detailed.get('trailer_segments') or []
+            trailer_url = detailed.get('trailer_url') or ''
+            saved_name = ''
+            if segments:
+                saved_name = self.save_hls_preview(segments, folder)
+            elif trailer_url:
+                trailer_path = folder / 'Trailers' / 'Preview.mp4'
+                if await self.download_trailer(trailer_url, str(trailer_path)):
+                    saved_name = 'Trailers/Preview.mp4'
+            if saved_name:
+                detailed['trailer_file'] = saved_name
+                notes.append('trailer downloaded')
+            else:
+                notes.append('no trailer published')
+        else:
+            notes.append('trailer download is off')
+
+        return notes
+
+    async def download_trailer(self, url: str, save_path: str) -> bool:
+        """Save a preview MP4. Skip anything larger than 80MB."""
+        try:
+            headers = image_request_headers(url)
+            headers['Range'] = 'bytes=0-0'
+            if self.session is None:
+                self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60))
+            async with self.session.get(url, headers=headers) as probe:
+                if probe.status not in (200, 206):
+                    logging.warning(f"Trailer probe failed: HTTP {probe.status}")
+                    return False
+                span = probe.headers.get('Content-Range', '')
+                total = 0
+                if '/' in span:
+                    total = int(span.rsplit('/', 1)[-1] or 0)
+                elif probe.headers.get('Content-Length'):
+                    total = int(probe.headers['Content-Length'])
+                await probe.read()
+            if not total or total > 80_000_000:
+                logging.warning(f"Trailer size {total} is not usable for {url}")
+                return False
+            headers.pop('Range', None)
+            async with self.session.get(url, headers=headers) as response:
+                if response.status != 200:
+                    logging.warning(f"Trailer download failed: HTTP {response.status}")
+                    return False
+                payload = await response.read()
+            if len(payload) < 100_000 or payload[4:8] != b'ftyp':
+                logging.warning(f"Trailer payload is not an MP4 ({len(payload)} bytes)")
+                return False
+            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+            with open(save_path, 'wb') as handle:
+                handle.write(payload)
+            logging.info(f"Saved trailer {save_path} ({len(payload)} bytes)")
+            return True
+        except Exception as error:
+            logging.error(f"Trailer download failed: {error}")
+            return False
+
+    def save_hls_preview(self, segments: List[str], output_folder) -> str:
+        """Join a streamed preview into one file. ffmpeg wraps it as trailer.mp4."""
+        import shutil
+        import subprocess
+        folder = Path(output_folder) / 'Trailers'
+        folder.mkdir(parents=True, exist_ok=True)
+        ts_path = folder / 'Preview.ts'
+        total = 0
+        try:
+            with open(ts_path, 'wb') as handle:
+                for url in segments:
+                    if not _preview_host_ok(url, '.ts'):
+                        continue
+                    request = urllib.request.Request(url, headers=image_request_headers(url))
+                    with urllib.request.urlopen(request, timeout=30) as response:
+                        piece = response.read()
+                    if not piece or piece[0] != 0x47:
+                        logging.warning(f"Preview piece was not video data: {url}")
+                        ts_path.unlink(missing_ok=True)
+                        return ''
+                    handle.write(piece)
+                    total += len(piece)
+                    if total > 80_000_000:
+                        logging.warning('Preview is larger than 80MB')
+                        ts_path.unlink(missing_ok=True)
+                        return ''
+        except Exception as error:
+            logging.error(f"Preview download failed: {error}")
+            ts_path.unlink(missing_ok=True)
+            return ''
+        if total < 100_000:
+            ts_path.unlink(missing_ok=True)
+            return ''
+        mp4_path = folder / 'Preview.mp4'
+        ffmpeg = shutil.which('ffmpeg')
+        if ffmpeg:
+            try:
+                result = subprocess.run(
+                    [ffmpeg, '-y', '-i', str(ts_path), '-c', 'copy', '-movflags', '+faststart', str(mp4_path)],
+                    capture_output=True,
+                    timeout=120,
+                )
+                if result.returncode == 0 and mp4_path.exists() and mp4_path.stat().st_size > 100_000:
+                    ts_path.unlink(missing_ok=True)
+                    logging.info(f"Saved trailer {mp4_path} ({mp4_path.stat().st_size} bytes)")
+                    return 'Trailers/Preview.mp4'
+            except Exception as error:
+                logging.warning(f"Could not wrap the preview as mp4: {error}")
+        logging.info(f"Saved trailer {ts_path} ({ts_path.stat().st_size} bytes)")
+        return 'Trailers/Preview.ts'
 
     async def enhance_actress_metadata(self, metadata: Dict) -> Dict:
         """
@@ -1672,7 +2650,7 @@ class JAVScraperEngine:
                             'runtime': '',
                             'category': '',
                             'tags': '',
-                            'plot': f'JAV content: {title}',
+                            'plot': '',
                             'fanart_url': '',
                             'large_cover_url': '',
                             'thumb_url': ''
@@ -1880,7 +2858,7 @@ class JAVScraperEngine:
             search_url = f"https://javtrailers.com/search/{jav_code}"
             logging.info(f"🔍 Search URL: {search_url}")
             
-            search_html = await self.fetch_html_with_playwright(search_url)
+            search_html = await self.fetch_html(search_url)
             if not search_html:
                 logging.warning(f"⚠️ Failed to fetch search page for {jav_code}")
                 return None
@@ -1918,7 +2896,7 @@ class JAVScraperEngine:
             
             # Step 2: Fetch the detail page
             logging.info(f"📄 Fetching detail page: {detail_url}")
-            detail_html = await self.fetch_html_with_playwright(detail_url)
+            detail_html = await self.fetch_html(detail_url)
             
             if not detail_html:
                 logging.warning(f"⚠️ Failed to fetch detail page for {jav_code}")

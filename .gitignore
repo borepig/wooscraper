@@ -1,0 +1,8 @@
+.vercel
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+scraper.log
+.playwright-mcp/

@@ -14,7 +14,15 @@ import asyncio
 import os
 import json
 from pathlib import Path
-from scraper_engine import JAVScraperEngine
+from scraper_engine import (
+    JAVScraperEngine,
+    actor_image_rel,
+    artwork_profile,
+    copy_bytes_as,
+    image_request_headers,
+    remove_stray_audit_copies,
+    title_assets_ready,
+)
 import logging
 import threading
 from datetime import datetime
@@ -26,7 +34,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Application metadata
-__version__ = "1.0.0"
+__version__ = "1.7.0"
+HOSTED = bool(os.environ.get('VERCEL'))
 __author__ = "JAV Scraper Team"
 
 # Global variables for job tracking with thread-safe lock
@@ -82,7 +91,7 @@ def index():
     Returns:
         str: Rendered HTML template for the main application page
     """
-    return render_template('index.html')
+    return render_template('index.html', version=__version__)
 
 @app.route('/api/scan-folder', methods=['POST'])
 def scan_folder():
@@ -98,6 +107,7 @@ def scan_folder():
     try:
         data = request.get_json()
         folder_path = data.get('folder_path', '')
+        library = data.get('library') or 'jav'
 
         # Debug logging
         logging.info(f"Scan folder request: '{folder_path}'")
@@ -126,11 +136,14 @@ def scan_folder():
             logging.error(f"Error validating folder path: {path_error}")
             return jsonify({'error': 'Invalid folder path provided'}), 400
 
-        # Initialize scraper engine
-        engine = JAVScraperEngine()
-        files = engine.scan_folder(resolved_path)
+        if library == 'hentai':
+            from hentai_library import scan_for_ui
+            files = scan_for_ui(resolved_path)
+        else:
+            engine = JAVScraperEngine()
+            files = engine.scan_folder(resolved_path)
 
-        logging.info(f"Found {len(files)} JAV files in {resolved_path}")
+        logging.info(f"Found {len(files)} videos in {resolved_path}")
 
         return jsonify({
             'success': True,
@@ -166,7 +179,12 @@ def start_scraping():
         ui_settings = {
             'create_nfo': data.get('create_nfo', True),
             'download_cover': data.get('download_cover', True),
+            'download_trailer': data.get('download_trailer', True),
             'organize_files': data.get('organize_files', True),
+            'audit': bool(data.get('audit')),
+            'media_server': data.get('media_server') or 'plex',
+            'library': data.get('library') or 'jav',
+            'skip_complete': bool(data.get('skip_complete')),
             'folder_path': folder_path
         }
 
@@ -213,14 +231,46 @@ def run_scraping_job(folder_path, ui_settings):
             logging.info(f"Folder to scan: {folder_path}")
             logging.info(f"UI Settings: {ui_settings}")
 
+            if (ui_settings.get('library') or 'jav') == 'hentai':
+                from hentai_library import process_library
+                def _keep_going():
+                    with _job_status_lock:
+                        return job_status['running']
+                process_library(folder_path, ui_settings, update_job_status, _keep_going)
+                return
+
             async with JAVScraperEngine() as engine:
                 # Scan for files
                 logging.info(f"Scanning folder for JAV files: {folder_path}")
                 files = engine.scan_folder(folder_path)
-                update_job_status(total_files=len(files))
                 logging.info(f"Found {len(files)} JAV files to process")
+                skipped = 0
+                if ui_settings.get('skip_complete'):
+                    pending = []
+                    for file_info in files:
+                        if title_assets_ready(
+                            file_info['folder'],
+                            create_nfo=ui_settings.get('create_nfo', True),
+                            download_cover=ui_settings.get('download_cover', True),
+                            download_trailer=ui_settings.get('download_trailer', True),
+                            media_server=ui_settings.get('media_server') or 'plex',
+                        ):
+                            skipped += 1
+                            continue
+                        pending.append(file_info)
+                    logging.info(f"Skipping {skipped} titles that already have their files")
+                    files = pending
+                update_job_status(total_files=len(files))
 
                 if len(files) == 0:
+                    if skipped:
+                        update_job_status(
+                            progress=100,
+                            processed_files=0,
+                            current_file='Completed',
+                            message=f'Nothing to do. {skipped} titles already have their files.',
+                        )
+                        return
                     error_msg = 'No JAV files found in folder'
                     logging.error(error_msg)
                     update_job_status(error=error_msg, running=False)
@@ -235,6 +285,10 @@ def run_scraping_job(folder_path, ui_settings):
                             break
 
                     jav_code = file_info['jav_code']
+                    stray = remove_stray_audit_copies(file_info['file_path'])
+                    if stray:
+                        logging.info(f"{jav_code}: {stray}")
+                        update_job_status(message=f'{jav_code}: {stray}')
                     update_job_status(
                         current_file=jav_code,
                         processed_files=i,
@@ -254,7 +308,18 @@ def run_scraping_job(folder_path, ui_settings):
                         
                         # Update job status with detailed scraping info
                         update_job_status(message=f'🔍 Searching JAV.guru for {jav_code}...')
-                        metadata = await engine.scrape_all_sites(jav_code)
+                        metadata = await engine.scrape_all_sites(jav_code, enhance=False)
+                        metadata = await engine.attach_library_artwork(metadata)
+                        if not (metadata.get('detailed_metadata') or {}).get('portraits'):
+                            metadata = await engine.enhance_actress_metadata(metadata)
+                            thumb = (metadata.get('detailed_metadata') or {}).get('thumb_url')
+                            first_actress = ((metadata.get('detailed_metadata') or {}).get('actress') or '').split(',')[0].strip()
+                            if thumb and first_actress:
+                                metadata.setdefault('detailed_metadata', {})['portraits'] = [{
+                                    'name': first_actress,
+                                    'url': thumb,
+                                    'file': actor_image_rel(first_actress),
+                                }]
                         metadata.update(file_info)
                         
                         # Log detailed scraping results
@@ -281,6 +346,8 @@ def run_scraping_job(folder_path, ui_settings):
                         
                         # Determine output folder based on UI settings
                         organize_files = ui_settings.get('organize_files', True)
+                        if ui_settings.get('audit'):
+                            organize_files = False
                         logging.info(f"🔧 UI Settings analysis:")
                         logging.info(f"   📋 organize_files: {organize_files}")
                         logging.info(f"   📋 folder_path: {ui_settings.get('folder_path', 'Not set')}")
@@ -362,18 +429,27 @@ def run_scraping_job(folder_path, ui_settings):
                             
                             # Always move video to organized structure, regardless of current location
                             if original_video_path.exists():
-                                import shutil
+                                import errno
                                 # Check if target file already exists
                                 if new_video_path.exists():
                                     logging.warning(f"⚠️ Target video already exists: {new_video_path}")
                                     logging.warning(f"⚠️ Skipping video move to avoid overwrite")
                                     update_job_status(message=f'⚠️ Video already exists in target folder')
+                                elif original_video_path.resolve() == new_video_path.resolve():
+                                    update_job_status(message='Video is already in the organized folder')
                                 else:
-                                    logging.info(f"🔄 Moving video file...")
-                                    update_job_status(message=f'🔄 Moving video file to organized folder...')
-                                    shutil.move(str(original_video_path), str(new_video_path))
-                                    logging.info(f"✅ Successfully moved video from {original_video_path} to {new_video_path}")
-                                    update_job_status(message=f'✅ Video moved successfully')
+                                    logging.info(f"🔄 Renaming video file...")
+                                    update_job_status(message=f'🔄 Renaming video into the organized folder...')
+                                    try:
+                                        os.rename(original_video_path, new_video_path)
+                                        logging.info(f"✅ Renamed video from {original_video_path} to {new_video_path}")
+                                        update_job_status(message=f'✅ Video renamed successfully')
+                                    except OSError as move_error:
+                                        if move_error.errno != errno.EXDEV:
+                                            raise
+                                        output_folder = original_video_path.parent
+                                        logging.warning('Leaving the video in place because moving it would copy the file')
+                                        update_job_status(message='Video left in place. Metadata will be written beside it.')
                             else:
                                 logging.error(f"❌ Original video not found: {original_video_path}")
                                 update_job_status(message=f'❌ Original video not found')
@@ -394,14 +470,8 @@ def run_scraping_job(folder_path, ui_settings):
                         logging.info(f"   📄 Output folder: {output_folder}")
                         logging.info(f"   📄 Output folder exists: {output_folder.exists()}")
                         
-                        engine.create_nfo_file(metadata, str(nfo_path))
-                        logging.info(f"✅ Successfully created NFO file: {nfo_path}")
-                        if nfo_path.exists():
-                            size = nfo_path.stat().st_size
-                            logging.info(f"📏 NFO file size: {size} bytes")
-                            update_job_status(message=f'✅ NFO file created ({size} bytes)')
-                        else:
-                            update_job_status(message=f'❌ Failed to create NFO file')
+                        # movie.nfo is written after the image files exist, so the
+                        # actor thumbs and trailer tag can name those local files.
                         
                         # Download fanart and create poster
                         update_job_status(message=f'🎨 Checking for images for {jav_code}...')
@@ -421,9 +491,26 @@ def run_scraping_job(folder_path, ui_settings):
                             logging.info(f"📊 Available metadata keys: {list(metadata.get('detailed_metadata', {}).keys())}")
                             update_job_status(message=f'⚠️ No fanart URL found')
 
-                        if ui_settings.get('download_cover', True) and fanart_url:
-                            fanart_path = output_folder / "fanart.jpg"
-                            poster_path = output_folder / "poster.jpg"
+                        auditing = bool(ui_settings.get('audit'))
+                        if auditing:
+                            update_job_status(message=f'🔎 Auditing metadata for {jav_code}...')
+                            audit_notes = await engine.audit_folder(
+                                metadata,
+                                output_folder,
+                                Path(file_info['file_path']),
+                                download_cover=ui_settings.get('download_cover', True),
+                                download_trailer=ui_settings.get('download_trailer', True),
+                                media_server=ui_settings.get('media_server') or 'plex',
+                            )
+                            for note in audit_notes:
+                                logging.info(f"🔎 {jav_code}: {note}")
+                                update_job_status(message=f'{jav_code}: {note}')
+
+                        media_server = ui_settings.get('media_server') or 'plex'
+                        art = artwork_profile(media_server)
+                        if not auditing and ui_settings.get('download_cover', True) and fanart_url:
+                            fanart_path = output_folder / art['backgrounds'][0]
+                            poster_path = output_folder / art['posters'][0]
 
                             logging.info(f"🎨 Fanart download path: {fanart_path}")
                             logging.info(f"🎨 Poster creation path: {poster_path}")
@@ -452,7 +539,9 @@ def run_scraping_job(folder_path, ui_settings):
                                         # Create poster by cropping the right 47.125% of fanart
                                         logging.info(f"🎨 Creating poster from fanart...")
                                         engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
-                                        logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
+                                        copy_bytes_as(fanart_path, art['backgrounds'])
+                                        copy_bytes_as(poster_path, art['posters'])
+                                        logging.info(f"✅ Successfully created artwork for {jav_code}")
                                         logging.info(f"✅ Fanart location: {fanart_path}")
                                         logging.info(f"✅ Poster location: {poster_path}")
 
@@ -482,11 +571,12 @@ def run_scraping_job(folder_path, ui_settings):
                                     # Call the async function with await
                                     if await engine.download_image(fanart_url, str(fanart_path)):
                                         logging.info(f"✅ Regular image download successful")
-                                        update_job_status(message=f'🎨 Creating poster from fanart...')
-                                        # Create poster by cropping the right 47.125% of fanart
+                                        update_job_status(message=f'🎨 Creating high-resolution poster from fanart...')
                                         logging.info(f"🎨 Creating poster from fanart...")
                                         engine.create_poster_from_fanart(str(fanart_path), str(poster_path))
-                                        logging.info(f"✅ Successfully created fanart.jpg and poster.jpg for {jav_code}")
+                                        copy_bytes_as(fanart_path, art['backgrounds'])
+                                        copy_bytes_as(poster_path, art['posters'])
+                                        logging.info(f"✅ Successfully created artwork for {jav_code}")
                                         logging.info(f"✅ Fanart location: {fanart_path}")
                                         logging.info(f"✅ Poster location: {poster_path}")
 
@@ -505,105 +595,71 @@ def run_scraping_job(folder_path, ui_settings):
                                 except Exception as e:
                                     logging.error(f"❌ Error in image download: {e}")
                                     update_job_status(message=f'❌ Error downloading image: {str(e)}')
-                        else:
+                        elif not auditing:
                             if not ui_settings.get('download_cover', True):
                                 logging.info(f"ℹ️ Cover download disabled in UI settings")
                             else:
                                 logging.warning(f"⚠️ No fanart URL available for {jav_code}")
 
-                        # Download actress portrait if available
-                        update_job_status(message=f'🎭 Checking for actress portrait for {jav_code}...')
-                        logging.info(f"🎭 ==== ACTRESS PORTRAIT DOWNLOAD ====")
-                        actress_name = ""
-                        if metadata.get('detailed_metadata', {}).get('actress'):
-                            actress_name = metadata['detailed_metadata']['actress'].split(',')[0].strip()
-                            logging.info(f"🎭 Found actress name: '{actress_name}'")
-                        elif metadata.get('detailed_metadata', {}).get('actresses'):
-                            actress_name = metadata['detailed_metadata']['actresses'].split(',')[0].strip()
-                            logging.info(f"🎭 Found actress in actresses field: '{actress_name}'")
-                        else:
-                            logging.info(f"ℹ️ No actress name found in metadata")
-
-                        if actress_name and ui_settings.get('download_cover', True):
-                            update_job_status(message=f'🎭 Processing portrait for {actress_name}...')
-                            # Clean actress name for filename
-                            import re
-                            original_actress_name = actress_name
-                            clean_actress_name = re.sub(r'[<>:"/\\|?*]', '', actress_name)
-                            clean_actress_name = clean_actress_name.replace(' ', '_')
-                            logging.info(f"🎭 Actress name cleaned: '{original_actress_name}' → '{clean_actress_name}'")
-
-                            portrait_path = output_folder / f"{clean_actress_name}_portrait.jpg"
-                            logging.info(f"🎭 Portrait save path: {portrait_path}")
-
-                            # Get portrait URL from metadata (already found by enhance_actress_metadata)
-                            actress_portrait_url = (metadata.get('detailed_metadata', {}).get('thumb_url') or
-                                                  metadata.get('all_details', {}).get('Actress Portrait'))
-
-                            if not actress_portrait_url:
-                                logging.warning(f"⚠️ No portrait URL found in metadata for {actress_name}")
-                                logging.warning(f"⚠️ This should not happen - enhance_actress_metadata should have found it")
-                                update_job_status(message=f'⚠️ No portrait URL in metadata for {actress_name}')
-                            else:
-                                logging.info(f"🎭 Found portrait URL in metadata: {actress_portrait_url}")
-
-                            if actress_portrait_url:
-                                update_job_status(message=f'🎭 Downloading portrait of {actress_name}...')
-                                logging.info(f"🎭 Attempting to download portrait from: {actress_portrait_url}")
-
-                                # Check if it's a webp file from JAV Database
-                                if actress_portrait_url.endswith('.webp'):
-                                    logging.info(f"🎭 Detected webp file, converting to jpg...")
-                                    try:
-                                        # Call the function directly without await since we're already in an async context
-                                        if engine.download_and_convert_webp_to_jpg(actress_portrait_url, str(portrait_path)):
-                                            logging.info(f"✅ Successfully downloaded and converted webp portrait: {portrait_path}")
-                                            # Check file size
-                                            if portrait_path.exists():
-                                                size = portrait_path.stat().st_size
-                                                logging.info(f"📏 Portrait file size: {size} bytes")
-                                                update_job_status(message=f'✅ Portrait downloaded and converted ({size} bytes)')
-                                            else:
-                                                update_job_status(message=f'❌ Portrait file not found after conversion')
-                                        else:
-                                            logging.error(f"❌ Failed to download and convert webp portrait for {actress_name}")
-                                            logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
-                                            logging.error(f"❌ Portrait path: {portrait_path}")
-                                            update_job_status(message=f'❌ Failed to download and convert portrait')
-                                    except Exception as e:
-                                        logging.error(f"❌ Error in webp conversion for portrait: {e}")
-                                        update_job_status(message=f'❌ Error converting webp portrait: {str(e)}')
+                        portraits = (metadata.get('detailed_metadata') or {}).get('portraits') or []
+                        portrait_path = None
+                        if not auditing and ui_settings.get('download_cover', True) and art['actor'] in ('local', 'both'):
+                            output_folder.mkdir(parents=True, exist_ok=True)
+                            for item in portraits:
+                                portrait_url = item.get('url') or ''
+                                portrait_name = actor_image_rel(item.get('name', ''))
+                                if not portrait_url or not portrait_name:
+                                    item['saved'] = False
+                                    continue
+                                portrait_path = output_folder / portrait_name
+                                portrait_path.parent.mkdir(parents=True, exist_ok=True)
+                                item['file'] = portrait_name
+                                update_job_status(message=f"🎭 Downloading portrait of {item.get('name', '')}...")
+                                try:
+                                    if portrait_url.endswith('.webp'):
+                                        saved = await engine.download_and_convert_webp_to_jpg(portrait_url, str(portrait_path))
+                                    else:
+                                        saved = await engine.download_image(portrait_url, str(portrait_path))
+                                except Exception as portrait_error:
+                                    logging.error(f"❌ Portrait download failed for {item.get('name')}: {portrait_error}")
+                                    saved = False
+                                item['saved'] = bool(saved and portrait_path.exists())
+                                if not item['saved']:
+                                    item['url'] = ''
+                                    logging.error(f"❌ Failed to save portrait {portrait_path}")
                                 else:
-                                    # Regular image download
-                                    try:
-                                        # Call the function directly without await since we're already in an async context
-                                        if engine.download_image(actress_portrait_url, str(portrait_path)):
-                                            logging.info(f"✅ Successfully downloaded actress portrait: {portrait_path}")
-                                            # Check file size
-                                            if portrait_path.exists():
-                                                size = portrait_path.stat().st_size
-                                                logging.info(f"📏 Portrait file size: {size} bytes")
-                                                update_job_status(message=f'✅ Portrait downloaded ({size} bytes)')
-                                            else:
-                                                update_job_status(message=f'❌ Portrait file not found after download')
-                                        else:
-                                            logging.error(f"❌ Failed to download actress portrait for {actress_name}")
-                                            logging.error(f"❌ Portrait URL from metadata: {actress_portrait_url}")
-                                            logging.error(f"❌ Portrait path: {portrait_path}")
-                                            update_job_status(message=f'❌ Failed to download portrait')
-                                    except Exception as e:
-                                        logging.error(f"❌ Error in image download for portrait: {e}")
-                                        update_job_status(message=f'❌ Error downloading portrait: {str(e)}')
-                            else:
-                                logging.warning(f"⚠️ No actress portrait URL in metadata for {actress_name}")
-                                logging.warning(f"⚠️ Portrait search was already done by enhance_actress_metadata")
-                                update_job_status(message=f'⚠️ No portrait URL in metadata for {actress_name}')
+                                    logging.info(f"✅ Saved portrait {portrait_path} ({portrait_path.stat().st_size} bytes)")
+
+                            trailer_url = (metadata.get('detailed_metadata') or {}).get('trailer_url')
+                            trailer_path = output_folder / 'Trailers' / 'Preview.mp4'
+                            segments = (metadata.get('detailed_metadata') or {}).get('trailer_segments') or []
+                            if ui_settings.get('download_trailer', True) and (segments or trailer_url):
+                                update_job_status(message=f'🎬 Downloading trailer for {jav_code}...')
+                                saved_name = ''
+                                if segments:
+                                    saved_name = engine.save_hls_preview(segments, output_folder)
+                                elif await engine.download_trailer(trailer_url, str(trailer_path)):
+                                    saved_name = 'Trailers/Preview.mp4'
+                                if saved_name:
+                                    metadata.setdefault('detailed_metadata', {})['trailer_file'] = saved_name
+                                    logging.info(f"✅ Saved trailer {output_folder / saved_name}")
+                                else:
+                                    logging.warning(f"⚠️ Trailer file was not saved; movie.nfo will keep the preview address")
+                        elif not ui_settings.get('download_cover', True):
+                            for item in portraits:
+                                item['saved'] = False
+
+                        update_job_status(message=f'📄 Creating NFO file for {jav_code}...')
+                        if auditing and not ui_settings.get('create_nfo', True):
+                            logging.info(f"Audit left the existing NFO in place for {jav_code}")
                         else:
-                            if not actress_name:
-                                logging.info(f"ℹ️ No actress name found, skipping portrait download")
-                            else:
-                                logging.info(f"ℹ️ Cover download disabled in UI settings, skipping portrait")
-                            
+                            engine.create_nfo_file(metadata, str(nfo_path), media_server=media_server)
+                        if nfo_path.exists():
+                            logging.info(f"✅ NFO file created: {nfo_path} ({nfo_path.stat().st_size} bytes)")
+                            update_job_status(message=f'✅ NFO file created ({nfo_path.stat().st_size} bytes)')
+                        else:
+                            update_job_status(message='❌ Failed to create NFO file')
+
                         results.append(metadata)
                         update_job_status(message=f'✅ Completed {jav_code} successfully')
                         logging.info(f"✅ ==== COMPLETED PROCESSING {jav_code} ====")
@@ -712,18 +768,21 @@ def get_common_paths():
     common_paths = []
     
     # Check common locations
+    library_root = os.environ.get('LIBRARY_ROOT', '')
     locations = [
+        library_root,
         os.path.expanduser("~/media/Others/JAV"),
         os.path.expanduser("~/Videos"),
         os.path.expanduser("~/Downloads"),
         os.path.expanduser("~/Desktop"),
+        "/library",
         "/mnt",
         "/media",
         "./test_videos"
     ]
     
     for location in locations:
-        if os.path.exists(location):
+        if location and os.path.exists(location):
             try:
                 # Look for JAV-like folders
                 for item in os.listdir(location):
@@ -754,6 +813,263 @@ def get_common_paths():
         'success': True,
         'paths': common_paths
     })
+
+def _run_async(coro):
+    loop = asyncio.new_event_loop()
+    try:
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
+
+
+def _present_lookup(metadata, media_server='plex'):
+    """Shape a scrape result for the browser. Leave the raw HTML behind."""
+    detailed = metadata.get('detailed_metadata') or {}
+    details = metadata.get('all_details') or {}
+    sources = metadata.get('sources') or {}
+    code = metadata.get('jav_code') or detailed.get('code') or ''
+    source = metadata.get('source') or ''
+    title = (
+        detailed.get('full_title')
+        or metadata.get('best_title')
+        or ''
+    )
+    cover = (
+        detailed.get('fanart_url')
+        or detailed.get('large_cover_url')
+        or detailed.get('poster_url')
+        or metadata.get('best_cover')
+        or ''
+    )
+    actress = detailed.get('actress') or details.get('Actress') or details.get('Actor') or ''
+    studio = detailed.get('studio') or details.get('Studio') or ''
+    release_date = detailed.get('release_date') or details.get('Release Date') or ''
+    runtime = str(detailed.get('runtime') or detailed.get('duration') or details.get('Runtime') or '')
+    genres = detailed.get('category') or detailed.get('categories') or details.get('Genre') or ''
+    if isinstance(genres, list):
+        genres = ', '.join(str(item) for item in genres if item)
+    plot = detailed.get('plot') or details.get('Plot') or ''
+    if len(plot) > 1200:
+        plot = plot[:1200].rstrip() + '…'
+    portraits = [
+        {
+            'name': item.get('name') or '',
+            'url': item.get('url') or '',
+            'file': item.get('file') or '',
+            'local': actor_image_rel(item.get('name') or ''),
+        }
+        for item in (detailed.get('portraits') or [])
+        if item.get('url') and item.get('file')
+    ]
+    profile = artwork_profile(media_server)
+    placeholder_title = f'{code} - JAV Content'
+    found = bool(title) and title != placeholder_title and source not in ('fallback', 'basic')
+    nfo = ''
+    if found:
+        record = dict(metadata)
+        record['jav_code'] = code
+        record['source'] = source
+        record['media_server'] = media_server
+        rendered = JAVScraperEngine().create_nfo_file(record, media_server=media_server)
+        nfo = rendered if isinstance(rendered, str) else ''
+    return {
+        'found': found,
+        'jav_code': code,
+        'title': title if found else '',
+        'source': source if found else '',
+        'cover_url': cover if found else '',
+        'poster_url': (detailed.get('poster_url') or '') if found else '',
+        'trailer_url': (detailed.get('trailer_url') or '') if found else '',
+        'trailer_segments': (detailed.get('trailer_segments') or []) if found else [],
+        'portraits': portraits if found else [],
+        'actress': actress if found else '',
+        'studio': studio if found else '',
+        'release_date': release_date if found else '',
+        'runtime': runtime if found else '',
+        'genres': genres if found else '',
+        'plot': plot if found else '',
+        'nfo': nfo,
+        'artwork': {
+            'posters': list(profile['posters']),
+            'backgrounds': list(profile['backgrounds']),
+            'actor_local': profile['actor'] in ('local', 'both'),
+            'remove': [] if (media_server or 'plex').strip().lower() == 'all' else [
+                item for item in (
+                    'poster.jpg', 'folder.jpg', 'cover.jpg',
+                    'fanart.jpg', 'background.jpg', 'backdrop.jpg', 'art.jpg',
+                )
+                if item not in set(profile['posters']) | set(profile['backgrounds'])
+            ],
+            'remove_actors': profile['actor'] == 'url',
+        },
+        'sources_tried': list(sources.keys()),
+    }
+
+
+@app.route('/api/capabilities')
+def capabilities():
+    """Tell the page which tools this process can actually perform."""
+    return jsonify({
+        'hosted': HOSTED,
+        'local_files': not HOSTED,
+        'version': __version__,
+    })
+
+
+@app.route('/api/lookup', methods=['POST'])
+def lookup_code():
+    """Look up one code or filename and return metadata plus an NFO document."""
+    try:
+        data = request.get_json(silent=True) or {}
+        query = str(data.get('query') or '').strip()
+        media_server = str(data.get('media_server') or 'plex')
+        if not query or len(query) > 500:
+            return jsonify({'error': 'Enter a code or a filename.'}), 400
+        if str(data.get('library') or '') == 'hentai':
+            from hentai_library import present_lookup
+            filename = str(data.get('filename') or query).strip()
+            payload = present_lookup(query, filename, media_server)
+            payload['query'] = query
+            return jsonify(payload)
+
+        engine = JAVScraperEngine()
+        code = engine.extract_jav_code(query)
+        if not code:
+            return jsonify({'error': f'No code found in "{query}".', 'query': query}), 400
+
+        async def _lookup():
+            async with JAVScraperEngine() as scraper:
+                metadata = await scraper.scrape_all_sites(code, enhance=False)
+                return await scraper.attach_library_artwork(metadata)
+
+        metadata = _run_async(_lookup())
+        payload = _present_lookup(metadata, media_server)
+        payload['query'] = query
+        return jsonify(payload)
+    except Exception as e:
+        logging.error(f"Lookup failed: {e}")
+        return jsonify({'error': 'Lookup failed. Try the code again.'}), 500
+
+
+def _image_host_allowed(host):
+    host = (host or '').lower()
+    if host in {
+        'jav.guru',
+        'cdn.javsts.com',
+        'javtrailers.com',
+        'images.javtrailers.com',
+        'pics.dmm.co.jp',
+        'awsimgsrc.dmm.co.jp',
+        'www.javdatabase.com',
+        'javdatabase.com',
+    }:
+        return True
+    return (
+        host.endswith('.javmost.com')
+        or host.endswith('.dmm.co.jp')
+        or host.endswith('.javsts.com')
+        or host.endswith('.javmiku.com')
+        or host == 'javmiku.com'
+        or host.endswith('.jdbstatic.com')
+        or host == 'jdbstatic.com'
+        or host.endswith('.myanimelist.net')
+        or host == 'myanimelist.net'
+        or host.endswith('.anilist.co')
+        or host == 'anilist.co'
+    )
+
+
+@app.route('/api/image')
+def proxy_image():
+    """Fetch a cover through this app so the browser is not blocked by hotlink rules."""
+    import urllib.request
+    from urllib.parse import urlparse
+    from flask import Response
+
+    url = request.args.get('url', '')
+    parsed = urlparse(url)
+    host = (parsed.hostname or '').lower()
+    if parsed.scheme not in ('http', 'https') or not _image_host_allowed(host):
+        return jsonify({'error': 'That image host is not allowed.'}), 400
+
+    class _GuardRedirects(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            new_host = (urlparse(newurl).hostname or '').lower()
+            if not _image_host_allowed(new_host):
+                return None
+            return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+    try:
+        req = urllib.request.Request(url, headers=image_request_headers(url))
+        opener = urllib.request.build_opener(_GuardRedirects)
+        with opener.open(req, timeout=20) as resp:
+            body = resp.read(8_000_000)
+            content_type = (resp.headers.get('Content-Type') or 'image/jpeg').split(';')[0]
+        if not content_type.startswith('image/'):
+            content_type = 'image/jpeg'
+        return Response(body, mimetype=content_type)
+    except Exception as e:
+        logging.warning(f"Image proxy failed: {e}")
+        return jsonify({'error': 'Could not load that image.'}), 502
+
+
+def _trailer_url_allowed(url):
+    from urllib.parse import urlparse
+    parsed = urlparse(url)
+    host = (parsed.hostname or '').lower()
+    path = parsed.path
+    return (
+        parsed.scheme == 'https'
+        and host == 'media.javtrailers.com'
+        and (
+            (path.startswith('/litevideo/freepv/') and path.endswith('.mp4'))
+            or (path.startswith('/hlsvideo/freepv/') and path.endswith(('.m3u8', '.ts')))
+        )
+    )
+
+
+@app.route('/api/media')
+def proxy_media():
+    """Send one slice of a preview file. The browser stitches the slices together.
+
+    A whole preview is about 25MB, which is larger than one hosted response,
+    so the page asks for 2.5MB at a time.
+    """
+    import urllib.request
+    from flask import Response
+
+    url = request.args.get('url', '')
+    if not _trailer_url_allowed(url):
+        return jsonify({'error': 'That preview address is not allowed.'}), 400
+    try:
+        start = int(request.args.get('start', '0'))
+    except ValueError:
+        return jsonify({'error': 'Bad start position.'}), 400
+    if start < 0:
+        return jsonify({'error': 'Bad start position.'}), 400
+
+    chunk = 2_500_000
+    end = start + chunk - 1
+    headers = image_request_headers(url)
+    headers['Range'] = f'bytes={start}-{end}'
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            total = 0
+            span = resp.headers.get('Content-Range', '')
+            if '/' in span:
+                total = int(span.rsplit('/', 1)[-1] or 0)
+            body = resp.read(chunk)
+        if len(body) > chunk:
+            return jsonify({'error': 'Preview slice was too large.'}), 502
+        response = Response(body, mimetype='video/mp4')
+        response.headers['X-Total-Size'] = str(total or (start + len(body)))
+        return response
+    except Exception as error:
+        logging.warning(f"Trailer proxy failed: {error}")
+        return jsonify({'error': 'Could not load that preview.'}), 502
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000) 

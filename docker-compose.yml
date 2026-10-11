@@ -1,0 +1,19 @@
+# QNAP Container Station: create an application from this file.
+# Point MEDIA_PATH at the shared folder that holds the videos.
+# The container sees that share at /library and writes NFO files, covers,
+# and trailers there. Trailer bytes stay on the NAS.
+
+services:
+  wooscraper:
+    build: .
+    image: wooscraper:local
+    container_name: wooscraper
+    restart: unless-stopped
+    user: "${PUID:-0}:${PGID:-0}"
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      LIBRARY_ROOT: /library
+      PORT: "5000"
+    volumes:
+      - ${MEDIA_PATH:-/share/Media}:/library

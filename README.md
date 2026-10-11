@@ -52,6 +52,24 @@ A modern web-based JAV metadata scraper with a beautiful UI, inspired by the [Ja
 4. **Open your browser**
    Navigate to `http://localhost:5000`
 
+### QNAP (Docker)
+
+Trailer files are large. Running the app on the NAS writes them straight onto the share, instead of pulling every preview through a hosted site.
+
+1. Copy `.env.example` to `.env` and set `MEDIA_PATH` to the shared folder, for example `/share/CACHEDEV1_DATA/Media`.
+2. In Container Station, create an application from `docker-compose.yml`.
+3. Open `http://<nas>:5000`. The folder path inside the app is `/library`.
+
+A repeat pass over the whole library, from SSH on the NAS:
+
+```bash
+docker compose run --rm wooscraper batch /library
+```
+
+That skips any title that already has its NFO, cover, and trailer. Add `--force` to redo them. Add `--library hentai` for the hentai library. Videos stay where they are unless you pass `--organize`.
+
+The same skip is in the web page as **Skip finished titles**.
+
 ## Usage
 
 ### Step 1: Select a Folder

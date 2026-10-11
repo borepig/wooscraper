@@ -144,6 +144,10 @@ function convertToAbsolutePath(path) {
  * @returns {Promise<void>}
  */
 async function scanFolder() {
+    if (window.clientFolder && clientFolder.isActive()) {
+        showNotification('That folder is on this device. Press Start Scraping to save into it.', 'info');
+        return;
+    }
     const folderPath = document.getElementById('folderPath').value.trim();
 
     if (!folderPath) {
@@ -167,7 +171,10 @@ async function scanFolder() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ folder_path: folderPath })
+            body: JSON.stringify({
+                folder_path: folderPath,
+                library: (document.getElementById('libraryKind') || {}).value || 'jav'
+            })
         });
 
         const data = await response.json();
@@ -186,8 +193,11 @@ async function scanFolder() {
             showNotification(`Found ${data.count} JAV files`, 'success');
             updateStatus(`Found ${data.count} JAV files in ${currentFolder}`);
 
-            // Enable start button
             document.getElementById('startBtn').disabled = false;
+            const auditButton = document.getElementById('auditBtn');
+            if (auditButton) {
+                auditButton.disabled = false;
+            }
         } else {
             const errorMsg = data.error || 'Failed to scan folder';
             addDebugLog(`❌ Scan failed: ${errorMsg}`, 'error');
@@ -211,7 +221,7 @@ function displayFiles(files) {
         fileList.innerHTML = `
             <p class="text-muted text-center py-4">
                 <i class="fas fa-exclamation-triangle fa-3x mb-3"></i><br>
-                No JAV files found in the selected folder
+                No videos found in the selected folder
             </p>
         `;
         return;
@@ -271,7 +281,15 @@ function getFileIcon(extension) {
  * @param {string} folderPath - The path of the folder containing JAV files
  * @returns {Promise<void>}
  */
-async function startScraping() {
+async function auditLibrary() {
+    return startScraping(true);
+}
+
+async function startScraping(audit) {
+    const auditing = audit === true;
+    if (window.clientFolder && clientFolder.isActive()) {
+        return clientFolder.run(auditing ? { audit: true } : undefined);
+    }
     const folderPath = document.getElementById('folderPath').value.trim();
 
     if (!folderPath) {
@@ -286,12 +304,17 @@ async function startScraping() {
         // Get UI settings
         const createNfo = document.getElementById('createNfo').checked;
         const downloadCover = document.getElementById('downloadCover').checked;
-        const organizeFiles = document.getElementById('organizeFiles').checked;
+        const downloadTrailer = document.getElementById('downloadTrailer').checked;
+        const organizeFiles = auditing ? false : document.getElementById('organizeFiles').checked;
+        const skipComplete = document.getElementById('skipComplete')
+            ? document.getElementById('skipComplete').checked
+            : false;
 
         addDebugLog(`⚙️ UI Settings:`, 'info');
         addDebugLog(`   - Create NFO: ${createNfo}`, 'info');
         addDebugLog(`   - Download Cover: ${downloadCover}`, 'info');
         addDebugLog(`   - Organize Files: ${organizeFiles}`, 'info');
+        addDebugLog(`   - Audit: ${auditing}`, 'info');
 
         const response = await fetch('/api/start-scraping', {
             method: 'POST',
@@ -302,7 +325,12 @@ async function startScraping() {
                 folder_path: folderPath,
                 create_nfo: createNfo,
                 download_cover: downloadCover,
-                organize_files: organizeFiles
+                download_trailer: downloadTrailer,
+                organize_files: organizeFiles,
+                audit: auditing,
+                skip_complete: skipComplete,
+                media_server: (document.getElementById('mediaServer') || {}).value || 'plex',
+                library: (document.getElementById('libraryKind') || {}).value || 'jav'
             })
         });
 
@@ -312,6 +340,10 @@ async function startScraping() {
             addDebugLog(`✅ Scraping job started successfully`, 'success');
             showNotification('Scraping started successfully', 'success');
             document.getElementById('startBtn').style.display = 'none';
+            const auditButton = document.getElementById('auditBtn');
+            if (auditButton) {
+                auditButton.style.display = 'none';
+            }
             document.getElementById('stopBtn').style.display = 'inline-block';
             document.getElementById('progressSection').style.display = 'block';
 
@@ -329,6 +361,9 @@ async function startScraping() {
 
 // Stop scraping process
 async function stopScraping() {
+    if (window.clientFolder) {
+        clientFolder.cancel();
+    }
     try {
         const response = await fetch('/api/stop-scraping', {
             method: 'POST',
@@ -425,7 +460,7 @@ function displayFilesEfficiently(files) {
         fileList.innerHTML = `
             <p class="text-muted text-center py-4">
                 <i class="fas fa-exclamation-triangle fa-3x mb-3"></i><br>
-                No JAV files found in the selected folder
+                No videos found in the selected folder
             </p>
         `;
         return;
@@ -570,6 +605,10 @@ async function testConnection() {
 // Reset UI to initial state
 function resetUI() {
     document.getElementById('startBtn').style.display = 'inline-block';
+    const auditButton = document.getElementById('auditBtn');
+    if (auditButton) {
+        auditButton.style.display = 'inline-block';
+    }
     document.getElementById('stopBtn').style.display = 'none';
     document.getElementById('progressSection').style.display = 'none';
     document.getElementById('progressBar').style.width = '0%';
@@ -597,6 +636,10 @@ function showLoading(show) {
     // Re-enable start button if files are scanned
     if (!show && scannedFiles.length > 0) {
         document.getElementById('startBtn').disabled = false;
+        const auditButton = document.getElementById('auditBtn');
+        if (auditButton) {
+            auditButton.disabled = false;
+        }
     }
 }
 
@@ -700,14 +743,14 @@ document.getElementById('folderInput').addEventListener('change', function() {
 function addPathSuggestions() {
     const folderPathInput = document.getElementById('folderPath');
     const suggestions = [
+        '/library',
         'test_videos',
         '/home/joe/media/Others/JAV',
         '/home/joe/Videos',
         '/home/joe/Downloads'
     ];
-    
-    // Add placeholder with suggestions
-    folderPathInput.placeholder = 'Enter folder path (e.g., test_videos, /home/joe/media/Others/JAV/...)';
+
+    folderPathInput.placeholder = 'Folder on the server, for example /library';
     
     // Add a small help text below the input
     const helpText = document.createElement('small');

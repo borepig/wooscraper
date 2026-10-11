@@ -24,14 +24,23 @@
                             <h6><i class="fas fa-folder-open"></i> Folder Selection</h6>
                         </div>
                         <div class="card-body">
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control bg-dark text-light" id="folderPath" placeholder="Enter folder path...">
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control bg-dark text-light" id="folderPath" placeholder="/library">
                             </div>
+                            <p class="text-muted small">On the NAS this is the folder inside the container, usually <code>/library</code>.</p>
+                            <button class="btn btn-outline-info w-100 mb-2" id="chooseDeviceFolder" type="button">
+                                <i class="fas fa-laptop"></i> Choose folder on this device
+                            </button>
+                            <p class="text-muted small" id="clientFolderHelp">The path box is read by the computer running the server. This button uses the folder on the device you are using.</p>
+                            <input id="clientFilePicker" type="file" multiple accept="video/*,.mp4,.mkv,.avi,.wmv,.mov" hidden>
                             <button class="btn btn-primary w-100 mb-2" onclick="scanFolder()">
                                 <i class="fas fa-search"></i> Scan Folder
                             </button>
                             <button class="btn btn-success w-100" onclick="startScraping()" id="startBtn" disabled>
                                 <i class="fas fa-play"></i> Start Scraping
+                            </button>
+                            <button class="btn btn-outline-warning w-100 mt-2" onclick="auditLibrary()" id="auditBtn" disabled>
+                                <i class="fas fa-clipboard-check"></i> Audit library
                             </button>
                         </div>
                     </div>
@@ -50,9 +59,32 @@
                                 <label class="form-check-label" for="downloadCover">Download covers</label>
                             </div>
                             <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="downloadTrailer" checked>
+                                <label class="form-check-label" for="downloadTrailer">Download trailer</label>
+                            </div>
+                            <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="organizeFiles" checked>
                                 <label class="form-check-label" for="organizeFiles">Organize files</label>
                             </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="skipComplete">
+                                <label class="form-check-label" for="skipComplete">Skip finished titles</label>
+                            </div>
+                            <p class="text-muted small mb-0">A repeat run leaves any title that already has its NFO, cover, and trailer.</p>
+                            <label class="form-label mt-3 mb-1" for="libraryKind">Library</label>
+                            <select class="form-select form-select-sm bg-dark text-light border-secondary" id="libraryKind">
+                                <option value="jav" selected>JAV</option>
+                                <option value="hentai">Hentai</option>
+                            </select>
+                            <p class="text-muted small mt-2 mb-0">Hentai is saved as a TV show: Show (Year)/Season 01. The video is renamed into that folder. It is never copied.</p>
+                            <label class="form-label mt-3 mb-1" for="mediaServer">Media server</label>
+                            <select class="form-select form-select-sm bg-dark text-light border-secondary" id="mediaServer">
+                                <option value="plex" selected>Plex</option>
+                                <option value="all">All (Plex, Jellyfin, Emby, Kodi)</option>
+                                <option value="jellyfin">Jellyfin</option>
+                                <option value="emby">Emby</option>
+                                <option value="kodi">Kodi</option>
+                            </select>
                             <hr class="border-secondary">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="highContrast">
@@ -215,6 +247,7 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
+    <script src="{{ url_for('static', filename='js/client-folder.js') }}?v={{ version }}"></script>
 </body>
 </html> 

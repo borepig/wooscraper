@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Wooscraper downloads",
+  "version": "1.0.0",
+  "description": "Saves pictures and trailers from this computer so the website host does not download them.",
+  "host_permissions": [
+    "https://*.dmm.co.jp/*",
+    "https://*.javtrailers.com/*",
+    "https://javtrailers.com/*",
+    "https://*.jdbstatic.com/*",
+    "https://*.javmiku.com/*",
+    "https://*.javsts.com/*",
+    "https://jav.guru/*",
+    "https://*.javdatabase.com/*",
+    "https://javdatabase.com/*",
+    "https://*.javmost.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://wooscraper-app.vercel.app/*",
+        "https://flying-gorge-4gr424x.vercel.app/*",
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["page-hook.js"],
+      "matches": [
+        "https://wooscraper-app.vercel.app/*",
+        "https://flying-gorge-4gr424x.vercel.app/*",
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ]
+    }
+  ]
+}

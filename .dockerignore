@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+scraper.log
+.playwright-mcp
+.vercel
+.env
+.env.*
+public
+extension
+*.md
