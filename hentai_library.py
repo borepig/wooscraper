@@ -18,7 +18,7 @@ import time
 import urllib.parse
 from pathlib import Path
 
-from scraper_engine import artwork_profile, copy_bytes_as, image_request_headers
+from scraper_engine import TRAILER_MAX_BYTES, artwork_profile, copy_bytes_as, image_request_headers
 
 VIDEO_EXTENSIONS = {'.mp4', '.mkv', '.avi', '.wmv', '.mov'}
 SUBTITLE_EXTENSIONS = {'.ass', '.ssa', '.srt', '.sub', '.idx'}
@@ -114,6 +114,18 @@ def _assign_episodes(releases):
         next_number += 1
 
 
+_DOWNLOAD_SITE = re.compile(r'(?i)(?:\.com\b|www\.|by1024)')
+_EXTRA_STEMS = {'特典', '設定資料', '设定资料', 'sample', 'ncop', 'nced'}
+
+
+def _keep_video(path):
+    """A release file, not a mirror site's duplicate or a bonus extra."""
+    if _DOWNLOAD_SITE.search(path.name):
+        return False
+    stem = re.sub(r'\s*\(\d+\)$', '', path.stem).strip().casefold()
+    return stem not in _EXTRA_STEMS
+
+
 def scan_videos(folder_path):
     """Every video under a folder, skipping trailers and leftover audit copies."""
     root = Path(folder_path)
@@ -125,7 +137,7 @@ def scan_videos(folder_path):
             continue
         if 'Trailers' in path.parts:
             continue
-        if '.audit-' in path.name:
+        if '.audit-' in path.name or not _keep_video(path):
             continue
         found.append({
             'file_path': str(path),
@@ -214,7 +226,6 @@ query ($search: String, $adult: Boolean) {
       coverImage { extraLarge large }
       bannerImage
       studios { nodes { name } }
-      trailer { site id }
       streamingEpisodes { title }
       characters(perPage: 8, sort: [ROLE, RELEVANCE]) {
         edges { role node { name { full } image { large } } }
@@ -311,6 +322,7 @@ def lookup_show(title, studio=''):
         show['matched'] = True
         show['catalog_id'] = best.get('id')
         show['title'] = names.get('english') or names.get('romaji') or title
+        show['romaji'] = names.get('romaji') or ''
         show['original'] = names.get('native') or title
         show['year'] = (best.get('startDate') or {}).get('year')
         show['plot'] = _plain_plot(best.get('description'))
@@ -325,9 +337,6 @@ def lookup_show(title, studio=''):
             show['picture_urls'].append(best['bannerImage'])
         if show['poster_url']:
             show['picture_urls'].append(show['poster_url'])
-        trailer = best.get('trailer') or {}
-        if (trailer.get('site') or '').lower() == 'youtube' and trailer.get('id'):
-            show['trailer_url'] = 'https://www.youtube.com/watch?v=' + trailer['id']
         for index, episode in enumerate(best.get('streamingEpisodes') or [], start=1):
             episode_title = episode.get('title') or ''
             if episode_title:
@@ -394,8 +403,9 @@ def tvshow_nfo(show):
         lines.append('        </rating>')
         lines.append('    </ratings>')
     lines.append('    <genre>Hentai</genre>')
-    if show.get('trailer_url'):
-        lines.append(f"    <trailer>{_xml(show['trailer_url'])}</trailer>")
+    trailer = show.get('trailer_file') or show.get('trailer_url')
+    if trailer:
+        lines.append(f"    <trailer>{_xml(trailer)}</trailer>")
     for index, person in enumerate(show.get('characters') or []):
         lines.append('    <actor>')
         lines.append(f"        <name>{_xml(person.get('name'))}</name>")
@@ -471,6 +481,290 @@ def present_lookup(folder_name, filename, media_server='plex'):
             'remove_actors': False,
         },
     }
+
+
+_COOKIES = {}
+_SAMPLE_SUFFIXES = ('.duga.jp', '.dmm.co.jp', '.getchu.com', '.chobit.cc')
+
+
+def _cookie_site(hostname):
+    host = (hostname or '').lower()
+    for site in ('chobit.cc', 'duga.jp', 'dmm.co.jp', 'getchu.com', 'hnt.co.jp'):
+        if host.endswith(site):
+            return site
+    return host
+
+
+def _remember_cookies(hostname, response):
+    jar = _COOKIES.setdefault(_cookie_site(hostname), {})
+    for key, value in response.getheaders():
+        if key.lower() != 'set-cookie' or '=' not in value:
+            continue
+        pair = value.split(';', 1)[0]
+        name, cookie = pair.split('=', 1)
+        jar[name.strip()] = cookie.strip()
+
+
+def _exchange(method, url, body=None, headers=None, limit=2_000_000):
+    """HTTPS over IPv4. These catalogs often do not answer on IPv6."""
+    parsed = urllib.parse.urlparse(url)
+    infos = socket.getaddrinfo(parsed.hostname, 443, socket.AF_INET, socket.SOCK_STREAM)
+    if not infos:
+        raise OSError('no IPv4 address')
+    context = ssl.create_default_context()
+    connection = http.client.HTTPSConnection(parsed.hostname, 443, timeout=25, context=context)
+    connection.sock = context.wrap_socket(
+        socket.create_connection(infos[0][4], 20),
+        server_hostname=parsed.hostname,
+    )
+    path = parsed.path or '/'
+    if parsed.query:
+        path += '?' + parsed.query
+    request_headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': '*/*',
+    }
+    jar = _COOKIES.get(_cookie_site(parsed.hostname), {})
+    if jar:
+        request_headers['Cookie'] = '; '.join(f'{name}={value}' for name, value in jar.items())
+    if headers:
+        request_headers.update(headers)
+    connection.request(method, path, body=body, headers=request_headers)
+    response = connection.getresponse()
+    _remember_cookies(parsed.hostname, response)
+    payload = response.read(limit)
+    status = response.status
+    connection.close()
+    return status, payload
+
+
+def _catalog_text(url):
+    status, payload = _exchange('GET', url, headers={'Accept': 'text/html'})
+    if b'loading page' in payload:
+        match = re.search(br'ajax\.get\("([^"]+)"', payload)
+        if match:
+            check = urllib.parse.urljoin(url, match.group(1).decode('ascii', 'replace'))
+            _exchange('GET', check, headers={'X-Requested-With': 'XMLHttpRequest', 'Referer': url})
+            status, payload = _exchange('GET', url, headers={'Accept': 'text/html', 'Referer': url})
+    if status != 200:
+        return ''
+    return payload.decode('utf-8', 'replace')
+
+
+def _sample_host_ok(url):
+    host = (urllib.parse.urlparse(url).hostname or '').lower()
+    return any(host.endswith(suffix) for suffix in _SAMPLE_SUFFIXES)
+
+
+def _title_hit(wanted, found):
+    left, right = _norm(wanted), _norm(found)
+    if len(left) < 4 or len(right) < 4:
+        return False
+    return left in right or right in left
+
+
+def _show_names(show):
+    names = []
+    for text in (show.get('original'), show.get('romaji'), show.get('title')):
+        text = (text or '').strip()
+        if text and text not in names:
+            names.append(text)
+    return names
+
+
+def _chobit_samples(title):
+    """Demo movie from chobit, the DLsite sample site. The file host answers from here."""
+    _COOKIES.setdefault('chobit.cc', {})['showr18'] = '1'
+    page = _catalog_text('https://chobit.cc/s?' + urllib.parse.urlencode({'q_keyword': title}))
+    urls = []
+    for path, name in re.findall(r'class="work-work-name"><a href="(/[0-9a-z]+)">(.*?)</a>', page):
+        if not _title_hit(title, html.unescape(name)):
+            continue
+        item = _catalog_text('https://chobit.cc' + path)
+        chosen = re.search(r'content="(https://file\.chobit\.cc/[^"]+\.mp4)"', item)
+        if chosen:
+            urls.append(chosen.group(1))
+            break
+    return urls
+
+
+def _duga_samples(title):
+    """Free sample MP4 from DUGA when the product title is this show."""
+    try:
+        query = urllib.parse.quote(title.encode('cp932'))
+    except UnicodeEncodeError:
+        return []
+    page = _catalog_text('https://duga.jp/search/=/q=' + query + '/')
+    urls = []
+    for href, alt in re.findall(r'href="(/ppv/[^"]+/)"[\s\S]{0,700}?alt="([^"]+)"', page):
+        if not _title_hit(title, alt):
+            continue
+        product = _catalog_text('https://duga.jp' + href)
+        media = [item for item in re.findall(r'https://[^"\']+\.mp4', product) if _sample_host_ok(item)]
+        media.sort(key=lambda item: (0 if item.endswith('movie.mp4') else 1))
+        urls.extend(media[:1])
+        break
+    return urls
+
+
+def _fanza_sample(content_id):
+    """Official FANZA sample address. The file itself is often region-locked."""
+    body = json.dumps({
+        'query': 'query ($id: ID!) { ppvContent(id: $id) { sample2DMovie { highestMovieUrl } } }',
+        'variables': {'id': content_id},
+    }).encode('utf-8')
+    status, payload = _exchange(
+        'POST',
+        'https://api.video.dmm.co.jp/graphql',
+        body,
+        {'Content-Type': 'application/json', 'Origin': 'https://video.dmm.co.jp', 'Referer': 'https://video.dmm.co.jp/'},
+    )
+    if status != 200:
+        return ''
+    data = json.loads(payload.decode('utf-8', 'replace'))
+    movie = ((data.get('data') or {}).get('ppvContent') or {}).get('sample2DMovie') or {}
+    return movie.get('highestMovieUrl') or ''
+
+
+def _hnt_samples(title):
+    """HNT indexes the FANZA sample for a show. DuckDuckGo lists it as a sample catalog."""
+    page = _catalog_text('https://anime.hnt.co.jp/?' + urllib.parse.urlencode({'s': title}))
+    articles = []
+    for href, label in re.findall(r'href="(https://anime\.hnt\.co\.jp/\d+/)"[^>]*>(.*?)</a>', page, re.S):
+        label = html.unescape(re.sub(r'<[^>]+>|\s+', ' ', label)).strip()
+        if href not in articles and _title_hit(title, label):
+            articles.append(href)
+        if len(articles) >= 2:
+            break
+    urls = []
+    for href in articles:
+        article = _catalog_text(href)
+        for media in re.findall(r'https://[^"\']+\.mp4', article):
+            if _sample_host_ok(media) and media not in urls:
+                urls.append(media)
+        if urls:
+            continue
+        for content_id in re.findall(r'(?:cid|id)(?:%3D|=)([0-9a-z]{6,})', article, re.I):
+            sample = _fanza_sample(content_id)
+            if sample and sample not in urls:
+                urls.append(sample)
+            break
+    return urls
+
+
+def _getchu_samples(title):
+    """Demo file on Getchu when the adult-anime search title matches."""
+    try:
+        query = urllib.parse.quote(title.encode('euc-jp'))
+    except UnicodeEncodeError:
+        return []
+    _COOKIES.setdefault('getchu.com', {})['getchu_adalt_flag'] = 'getchu.com'
+    status, payload = _exchange(
+        'GET',
+        f'https://www.getchu.com/php/search.phtml?genre=anime_dvd&search_keyword={query}&gc=gc',
+    )
+    if status != 200:
+        return []
+    page = payload.decode('euc-jp', 'replace')
+    ids = []
+    for product_id, name in re.findall(r'soft\.phtml\?id=(\d+)" class="blueb">([^<]+)', page):
+        if product_id not in ids and _title_hit(title, name):
+            ids.append(product_id)
+    urls = []
+    for product_id in ids[:2]:
+        status, payload = _exchange('GET', f'https://www.getchu.com/soft.phtml?id={product_id}')
+        product = payload.decode('euc-jp', 'replace')
+        for media in re.findall(r'https://[^"\']+\.mp4', product, re.I):
+            if _sample_host_ok(media) and media not in urls:
+                urls.append(media)
+        if urls:
+            break
+    return urls
+
+
+def _save_sample(url, dest):
+    """Stream a catalog sample to disk. Refuse anything that is not a real MP4."""
+    if not _sample_host_ok(url):
+        return False
+    parsed = urllib.parse.urlparse(url)
+    host = parsed.hostname or ''
+    if 'duga.jp' in host:
+        referer = 'https://duga.jp/'
+    elif host.endswith('chobit.cc'):
+        referer = 'https://chobit.cc/'
+    else:
+        referer = 'https://video.dmm.co.jp/'
+    infos = socket.getaddrinfo(parsed.hostname, 443, socket.AF_INET, socket.SOCK_STREAM)
+    if not infos:
+        return False
+    context = ssl.create_default_context()
+    connection = http.client.HTTPSConnection(parsed.hostname, 443, timeout=30, context=context)
+    connection.sock = context.wrap_socket(
+        socket.create_connection(infos[0][4], 20),
+        server_hostname=parsed.hostname,
+    )
+    path = parsed.path + (('?' + parsed.query) if parsed.query else '')
+    connection.request('GET', path, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Referer': referer,
+        'Accept': 'video/mp4,*/*',
+    })
+    response = connection.getresponse()
+    if response.status not in (200, 206):
+        logging.warning('Sample download HTTP %s for %s', response.status, url)
+        connection.close()
+        return False
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
+    header = b''
+    try:
+        with dest.open('wb') as handle:
+            while True:
+                chunk = response.read(1024 * 1024)
+                if not chunk:
+                    break
+                if len(header) < 12:
+                    header += chunk
+                written += len(chunk)
+                if written > TRAILER_MAX_BYTES:
+                    break
+                handle.write(chunk)
+    finally:
+        connection.close()
+    if written > TRAILER_MAX_BYTES or written < 100_000 or header[4:8] != b'ftyp':
+        dest.unlink(missing_ok=True)
+        return False
+    return True
+
+
+def _download_show_trailer(show_dir, show):
+    """Save Trailers/Preview.mp4 from a store sample, never from YouTube."""
+    dest = Path(show_dir) / 'Trailers' / 'Preview.mp4'
+    if dest.is_file() and dest.stat().st_size > 100_000:
+        show['trailer_file'] = 'Trailers/Preview.mp4'
+        return 'trailer already saved'
+    saw_sample = False
+    for finder in (_chobit_samples, _duga_samples, _hnt_samples, _getchu_samples):
+        for title in _show_names(show)[:2]:
+            try:
+                urls = finder(title)
+            except Exception as error:
+                logging.warning('Sample search failed for %s: %s', title, error)
+                continue
+            if not urls:
+                continue
+            saw_sample = True
+            if _save_sample(urls[0], dest):
+                show['trailer_url'] = urls[0]
+                show['trailer_file'] = 'Trailers/Preview.mp4'
+                host = urllib.parse.urlparse(urls[0]).hostname or 'catalog'
+                return f'trailer saved from {host}'
+            dest.unlink(missing_ok=True)
+            break
+    if saw_sample:
+        return 'trailer could not be downloaded'
+    return 'no trailer published'
 
 
 def _download(url, dest):
@@ -604,6 +898,13 @@ def process_library(folder_path, settings, update, should_continue):
                 else:
                     still.append(item)
             if not still:
+                if settings.get('download_trailer', True):
+                    series = parse_release(folder_path_obj.name, folder_path_obj.name)
+                    show = lookup_show(series['title'], series['studio'])
+                    note = _download_show_trailer(folder_path_obj, show)
+                    print(f'{show.get("title") or series["title"]}: {note}', flush=True)
+                    if create_nfo and show.get('trailer_file'):
+                        (folder_path_obj / 'tvshow.nfo').write_text(tvshow_nfo(show), encoding='utf-8')
                 update(
                     processed_files=done,
                     progress=int((done / len(files)) * 100) if files else 100,
@@ -631,14 +932,20 @@ def process_library(folder_path, settings, update, should_continue):
             season_dir = folder_path_obj
         show_dir.mkdir(parents=True, exist_ok=True)
         label = show['title']
+        line = ('Matched ' if show['matched'] else 'No catalog match for ') + label
+        print(line, flush=True)
         update(
             current_file=label,
             processed_files=done,
             progress=int((done / len(files)) * 100),
-            message=('Matched ' if show['matched'] else 'No catalog match for ') + label,
+            message=line,
         )
         if download_cover:
             note = _save_artwork(show_dir, show, media_server)
+            update(message=f'{label}: {note}')
+        if settings.get('download_trailer', True):
+            note = _download_show_trailer(show_dir, show)
+            print(f'{label}: {note}', flush=True)
             update(message=f'{label}: {note}')
         if create_nfo:
             (show_dir / 'tvshow.nfo').write_text(tvshow_nfo(show), encoding='utf-8')

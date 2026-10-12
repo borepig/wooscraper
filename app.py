@@ -669,9 +669,12 @@ def run_scraping_job(folder_path, ui_settings):
                         logging.info(f"✅ Actress: {metadata.get('detailed_metadata', {}).get('actress', 'N/A')}")
                         logging.info(f"✅ Output folder: {output_folder}")
                         logging.info(f"✅ NFO file: {nfo_path.exists()}")
-                        logging.info(f"✅ Fanart: {fanart_path.exists() if 'fanart_path' in locals() else 'N/A'}")
-                        logging.info(f"✅ Poster: {poster_path.exists() if 'poster_path' in locals() else 'N/A'}")
-                        logging.info(f"✅ Portrait: {portrait_path.exists() if 'portrait_path' in locals() else 'N/A'}")
+                        fanart_note = locals().get('fanart_path')
+                        poster_note = locals().get('poster_path')
+                        portrait_note = locals().get('portrait_path')
+                        logging.info(f"✅ Fanart: {fanart_note.exists() if fanart_note else 'N/A'}")
+                        logging.info(f"✅ Poster: {poster_note.exists() if poster_note else 'N/A'}")
+                        logging.info(f"✅ Portrait: {portrait_note.exists() if portrait_note else 'N/A'}")
                         
                     except Exception as e:
                         logging.error(f"❌ ==== ERROR PROCESSING {jav_code} ====")

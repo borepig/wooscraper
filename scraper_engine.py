@@ -30,6 +30,9 @@ try:
 except ImportError:
     async_playwright = None
 
+# A preview can be a long HD sample. Past this, treat the file as a full movie.
+TRAILER_MAX_BYTES = 1_000_000_000
+
 
 def image_request_headers(url: str) -> dict:
     """Headers that the cover CDNs accept. The referer has to match the host."""
@@ -255,7 +258,7 @@ def hls_preview_segments(playlist_url: str) -> List[str]:
         if not _preview_host_ok(url, '.ts'):
             continue
         segments.append(url)
-        if len(segments) >= 80:
+        if len(segments) >= 500:
             break
     return segments
 
@@ -2265,7 +2268,7 @@ class JAVScraperEngine:
         return notes
 
     async def download_trailer(self, url: str, save_path: str) -> bool:
-        """Save a preview MP4. Skip anything larger than 80MB."""
+        """Save a preview MP4. Refuse anything larger than 1GB."""
         try:
             headers = image_request_headers(url)
             headers['Range'] = 'bytes=0-0'
@@ -2282,25 +2285,38 @@ class JAVScraperEngine:
                 elif probe.headers.get('Content-Length'):
                     total = int(probe.headers['Content-Length'])
                 await probe.read()
-            if not total or total > 80_000_000:
-                logging.warning(f"Trailer size {total} is not usable for {url}")
+            if total > TRAILER_MAX_BYTES:
+                logging.warning(f"Trailer size {total} is over 1GB for {url}")
                 return False
             headers.pop('Range', None)
-            async with self.session.get(url, headers=headers) as response:
+            dest = Path(save_path)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            written = 0
+            header = b''
+            # The shared session timeout is for web pages. A long preview needs longer.
+            timeout = aiohttp.ClientTimeout(total=None, sock_read=120)
+            async with self.session.get(url, headers=headers, timeout=timeout) as response:
                 if response.status != 200:
                     logging.warning(f"Trailer download failed: HTTP {response.status}")
                     return False
-                payload = await response.read()
-            if len(payload) < 100_000 or payload[4:8] != b'ftyp':
-                logging.warning(f"Trailer payload is not an MP4 ({len(payload)} bytes)")
+                with open(dest, 'wb') as handle:
+                    async for chunk in response.content.iter_chunked(1024 * 1024):
+                        if len(header) < 8:
+                            header += chunk
+                        written += len(chunk)
+                        if written > TRAILER_MAX_BYTES:
+                            logging.warning(f"Trailer grew past 1GB for {url}")
+                            break
+                        handle.write(chunk)
+            if written > TRAILER_MAX_BYTES or written < 100_000 or header[4:8] != b'ftyp':
+                dest.unlink(missing_ok=True)
+                logging.warning(f"Trailer payload is not a usable MP4 ({written} bytes)")
                 return False
-            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-            with open(save_path, 'wb') as handle:
-                handle.write(payload)
-            logging.info(f"Saved trailer {save_path} ({len(payload)} bytes)")
+            logging.info(f"Saved trailer {save_path} ({written} bytes)")
             return True
         except Exception as error:
             logging.error(f"Trailer download failed: {error}")
+            Path(save_path).unlink(missing_ok=True)
             return False
 
     def save_hls_preview(self, segments: List[str], output_folder) -> str:
@@ -2325,8 +2341,8 @@ class JAVScraperEngine:
                         return ''
                     handle.write(piece)
                     total += len(piece)
-                    if total > 80_000_000:
-                        logging.warning('Preview is larger than 80MB')
+                    if total > TRAILER_MAX_BYTES:
+                        logging.warning(f'Preview is larger than 1GB ({total} bytes)')
                         ts_path.unlink(missing_ok=True)
                         return ''
         except Exception as error:
@@ -2343,7 +2359,7 @@ class JAVScraperEngine:
                 result = subprocess.run(
                     [ffmpeg, '-y', '-i', str(ts_path), '-c', 'copy', '-movflags', '+faststart', str(mp4_path)],
                     capture_output=True,
-                    timeout=120,
+                    timeout=600,
                 )
                 if result.returncode == 0 and mp4_path.exists() and mp4_path.stat().st_size > 100_000:
                     ts_path.unlink(missing_ok=True)
