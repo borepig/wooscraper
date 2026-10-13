@@ -51,11 +51,9 @@
             return;
         }
         if (canWriteFolder()) {
-            button.textContent = 'Choose folder on this device';
-            help.textContent = 'Saves NFO files and covers into a folder on this computer. Needs Chrome or Edge over HTTPS or localhost. On the NAS, use the path box / folder button instead.';
+            help.textContent = 'Choose folder on this device saves NFO files and covers into that folder. Windows and Ubuntu need Chrome or Edge. The path box above is only for the computer running the server.';
         } else {
-            button.textContent = 'Choose folder on this device';
-            help.textContent = 'This browser cannot write into a folder over plain HTTP. You can still pick a folder of videos; Start Scraping downloads a zip. On the QNAP, prefer the path box and the browse button beside it.';
+            help.textContent = 'Choose a folder of videos on this device. Start Scraping downloads a zip of NFO files and covers for you to save. The path box above is for folders on the NAS (/library/...).';
         }
     }
 
@@ -120,7 +118,16 @@
         cancelled = false;
         try {
             if (canWriteFolder()) {
-                rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                try {
+                    rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                } catch (error) {
+                    if (error && error.name === 'AbortError') {
+                        return;
+                    }
+                    // HTTP to the NAS cannot write via the File System API — fall back to folder pick.
+                    document.getElementById('clientFilePicker').click();
+                    return;
+                }
                 mode = 'write';
                 picked = await listDirectory(rootHandle, []);
             } else {

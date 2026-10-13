@@ -24,16 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize path suggestions
     addPathSuggestions();
 
-    const browseBtn = document.getElementById('browseServerFolder');
-    if (browseBtn) {
-        browseBtn.addEventListener('click', browseFolder);
-    }
-    const browseSelect = document.getElementById('browseSelectBtn');
-    if (browseSelect) {
-        browseSelect.addEventListener('click', selectBrowseFolder);
-    }
-    setupServerBrowse();
-
     // Initialize theme from localStorage
     try {
         const savedTheme = localStorage.getItem('theme');
@@ -53,100 +43,79 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-let browsePath = '';
 
-async function setupServerBrowse() {
-    try {
-        const response = await fetch('/api/capabilities');
-        const data = await response.json();
-        const browseBtn = document.getElementById('browseServerFolder');
-        if (browseBtn) {
-            browseBtn.style.display = data.browse ? '' : 'none';
-        }
-        if (data.library_root && !document.getElementById('folderPath').value) {
-            document.getElementById('folderPath').placeholder = data.library_root;
-        }
-    } catch (error) {
-        // Capabilities are optional; path box still works.
-    }
-}
 
 /**
- * Opens the folder browser for folders on the server / NAS.
+ * Opens the folder browser dialog
+ * @description Triggers the hidden file input to select a folder
+ * @returns {void}
  */
-async function browseFolder() {
-    const start = (document.getElementById('folderPath').value || '').trim();
-    await loadBrowsePath(start);
-    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('folderModal'));
-    modal.show();
+function browseFolder() {
+    // For web browsers, we'll use a simple input
+    // In a real desktop app, you'd use a native file dialog
+    const folderInput = document.getElementById('folderInput');
+    folderInput.click();
 }
 
-async function loadBrowsePath(path) {
-    const list = document.getElementById('browseFolderList');
-    const label = document.getElementById('browseCurrentPath');
-    if (list) {
-        list.innerHTML = '<div class="list-group-item bg-dark text-muted">Loading…</div>';
-    }
-    const query = path ? ('?path=' + encodeURIComponent(path)) : '';
-    const response = await fetch('/api/browse' + query);
-    const data = await response.json();
-    if (!response.ok) {
-        if (list) {
-            list.innerHTML = '<div class="list-group-item bg-dark text-danger">' +
-                (data.error || 'Could not open folder') + '</div>';
+// Show path helper
+async function showPathHelper() {
+    try {
+        const response = await fetch('/api/common-paths');
+        const data = await response.json();
+        
+        if (data.success && data.paths.length > 0) {
+            let pathList = 'Found video folders:\n\n';
+            data.paths.forEach(item => {
+                pathList += `• ${item.path} (${item.video_count} videos)\n`;
+            });
+            
+            pathList += '\n💡 Tip: Use the full path to the folder containing video files';
+            
+            alert(pathList);
+        } else {
+            alert('No video folders found automatically.\n\nTry these common paths:\n• test_videos\n• /home/joe/Videos');
         }
-        return;
-    }
-    browsePath = data.path || '';
-    if (label) {
-        label.textContent = browsePath;
-    }
-    if (!list) {
-        return;
-    }
-    list.innerHTML = '';
-    if (data.parent) {
-        const up = document.createElement('button');
-        up.type = 'button';
-        up.className = 'list-group-item list-group-item-action bg-dark text-light';
-        up.innerHTML = '<i class="fas fa-level-up-alt me-2"></i>.. (parent folder)';
-        up.addEventListener('click', () => loadBrowsePath(data.parent));
-        list.appendChild(up);
-    }
-    (data.entries || []).forEach((entry) => {
-        const row = document.createElement('button');
-        row.type = 'button';
-        row.className = 'list-group-item list-group-item-action bg-dark text-light';
-        row.innerHTML = '<i class="fas fa-folder me-2 text-warning"></i>' + entry.name;
-        row.addEventListener('click', () => loadBrowsePath(entry.path));
-        list.appendChild(row);
-    });
-    if (!(data.entries || []).length) {
-        const empty = document.createElement('div');
-        empty.className = 'list-group-item bg-dark text-muted';
-        empty.textContent = 'No subfolders here. You can still use this folder.';
-        list.appendChild(empty);
+    } catch (error) {
+        alert('Error finding paths. Try:\n• test_videos');
     }
 }
 
-function selectBrowseFolder() {
-    if (!browsePath) {
-        showNotification('No folder selected', 'warning');
-        return;
-    }
-    document.getElementById('folderPath').value = browsePath;
-    currentFolder = browsePath;
-    localStorage.setItem('lastFolderPath', browsePath);
-    const modal = bootstrap.Modal.getInstance(document.getElementById('folderModal'));
-    if (modal) {
-        modal.hide();
-    }
-    showNotification('Folder path set: ' + browsePath, 'success');
-}
+// Quick path helper function removed - no more popup
 
-/** Kept for older onclick handlers; same as browseFolder. */
+// Handle folder selection
 function selectFolder() {
-    selectBrowseFolder();
+    const folderInput = document.getElementById('folderInput');
+    if (folderInput.files.length > 0) {
+        // Get the folder name from the file object
+        const file = folderInput.files[0];
+        let folderName = '';
+        
+        // Extract folder name from the relative path
+        if (file.webkitRelativePath) {
+            const pathParts = file.webkitRelativePath.split('/');
+            if (pathParts.length > 1) {
+                folderName = pathParts[0];
+            }
+        }
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('folderModal'));
+        modal.hide();
+        
+        // Show a dialog to get the full absolute path
+        const fullPath = prompt(
+            `You selected folder: "${folderName}"\n\nPlease enter the full absolute path to this folder:\n\nExample: /home/joe/media/Others/JAV/${folderName}`,
+            `/home/joe/media/Others/JAV/${folderName}`
+        );
+        
+        if (fullPath && fullPath.trim()) {
+            document.getElementById('folderPath').value = fullPath.trim();
+            currentFolder = fullPath.trim();
+            showNotification('Folder path set: ' + fullPath.trim(), 'success');
+        } else {
+            showNotification('No path entered. Please enter the path manually.', 'warning');
+        }
+    }
 }
 
 // Convert relative path to absolute path
@@ -337,7 +306,7 @@ async function startScraping(audit) {
         const downloadCover = document.getElementById('downloadCover').checked;
         const downloadTrailer = document.getElementById('downloadTrailer').checked;
         const library = (document.getElementById('libraryKind') || {}).value || 'jav';
-        // Hentai audit reprocesses layout too; JAV audit stays artwork-only.
+        // Hentai audit still organizes into Season 01; JAV audit stays artwork-only.
         const organizeFiles = (auditing && library !== 'hentai')
             ? false
             : document.getElementById('organizeFiles').checked;

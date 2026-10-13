@@ -913,87 +913,10 @@ def _present_lookup(metadata, media_server='plex'):
 @app.route('/api/capabilities')
 def capabilities():
     """Tell the page which tools this process can actually perform."""
-    library_root = (os.environ.get('LIBRARY_ROOT') or '').strip() or ('/library' if not HOSTED else '')
     return jsonify({
         'hosted': HOSTED,
         'local_files': not HOSTED,
-        'library_root': library_root if not HOSTED else '',
-        'browse': not HOSTED,
         'version': __version__,
-    })
-
-
-def _library_roots():
-    """Folders the page may browse. Prefer LIBRARY_ROOT, then its children."""
-    roots = []
-    primary = (os.environ.get('LIBRARY_ROOT') or '').strip() or '/library'
-    if primary and os.path.isdir(primary):
-        roots.append(Path(primary).resolve())
-        try:
-            for child in sorted(Path(primary).iterdir()):
-                if child.is_dir() and not child.name.startswith('.'):
-                    roots.append(child.resolve())
-        except OSError:
-            pass
-    return roots
-
-
-def _browse_allowed(path: Path) -> bool:
-    """True when path stays under a configured library root."""
-    try:
-        resolved = path.resolve()
-    except OSError:
-        return False
-    for root in _library_roots():
-        try:
-            resolved.relative_to(root)
-            return True
-        except ValueError:
-            if resolved == root:
-                return True
-    return False
-
-
-@app.route('/api/browse')
-def browse_library():
-    """List subfolders on the NAS for the path box. Not used on hosted deploys."""
-    if HOSTED:
-        return jsonify({'error': 'Folder browsing is only available when files are on this server'}), 400
-    roots = _library_roots()
-    if not roots:
-        return jsonify({'error': 'No library folder is mounted'}), 404
-    requested = (request.args.get('path') or str(roots[0])).strip() or str(roots[0])
-    current = Path(requested)
-    if not _browse_allowed(current) or not current.is_dir():
-        current = roots[0]
-    try:
-        current = current.resolve()
-    except OSError:
-        return jsonify({'error': 'Cannot open that folder'}), 400
-    parent = current.parent if _browse_allowed(current.parent) else None
-    entries = []
-    try:
-        for item in sorted(current.iterdir(), key=lambda path: path.name.casefold()):
-            if not item.is_dir():
-                continue
-            # Skip trash / snapshot / hidden NAS folders.
-            if item.name.startswith('.') or item.name.startswith('@'):
-                continue
-            entries.append({
-                'name': item.name,
-                'path': str(item),
-                'type': 'dir',
-            })
-    except OSError as error:
-        return jsonify({'error': str(error)}), 400
-    return jsonify({
-        'success': True,
-        'path': str(current),
-        'parent': str(parent) if parent else None,
-        'roots': [str(root) for root in roots[:1]] + [
-            str(root) for root in roots[1:] if root.parent == roots[0]
-        ],
-        'entries': entries,
     })
 
 
