@@ -79,8 +79,11 @@ def parse_release(folder_name, filename):
     ):
         title = re.sub(pattern, ' ', title)
     title = re.sub(r'\s+', ' ', title).strip(' -_')
+    # Plex-style "Show (2003)" folders — year is not part of the catalog title.
+    title = re.sub(r'\s*\((?:19|20)\d{2}\)\s*$', '', title).strip(' -_')
     if not title:
         title = safe_name(folder_name)
+        title = re.sub(r'\s*\((?:19|20)\d{2}\)\s*$', '', title).strip(' -_') or title
     return {
         'studio': studio,
         'title': title,
@@ -318,6 +321,7 @@ def _plain_plot(text):
 
 def lookup_show(title, studio=''):
     """AniList record for a series title. Cached for the life of this process."""
+    title = re.sub(r'\s*\((?:19|20)\d{2}\)\s*$', '', (title or '')).strip() or (title or '')
     key = _norm(title) + '|' + _norm(studio)
     if key in _SHOW_CACHE:
         return _SHOW_CACHE[key]
@@ -778,8 +782,15 @@ def _download_show_trailer(show_dir, show):
         show['trailer_file'] = 'Trailers/Preview.mp4'
         return 'trailer already saved'
     saw_sample = False
+    tried = set()
+    # Try every catalog name (Japanese / romaji / English). Skipping names
+    # was leaving trailers undownloaded even when Download trailer was on.
     for finder in (_chobit_samples, _duga_samples, _hnt_samples, _getchu_samples):
-        for title in _show_names(show)[:2]:
+        for title in _show_names(show):
+            key = (finder.__name__, _norm(title))
+            if not title or key in tried:
+                continue
+            tried.add(key)
             try:
                 urls = finder(title)
             except Exception as error:
@@ -788,13 +799,13 @@ def _download_show_trailer(show_dir, show):
             if not urls:
                 continue
             saw_sample = True
-            if _save_sample(urls[0], dest):
-                show['trailer_url'] = urls[0]
-                show['trailer_file'] = 'Trailers/Preview.mp4'
-                host = urllib.parse.urlparse(urls[0]).hostname or 'catalog'
-                return f'trailer saved from {host}'
-            dest.unlink(missing_ok=True)
-            break
+            for url in urls[:2]:
+                if _save_sample(url, dest):
+                    show['trailer_url'] = url
+                    show['trailer_file'] = 'Trailers/Preview.mp4'
+                    host = urllib.parse.urlparse(url).hostname or 'catalog'
+                    return f'trailer saved from {host}'
+                dest.unlink(missing_ok=True)
     if saw_sample:
         return 'trailer could not be downloaded'
     return 'no trailer published'
