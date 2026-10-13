@@ -974,7 +974,10 @@ def browse_library():
     entries = []
     try:
         for item in sorted(current.iterdir(), key=lambda path: path.name.casefold()):
-            if not item.is_dir() or item.name.startswith('.'):
+            if not item.is_dir():
+                continue
+            # Skip trash / snapshot / hidden NAS folders.
+            if item.name.startswith('.') or item.name.startswith('@'):
                 continue
             entries.append({
                 'name': item.name,
