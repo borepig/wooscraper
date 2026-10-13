@@ -108,26 +108,60 @@
         }
     }
 
+    function folderLabelFromFiles(files) {
+        for (const file of files) {
+            const relative = file.webkitRelativePath || file.name;
+            const parts = relative.split('/').filter(Boolean);
+            if (parts.length > 1) {
+                return parts[0];
+            }
+        }
+        return '';
+    }
+
+    function confirmNasPath(folderLabel) {
+        const library = libraryKind() === 'hentai' ? 'hentai' : 'jav';
+        const current = (document.getElementById('folderPath') && document.getElementById('folderPath').value || '').trim();
+        const suggested = current && !current.startsWith('(this device)')
+            ? current
+            : '/library/' + library + (folderLabel ? '/' + folderLabel : '');
+        const message = folderLabel
+            ? 'You selected “‘ + folderLabel + '”.\n\nEnter the path on the NAS for that folder so scraping writes there (not an upload):'
+            : 'Enter the path on the NAS for the folder you selected:';
+        const fullPath = window.prompt(message, suggested);
+        if (!fullPath || !fullPath.trim()) {
+            return null;
+        }
+        return fullPath.trim();
+    }
+
     async function choose() {
         cancelled = false;
         try {
-            if (canWriteFolder()) {
+            // Prefer the real system folder picker with write access when the browser allows it.
+            if (canWriteFolder() && window.isSecureContext) {
                 try {
                     rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
                 } catch (error) {
                     if (error && error.name === 'AbortError') {
                         return;
                     }
-                    // HTTP to the NAS cannot write via the File System API — fall back to folder pick.
                     document.getElementById('clientFilePicker').click();
                     return;
                 }
                 mode = 'write';
                 picked = await listDirectory(rootHandle, []);
-            } else {
-                document.getElementById('clientFilePicker').click();
+                showPicked();
+                const message = picked.length
+                    ? 'Found ' + picked.length + ' video' + (picked.length === 1 ? '' : 's') + ' — Start writes into this folder'
+                    : (libraryKind() === 'hentai' ? 'No videos found in that folder' : 'No JAV videos found in that folder');
+                if (typeof showNotification === 'function') {
+                    showNotification(message, picked.length ? 'success' : 'warning');
+                }
                 return;
             }
+            // Same system folder dialog via <input webkitdirectory>.
+            document.getElementById('clientFilePicker').click();
         } catch (error) {
             if (error && error.name === 'AbortError') {
                 return;
@@ -135,30 +169,47 @@
             if (typeof showNotification === 'function') {
                 showNotification(error.message || 'Could not open that folder', 'error');
             }
-            return;
-        }
-        showPicked();
-        const message = picked.length
-            ? 'Found ' + picked.length + ' video' + (picked.length === 1 ? '' : 's') + ' on this device'
-            : (libraryKind() === 'hentai' ? 'No videos found in that folder' : 'No JAV videos found in that folder');
-        if (typeof showNotification === 'function') {
-            showNotification(message, picked.length ? 'success' : 'warning');
         }
     }
 
     function onFileInput(event) {
+        const files = Array.from(event.target.files || []);
+        const folderLabel = folderLabelFromFiles(files);
+        const hentai = libraryKind() === 'hentai';
+
+        // On the NAS app: system picker only identifies the folder. Scraping uses the
+        // server path so files are written in place — never upload/zip.
+        if (window.serverHasLibrary) {
+            clearSelection();
+            const fullPath = confirmNasPath(folderLabel);
+            event.target.value = '';
+            if (!fullPath) {
+                return;
+            }
+            const path = document.getElementById('folderPath');
+            if (path) {
+                path.value = fullPath;
+            }
+            if (typeof currentFolder !== 'undefined') {
+                currentFolder = fullPath;
+            }
+            try {
+                localStorage.setItem('lastFolderPath', fullPath);
+            } catch (error) {
+                /* ignore */
+            }
+            if (typeof showNotification === 'function') {
+                showNotification('Folder path set: ' + fullPath + '. Click Scan Folder, then Start Scraping.', 'success');
+            }
+            return;
+        }
+
         mode = 'download';
         rootHandle = null;
         picked = [];
-        const files = Array.from(event.target.files || []);
-        const hentai = libraryKind() === 'hentai';
-        let folderLabel = '';
         files.forEach((file) => {
             const relative = file.webkitRelativePath || file.name;
             const parts = relative.split('/').filter(Boolean);
-            if (!folderLabel && parts.length > 1) {
-                folderLabel = parts[0];
-            }
             const code = extractJavCode(file.name);
             let parentName = parts.length > 1 ? parts[parts.length - 2] : file.name;
             if (hentai && /^Season \d+$/i.test(parentName) && parts.length >= 3) {
@@ -1162,7 +1213,7 @@
             if (!button) {
                 return;
             }
-            button.innerHTML = '<i class="fas fa-laptop"></i> Choose folder on this device';
+            button.innerHTML = '<i class="fas fa-folder-open"></i> Choose folder';
             button.addEventListener('click', choose);
         },
         run: run,

@@ -53,27 +53,24 @@ async function setupFolderButton() {
         const response = await fetch('/api/capabilities');
         const data = await response.json();
         serverHasLibrary = Boolean(data.local_files);
+        window.serverHasLibrary = serverHasLibrary;
         if (data.library_root && !document.getElementById('folderPath').value) {
             document.getElementById('folderPath').placeholder = data.library_root;
         }
     } catch (error) {
         serverHasLibrary = false;
+        window.serverHasLibrary = false;
     }
-    if (serverHasLibrary) {
-        // QNAP: type a container path and Scan — no upload, no folder modal.
-        if (button) {
-            button.hidden = true;
-        }
-        if (help) {
-            help.innerHTML = 'Type the folder path on the NAS (inside the container), usually <code>/library/jav</code> or <code>/library/hentai</code>. Scan and Start write files there.';
-        }
+    if (!button || !window.clientFolder || typeof window.clientFolder.bindChooser !== 'function') {
         return;
     }
-    if (button && window.clientFolder && typeof window.clientFolder.bindChooser === 'function') {
-        button.hidden = false;
-        window.clientFolder.bindChooser(button);
-        if (help) {
-            help.textContent = 'Choose a folder on this computer. Chrome or Edge can write into it; otherwise you get a zip download.';
+    button.hidden = false;
+    window.clientFolder.bindChooser(button);
+    if (help) {
+        if (serverHasLibrary) {
+            help.innerHTML = 'Choose folder opens the system file browser. Then confirm the NAS path (e.g. <code>/library/hentai/…</code>) so Scan/Start write in place — nothing is uploaded.';
+        } else {
+            help.textContent = 'Choose folder opens the system file browser. Chrome or Edge can write into that folder; otherwise you get a zip download.';
         }
     }
 }

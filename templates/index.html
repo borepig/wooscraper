@@ -27,10 +27,10 @@
                             <div class="input-group mb-2">
                                 <input type="text" class="form-control bg-dark text-light" id="folderPath" placeholder="/library/hentai">
                             </div>
-                            <p class="text-muted small" id="folderHelp">On the NAS this is the folder inside the container, usually <code>/library/jav</code> or <code>/library/hentai</code>.</p>
-                            <button class="btn btn-outline-info w-100 mb-2" id="chooseFolderBtn" type="button" hidden>
-                                <i class="fas fa-laptop"></i> Choose folder on this device
+                            <button class="btn btn-outline-info w-100 mb-2" id="chooseFolderBtn" type="button">
+                                <i class="fas fa-folder-open"></i> Choose folder
                             </button>
+                            <p class="text-muted small" id="folderHelp">Use Choose folder for the system file browser, or type a path like <code>/library/jav</code> or <code>/library/hentai</code>.</p>
                             <input id="clientFilePicker" type="file" multiple webkitdirectory directory accept="video/*,.mp4,.mkv,.avi,.wmv,.mov" hidden>
                             <button class="btn btn-primary w-100 mb-2" onclick="scanFolder()">
                                 <i class="fas fa-search"></i> Scan Folder
