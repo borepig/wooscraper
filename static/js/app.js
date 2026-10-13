@@ -67,11 +67,27 @@ async function setupFolderButton() {
     if (!button) {
         return;
     }
+    const goBtn = document.getElementById('browseGoBtn');
+    const pathInput = document.getElementById('browsePathInput');
+    if (goBtn) {
+        goBtn.addEventListener('click', () => {
+            const typed = (pathInput && pathInput.value || '').trim();
+            loadBrowsePath(typed);
+        });
+    }
+    if (pathInput) {
+        pathInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                loadBrowsePath((pathInput.value || '').trim());
+            }
+        });
+    }
     if (serverHasLibrary) {
         // QNAP / local server: pick a folder the server can write into.
         button.innerHTML = '<i class="fas fa-folder-open"></i> Choose folder';
         if (help) {
-            help.textContent = 'Pick a folder on the NAS (for example /library/hentai/…). Scan and Start write files there — nothing is uploaded from your PC.';
+            help.textContent = 'Type any server path above, or browse. Scan and Start write into that folder — nothing is uploaded.';
         }
         button.addEventListener('click', openServerFolderBrowser);
     } else if (window.clientFolder && typeof window.clientFolder.bindChooser === 'function') {
@@ -85,13 +101,17 @@ async function setupFolderButton() {
 
 async function openServerFolderBrowser() {
     const start = (document.getElementById('folderPath').value || '').trim();
+    const pathInput = document.getElementById('browsePathInput');
+    if (pathInput) {
+        pathInput.value = start;
+    }
     await loadBrowsePath(start);
     bootstrap.Modal.getOrCreateInstance(document.getElementById('folderModal')).show();
 }
 
 async function loadBrowsePath(path) {
     const list = document.getElementById('browseFolderList');
-    const label = document.getElementById('browseCurrentPath');
+    const pathInput = document.getElementById('browsePathInput');
     if (list) {
         list.innerHTML = '<div class="list-group-item bg-dark text-muted">Loading…</div>';
     }
@@ -106,8 +126,8 @@ async function loadBrowsePath(path) {
         return;
     }
     browsePath = data.path || '';
-    if (label) {
-        label.textContent = browsePath;
+    if (pathInput) {
+        pathInput.value = browsePath;
     }
     if (!list) {
         return;
@@ -791,13 +811,7 @@ function addPathSuggestions() {
         '/home/joe/Downloads'
     ];
 
-    folderPathInput.placeholder = 'Folder on the server, for example /library';
-    
-    // Add a small help text below the input
-    const helpText = document.createElement('small');
-    helpText.className = 'text-muted mt-1 d-block';
-            helpText.innerHTML = '💡 Tip: Use absolute paths like <code>/home/user/videos</code>';
-    folderPathInput.parentNode.appendChild(helpText);
+    folderPathInput.placeholder = 'Any folder path the server can read, e.g. /library/hentai';
 }
 
 // Handle Enter key in folder path input

@@ -25,12 +25,12 @@
                         </div>
                         <div class="card-body">
                             <div class="input-group mb-2">
-                                <input type="text" class="form-control bg-dark text-light" id="folderPath" placeholder="/library/hentai">
+                                <input type="text" class="form-control bg-dark text-light" id="folderPath" placeholder="/library/hentai/…">
                             </div>
                             <button class="btn btn-outline-info w-100 mb-2" id="chooseFolderBtn" type="button">
                                 <i class="fas fa-folder-open"></i> Choose folder
                             </button>
-                            <p class="text-muted small" id="folderHelp">Pick a folder on the NAS. Scraping writes NFO, covers, and trailers into that folder.</p>
+                            <p class="text-muted small" id="folderHelp">Type any server path above, or browse. Scan and Start write into that folder — nothing is uploaded.</p>
                             <input id="clientFilePicker" type="file" multiple webkitdirectory directory accept="video/*,.mp4,.mkv,.avi,.wmv,.mov" hidden>
                             <button class="btn btn-primary w-100 mb-2" onclick="scanFolder()">
                                 <i class="fas fa-search"></i> Scan Folder
@@ -214,7 +214,10 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small mb-2" id="browseCurrentPath"></p>
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control bg-dark text-light" id="browsePathInput" placeholder="/library/hentai">
+                        <button type="button" class="btn btn-outline-light" id="browseGoBtn">Go</button>
+                    </div>
                     <div class="list-group list-group-flush" id="browseFolderList"></div>
                 </div>
                 <div class="modal-footer">

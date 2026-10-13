@@ -924,39 +924,32 @@ def capabilities():
     })
 
 
-def _browse_root() -> Path:
+def _browse_default() -> str:
     root = (os.environ.get('LIBRARY_ROOT') or '').strip() or '/library'
-    return Path(root).resolve()
-
-
-def _under_library(path: Path) -> bool:
-    root = _browse_root()
-    try:
-        resolved = path.resolve()
-        resolved.relative_to(root)
-        return True
-    except (OSError, ValueError):
-        return False
+    return root
 
 
 @app.route('/api/browse')
 def browse_library():
-    """List folders on the NAS so the page can set the path box."""
+    """List folders on the server so the page can set the path box.
+
+    Any readable directory is fine — LIBRARY_ROOT is only the empty default,
+    not a hard limit. Scan/Start already accept whatever path you type.
+    """
     if HOSTED:
         return jsonify({'error': 'Not available'}), 400
-    root = _browse_root()
-    if not root.is_dir():
-        return jsonify({'error': f'Library root missing: {root}'}), 404
-    requested = (request.args.get('path') or str(root)).strip() or str(root)
+    requested = (request.args.get('path') or '').strip() or _browse_default()
     current = Path(requested)
-    if not _under_library(current) or not current.is_dir():
-        current = root
     try:
         current = current.resolve()
     except OSError:
         return jsonify({'error': 'Cannot open that folder'}), 400
+    if not current.is_dir():
+        return jsonify({'error': f'Not a folder: {current}'}), 404
+    if not os.access(current, os.R_OK):
+        return jsonify({'error': f'Cannot read: {current}'}), 403
     parent = None
-    if current != root and _under_library(current.parent):
+    if current.parent != current:
         parent = str(current.parent)
     entries = []
     try:
