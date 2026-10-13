@@ -12,19 +12,14 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN chmod +x docker-entrypoint.sh \
-    && mkdir -p /app/certs \
-    && openssl req -x509 -newkey rsa:2048 \
-        -keyout /app/certs/key.pem -out /app/certs/cert.pem \
-        -days 3650 -nodes -subj '/CN=wooscraper' \
-    && chmod -R a+rX /app/certs
+RUN chmod +x docker-entrypoint.sh
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     LIBRARY_ROOT=/library \
     PORT=5000 \
     HTTPS_PORT=5443 \
-    CERT_DIR=/app/certs
+    CERT_DIR=/tmp/wooscraper-certs
 
 EXPOSE 5000 5443
 VOLUME ["/library"]
