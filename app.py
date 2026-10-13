@@ -913,10 +913,66 @@ def _present_lookup(metadata, media_server='plex'):
 @app.route('/api/capabilities')
 def capabilities():
     """Tell the page which tools this process can actually perform."""
+    library_root = (os.environ.get('LIBRARY_ROOT') or '').strip()
+    if not library_root and not HOSTED:
+        library_root = '/library'
     return jsonify({
         'hosted': HOSTED,
         'local_files': not HOSTED,
+        'library_root': library_root if not HOSTED else '',
         'version': __version__,
+    })
+
+
+def _browse_root() -> Path:
+    root = (os.environ.get('LIBRARY_ROOT') or '').strip() or '/library'
+    return Path(root).resolve()
+
+
+def _under_library(path: Path) -> bool:
+    root = _browse_root()
+    try:
+        resolved = path.resolve()
+        resolved.relative_to(root)
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+@app.route('/api/browse')
+def browse_library():
+    """List folders on the NAS so the page can set the path box."""
+    if HOSTED:
+        return jsonify({'error': 'Not available'}), 400
+    root = _browse_root()
+    if not root.is_dir():
+        return jsonify({'error': f'Library root missing: {root}'}), 404
+    requested = (request.args.get('path') or str(root)).strip() or str(root)
+    current = Path(requested)
+    if not _under_library(current) or not current.is_dir():
+        current = root
+    try:
+        current = current.resolve()
+    except OSError:
+        return jsonify({'error': 'Cannot open that folder'}), 400
+    parent = None
+    if current != root and _under_library(current.parent):
+        parent = str(current.parent)
+    entries = []
+    try:
+        for item in sorted(current.iterdir(), key=lambda path: path.name.casefold()):
+            if not item.is_dir():
+                continue
+            if item.name.startswith('.') or item.name.startswith('@'):
+                continue
+            entries.append({'name': item.name, 'path': str(item)})
+    except OSError as error:
+        return jsonify({'error': str(error)}), 400
+    return jsonify({
+        'success': True,
+        'path': str(current),
+        'parent': parent,
+        'entries': entries,
     })
 
 

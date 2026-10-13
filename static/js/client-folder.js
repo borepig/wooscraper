@@ -44,17 +44,11 @@
         return typeof window.showDirectoryPicker === 'function';
     }
 
-    function setHelp() {
-        const help = document.getElementById('clientFolderHelp');
-        const button = document.getElementById('chooseDeviceFolder');
-        if (!help || !button) {
-            return;
-        }
-        if (canWriteFolder()) {
-            help.textContent = 'Choose folder on this device saves NFO files and covers into that folder. Windows and Ubuntu need Chrome or Edge. The path box above is only for the computer running the server.';
-        } else {
-            help.textContent = 'Choose a folder of videos on this device. Start Scraping downloads a zip of NFO files and covers for you to save. The path box above is for folders on the NAS (/library/...).';
-        }
+    function clearSelection() {
+        mode = null;
+        rootHandle = null;
+        picked = [];
+        cancelled = false;
     }
 
     async function listDirectory(dirHandle, parentParts) {
@@ -1151,20 +1145,25 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        setHelp();
-        const button = document.getElementById('chooseDeviceFolder');
         const input = document.getElementById('clientFilePicker');
-        if (button) {
-            button.addEventListener('click', choose);
-        }
         if (input) {
             input.addEventListener('change', onFileInput);
         }
+        // On the NAS, app.js owns the Choose folder button (server paths).
+        // Elsewhere bindChooser wires the browser folder picker.
     });
 
     window.clientFolder = {
         isActive: function () {
             return Boolean(mode && picked.length);
+        },
+        clear: clearSelection,
+        bindChooser: function (button) {
+            if (!button) {
+                return;
+            }
+            button.innerHTML = '<i class="fas fa-laptop"></i> Choose folder on this device';
+            button.addEventListener('click', choose);
         },
         run: run,
         cancel: function () {

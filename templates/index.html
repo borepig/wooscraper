@@ -25,13 +25,12 @@
                         </div>
                         <div class="card-body">
                             <div class="input-group mb-2">
-                                <input type="text" class="form-control bg-dark text-light" id="folderPath" placeholder="/library">
+                                <input type="text" class="form-control bg-dark text-light" id="folderPath" placeholder="/library/hentai">
                             </div>
-                            <p class="text-muted small">On the NAS this is the folder inside the container, usually <code>/library</code>.</p>
-                            <button class="btn btn-outline-info w-100 mb-2" id="chooseDeviceFolder" type="button">
-                                <i class="fas fa-laptop"></i> Choose folder on this device
+                            <button class="btn btn-outline-info w-100 mb-2" id="chooseFolderBtn" type="button">
+                                <i class="fas fa-folder-open"></i> Choose folder
                             </button>
-                            <p class="text-muted small" id="clientFolderHelp">The path box is read by the computer running the server. This button uses the folder on the device you are using.</p>
+                            <p class="text-muted small" id="folderHelp">Pick a folder on the NAS. Scraping writes NFO, covers, and trailers into that folder.</p>
                             <input id="clientFilePicker" type="file" multiple webkitdirectory directory accept="video/*,.mp4,.mkv,.avi,.wmv,.mov" hidden>
                             <button class="btn btn-primary w-100 mb-2" onclick="scanFolder()">
                                 <i class="fas fa-search"></i> Scan Folder
@@ -206,28 +205,21 @@
         </div>
     </div>
     
-    <!-- Modal for folder browser -->
+    <!-- Folder picker: NAS paths when the server has the files -->
     <div class="modal fade" id="folderModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content bg-dark text-light">
                 <div class="modal-header">
-                    <h5 class="modal-title">Select Folder</h5>
+                    <h5 class="modal-title">Choose folder</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Note:</strong> Due to browser security restrictions, you'll need to enter the full absolute path manually after selecting a folder.
-                    </div>
-                    <label for="folderInput" class="form-label">Select any file from the folder:</label>
-                    <input type="file" class="form-control" id="folderInput" webkitdirectory directory multiple>
-                    <small class="text-muted">
-                        This will help identify the folder name, then you'll enter the full path.
-                    </small>
+                    <p class="text-muted small mb-2" id="browseCurrentPath"></p>
+                    <div class="list-group list-group-flush" id="browseFolderList"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="selectFolder()">Select</button>
+                    <button type="button" class="btn btn-primary" id="browseUseFolderBtn">Use this folder</button>
                 </div>
             </div>
         </div>
