@@ -17,12 +17,17 @@ from app import app
 
 
 def _ensure_certs(cert_dir: Path) -> tuple[Path, Path]:
-    cert_dir.mkdir(parents=True, exist_ok=True)
     cert = cert_dir / 'cert.pem'
     key = cert_dir / 'key.pem'
     if cert.is_file() and key.is_file():
         return cert, key
-    # Prefer openssl when present; otherwise skip HTTPS.
+    # Image build should have created these; fall back to /tmp if needed.
+    fallback = Path('/tmp/wooscraper-certs')
+    fallback.mkdir(parents=True, exist_ok=True)
+    cert = fallback / 'cert.pem'
+    key = fallback / 'key.pem'
+    if cert.is_file() and key.is_file():
+        return cert, key
     import subprocess
 
     subprocess.run(
