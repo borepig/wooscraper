@@ -629,11 +629,18 @@ def run_scraping_job(folder_path, ui_settings):
                                     logging.error(f"❌ Failed to save portrait {portrait_path}")
                                 else:
                                     logging.info(f"✅ Saved portrait {portrait_path} ({portrait_path.stat().st_size} bytes)")
+                        elif not ui_settings.get('download_cover', True):
+                            for item in portraits:
+                                item['saved'] = False
 
+                        # Trailer download is independent of cover/actor settings.
+                        # Plex uses actor=url, so nesting this under local portraits
+                        # skipped every JAV trailer when Media server was Plex.
+                        if not auditing and ui_settings.get('download_trailer', True):
                             trailer_url = (metadata.get('detailed_metadata') or {}).get('trailer_url')
                             trailer_path = output_folder / 'Trailers' / 'Preview.mp4'
                             segments = (metadata.get('detailed_metadata') or {}).get('trailer_segments') or []
-                            if ui_settings.get('download_trailer', True) and (segments or trailer_url):
+                            if segments or trailer_url:
                                 update_job_status(message=f'🎬 Downloading trailer for {jav_code}...')
                                 saved_name = ''
                                 if segments:
@@ -645,9 +652,8 @@ def run_scraping_job(folder_path, ui_settings):
                                     logging.info(f"✅ Saved trailer {output_folder / saved_name}")
                                 else:
                                     logging.warning(f"⚠️ Trailer file was not saved; movie.nfo will keep the preview address")
-                        elif not ui_settings.get('download_cover', True):
-                            for item in portraits:
-                                item['saved'] = False
+                            else:
+                                logging.info(f"ℹ️ No trailer published for {jav_code}")
 
                         update_job_status(message=f'📄 Creating NFO file for {jav_code}...')
                         if auditing and not ui_settings.get('create_nfo', True):
