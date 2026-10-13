@@ -126,7 +126,7 @@
             ? current
             : '/library/' + library + (folderLabel ? '/' + folderLabel : '');
         const message = folderLabel
-            ? 'You selected “‘ + folderLabel + '”.\n\nEnter the path on the NAS for that folder so scraping writes there (not an upload):'
+            ? 'You selected "' + folderLabel + '".\n\nEnter the path on the NAS for that folder so scraping writes there (not an upload):'
             : 'Enter the path on the NAS for the folder you selected:';
         const fullPath = window.prompt(message, suggested);
         if (!fullPath || !fullPath.trim()) {
@@ -135,20 +135,57 @@
         return fullPath.trim();
     }
 
+    function applyNasPath(fullPath) {
+        clearSelection();
+        const path = document.getElementById('folderPath');
+        if (path) {
+            path.value = fullPath;
+        }
+        if (typeof currentFolder !== 'undefined') {
+            currentFolder = fullPath;
+        }
+        try {
+            localStorage.setItem('lastFolderPath', fullPath);
+        } catch (error) {
+            /* ignore */
+        }
+        if (typeof showNotification === 'function') {
+            showNotification('Folder path set: ' + fullPath + '. Click Scan Folder, then Start Scraping.', 'success');
+        }
+    }
+
     async function choose() {
         cancelled = false;
         try {
-            // Prefer the real system folder picker with write access when the browser allows it.
-            if (canWriteFolder() && window.isSecureContext) {
+            // Real OS folder picker (no "upload to this site" prompt). Needs HTTPS.
+            if (canWriteFolder()) {
+                let pickedHandle = null;
                 try {
-                    rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                    pickedHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
                 } catch (error) {
                     if (error && error.name === 'AbortError') {
+                        return;
+                    }
+                    if (window.serverHasLibrary) {
+                        const fullPath = confirmNasPath('');
+                        if (fullPath) {
+                            applyNasPath(fullPath);
+                        }
                         return;
                     }
                     document.getElementById('clientFilePicker').click();
                     return;
                 }
+                // On the NAS app, confirm the container path and scrape on the server
+                // so files land in /library — do not upload the picked files.
+                if (window.serverHasLibrary) {
+                    const fullPath = confirmNasPath(pickedHandle.name || '');
+                    if (fullPath) {
+                        applyNasPath(fullPath);
+                    }
+                    return;
+                }
+                rootHandle = pickedHandle;
                 mode = 'write';
                 picked = await listDirectory(rootHandle, []);
                 showPicked();
@@ -160,7 +197,15 @@
                 }
                 return;
             }
-            // Same system folder dialog via <input webkitdirectory>.
+            // No File System Access API: on the NAS never use <input type=file> —
+            // Chrome shows "Upload N files to this site?" which is the wrong UX.
+            if (window.serverHasLibrary) {
+                const fullPath = confirmNasPath('');
+                if (fullPath) {
+                    applyNasPath(fullPath);
+                }
+                return;
+            }
             document.getElementById('clientFilePicker').click();
         } catch (error) {
             if (error && error.name === 'AbortError') {
@@ -173,36 +218,10 @@
     }
 
     function onFileInput(event) {
+        // Hosted / no server disk only. NAS Choose folder never clicks this input.
         const files = Array.from(event.target.files || []);
         const folderLabel = folderLabelFromFiles(files);
         const hentai = libraryKind() === 'hentai';
-
-        // On the NAS app: system picker only identifies the folder. Scraping uses the
-        // server path so files are written in place — never upload/zip.
-        if (window.serverHasLibrary) {
-            clearSelection();
-            const fullPath = confirmNasPath(folderLabel);
-            event.target.value = '';
-            if (!fullPath) {
-                return;
-            }
-            const path = document.getElementById('folderPath');
-            if (path) {
-                path.value = fullPath;
-            }
-            if (typeof currentFolder !== 'undefined') {
-                currentFolder = fullPath;
-            }
-            try {
-                localStorage.setItem('lastFolderPath', fullPath);
-            } catch (error) {
-                /* ignore */
-            }
-            if (typeof showNotification === 'function') {
-                showNotification('Folder path set: ' + fullPath + '. Click Scan Folder, then Start Scraping.', 'success');
-            }
-            return;
-        }
 
         mode = 'download';
         rootHandle = null;

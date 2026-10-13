@@ -68,7 +68,12 @@ async function setupFolderButton() {
     window.clientFolder.bindChooser(button);
     if (help) {
         if (serverHasLibrary) {
-            help.innerHTML = 'Choose folder opens the system file browser. Then confirm the NAS path (e.g. <code>/library/hentai/…</code>) so Scan/Start write in place — nothing is uploaded.';
+            if (window.isSecureContext && typeof window.showDirectoryPicker === 'function') {
+                help.innerHTML = 'Choose folder opens the system file browser, then asks you to confirm the NAS path (e.g. <code>/library/hentai/…</code>). Nothing is uploaded.';
+            } else {
+                const httpsUrl = 'https://' + window.location.hostname + ':5443' + window.location.pathname;
+                help.innerHTML = 'Choose folder asks for the NAS path (e.g. <code>/library/hentai/…</code>). For the system file browser, open <a href="' + httpsUrl + '" class="link-info">' + httpsUrl + '</a> (accept the certificate warning once).';
+            }
         } else {
             help.textContent = 'Choose folder opens the system file browser. Chrome or Edge can write into that folder; otherwise you get a zip download.';
         }
