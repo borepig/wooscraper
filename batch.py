@@ -14,11 +14,15 @@ from app import _get_job_status_copy, reset_job_status, run_scraping_job, update
 
 
 def _settings(folder, args):
+    # Hentai audit still organizes into Season 01; JAV audit stays artwork-only.
+    organize = bool(args.organize)
+    if args.audit and args.library != 'hentai':
+        organize = False
     return {
         'create_nfo': not args.no_nfo,
         'download_cover': not args.no_cover,
         'download_trailer': not args.no_trailer,
-        'organize_files': bool(args.organize) and not args.audit,
+        'organize_files': organize,
         'audit': bool(args.audit),
         'media_server': args.media_server,
         'library': args.library,

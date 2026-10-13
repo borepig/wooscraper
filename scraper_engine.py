@@ -47,6 +47,14 @@ def image_request_headers(url: str) -> dict:
         referer = 'https://myanimelist.net/'
     elif 'anilist.co' in host:
         referer = 'https://anilist.co/'
+    elif host.endswith('getchu.com'):
+        referer = 'https://www.getchu.com/'
+    elif host.endswith('duga.jp'):
+        referer = 'https://duga.jp/'
+    elif host.endswith('hnt.co.jp'):
+        referer = 'https://anime.hnt.co.jp/'
+    elif host.endswith('anidb.net'):
+        referer = 'https://anidb.net/'
     else:
         referer = 'https://jav.guru/'
     return {

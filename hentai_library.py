@@ -18,7 +18,15 @@ import time
 import urllib.parse
 from pathlib import Path
 
-from scraper_engine import TRAILER_MAX_BYTES, artwork_profile, copy_bytes_as, image_request_headers
+from scraper_engine import (
+    TRAILER_MAX_BYTES,
+    artwork_profile,
+    copy_bytes_as,
+    image_dimensions,
+    image_pixels,
+    image_request_headers,
+    prune_other_artwork,
+)
 
 VIDEO_EXTENSIONS = {'.mp4', '.mkv', '.avi', '.wmv', '.mov'}
 SUBTITLE_EXTENSIONS = {'.ass', '.ssa', '.srt', '.sub', '.idx'}
@@ -166,16 +174,16 @@ def scan_for_ui(folder_path):
     return rows
 
 
-def _ipv4_get(url, headers, limit):
+def _ipv4_get(url, headers, limit, timeout=20):
     """GET over IPv4. Several of these hosts do not answer on IPv6 from this network."""
     parsed = urllib.parse.urlparse(url)
     infos = socket.getaddrinfo(parsed.hostname, 443, socket.AF_INET, socket.SOCK_STREAM)
     if not infos:
         raise OSError('no IPv4 address')
     context = ssl.create_default_context()
-    connection = http.client.HTTPSConnection(parsed.hostname, 443, timeout=20, context=context)
+    connection = http.client.HTTPSConnection(parsed.hostname, 443, timeout=timeout, context=context)
     connection.sock = context.wrap_socket(
-        socket.create_connection(infos[0][4], 20),
+        socket.create_connection(infos[0][4], timeout),
         server_hostname=parsed.hostname,
     )
     path = parsed.path + (('?' + parsed.query) if parsed.query else '')
@@ -218,6 +226,7 @@ query ($search: String, $adult: Boolean) {
   Page(perPage: 8) {
     media(search: $search, type: ANIME, isAdult: $adult) {
       id
+      idMal
       title { romaji english native }
       synonyms
       description(asHtml: false)
@@ -234,6 +243,20 @@ query ($search: String, $adult: Boolean) {
   }
 }
 '''
+
+# Remote artwork hosts we are allowed to download from.
+_ART_HOSTS = (
+    'anilist.co',
+    'myanimelist.net',
+    'anidb.net',
+    'getchu.com',
+    'duga.jp',
+    'dmm.co.jp',
+    'hnt.co.jp',
+)
+
+# Good enough to skip remaining remote poster sources (roughly 500x600).
+_GOOD_POSTER_PIXELS = 300_000
 
 
 def _anilist_search(title, adult):
@@ -300,20 +323,24 @@ def lookup_show(title, studio=''):
         return _SHOW_CACHE[key]
     show = {
         'catalog_id': None,
+        'mal_id': None,
         'title': title,
         'original': title,
         'year': None,
         'plot': '',
         'score': None,
-        'votes': None,
+        'romaji': None,
         'studio': studio,
         'poster_url': '',
         'picture_urls': [],
+        'cover_candidates': [],
+        '_covers_ready': False,
         'trailer_url': '',
         'episodes': {},
         'characters': [],
         'matched': False,
     }
+
     hits = _anilist_search(title, True) or _anilist_search(title, False)
     ranked = sorted(hits, key=lambda hit: _score_hit(hit, title, studio), reverse=True)
     best = ranked[0] if ranked and _score_hit(ranked[0], title, studio) >= 80 else None
@@ -321,6 +348,7 @@ def lookup_show(title, studio=''):
         names = best.get('title') or {}
         show['matched'] = True
         show['catalog_id'] = best.get('id')
+        show['mal_id'] = best.get('idMal')
         show['title'] = names.get('english') or names.get('romaji') or title
         show['romaji'] = names.get('romaji') or ''
         show['original'] = names.get('native') or title
@@ -445,8 +473,11 @@ def episode_nfo(show, release):
 
 def present_lookup(folder_name, filename, media_server='plex'):
     """One file, for the page that saves into a folder the server cannot see."""
-    series = parse_release(folder_name, folder_name)
-    parsed = parse_release(folder_name, filename)
+    label = folder_name
+    if re.fullmatch(r'Season \d+', folder_name or '', flags=re.I):
+        label = folder_name
+    series = parse_release(label, label)
+    parsed = parse_release(label, filename)
     parsed['title'] = series['title'] or parsed['title']
     parsed['studio'] = series['studio'] or parsed['studio']
     if not parsed['episode_start']:
@@ -456,7 +487,9 @@ def present_lookup(folder_name, filename, media_server='plex'):
     folder = show_folder_name(show)
     suffix = Path(filename).suffix or '.mkv'
     profile = artwork_profile(media_server)
-    fanart = show['picture_urls'][0] if show['picture_urls'] else show['poster_url']
+    # Keep present_lookup fast: AniList URLs only. Catalog covers run on server process/audit.
+    cover = show.get('poster_url') or ''
+    fanart = (show['picture_urls'][0] if show.get('picture_urls') else '') or cover
     return {
         'found': True,
         'library': 'hentai',
@@ -469,7 +502,7 @@ def present_lookup(folder_name, filename, media_server='plex'):
         'episode_file': episode_filename(folder, parsed['episode_start'], parsed['episode_end'], suffix),
         'show_nfo': tvshow_nfo(show),
         'episode_nfo': episode_nfo(show, parsed),
-        'cover_url': show['poster_url'],
+        'cover_url': cover,
         'fanart_url': fanart,
         'trailer_url': show['trailer_url'],
         'jav_code': folder,
@@ -477,7 +510,7 @@ def present_lookup(folder_name, filename, media_server='plex'):
             'posters': list(profile['posters']),
             'backgrounds': list(profile['backgrounds']),
             'actor_local': False,
-            'remove': [],
+            'remove': _artwork_remove_names(media_server),
             'remove_actors': False,
         },
     }
@@ -767,16 +800,383 @@ def _download_show_trailer(show_dir, show):
     return 'no trailer published'
 
 
+
+def _art_host_ok(url):
+    host = (urllib.parse.urlparse(url).hostname or '').lower()
+    return any(host.endswith(suffix) for suffix in _ART_HOSTS)
+
+
+def _abs_url(base, url):
+    if not url:
+        return ''
+    url = html.unescape(url).strip()
+    if url.startswith('//'):
+        url = 'https:' + url
+    elif url.startswith('/'):
+        url = urllib.parse.urljoin(base, url)
+    if url.startswith('http://'):
+        url = 'https://' + url[7:]
+    return url if url.startswith('https://') else ''
+
+
+def _unique_urls(urls):
+    seen = set()
+    out = []
+    for url in urls:
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        out.append(url)
+    return out
+
+
+def _getchu_covers(title):
+    """Package images from Getchu adult-anime search."""
+    try:
+        query = urllib.parse.quote(title.encode('euc-jp'))
+    except UnicodeEncodeError:
+        return []
+    _COOKIES.setdefault('getchu.com', {})['getchu_adalt_flag'] = 'getchu.com'
+    status, payload = _exchange(
+        'GET',
+        f'https://www.getchu.com/php/search.phtml?genre=anime_dvd&search_keyword={query}&gc=gc',
+    )
+    if status != 200:
+        return []
+    page = payload.decode('euc-jp', 'replace')
+    ids = []
+    for product_id, name in re.findall(r'soft\.phtml\?id=(\d+)" class="blueb">([^<]+)', page):
+        if product_id not in ids and _title_hit(title, name):
+            ids.append(product_id)
+    urls = []
+    for product_id in ids[:2]:
+        status, payload = _exchange('GET', f'https://www.getchu.com/soft.phtml?id={product_id}')
+        if status != 200:
+            continue
+        product = payload.decode('euc-jp', 'replace')
+        candidates = re.findall(
+            r'(?:src|href)="([^"]*(?:image\.getchu\.com|getchu\.com/[^"]+)[^"]*\.(?:jpe?g|png|webp)[^"]*)"',
+            product,
+            re.I,
+        )
+        if not candidates:
+            candidates = re.findall(
+                r'(?:src|href)="([^"]+\.(?:jpe?g|png|webp)[^"]*)"',
+                product,
+                re.I,
+            )
+        for raw in candidates:
+            url = _abs_url(f'https://www.getchu.com/soft.phtml?id={product_id}', raw)
+            low = url.lower()
+            if not url or 'banner' in low or 'logo' in low or 'button' in low:
+                continue
+            if 'package' in low or 'jacket' in low or 'image.getchu.com' in low or 'cover' in low:
+                urls.append(url)
+            elif url not in urls and len(urls) < 2:
+                urls.append(url)
+        if urls:
+            break
+    return _unique_urls(urls)
+
+
+def _duga_covers(title):
+    """Product package image from DUGA."""
+    try:
+        query = urllib.parse.quote(title.encode('cp932'))
+    except UnicodeEncodeError:
+        return []
+    page = _catalog_text('https://duga.jp/search/=/q=' + query + '/')
+    urls = []
+    for href, alt in re.findall(r'href="(/ppv/[^"]+/)"[\s\S]{0,700}?alt="([^"]+)"', page):
+        if not _title_hit(title, alt):
+            continue
+        product = _catalog_text('https://duga.jp' + href)
+        og = re.search(r'property="og:image"\s+content="([^"]+)"', product)
+        if not og:
+            og = re.search(r'content="([^"]+)"\s+property="og:image"', product)
+        if og:
+            urls.append(_abs_url('https://duga.jp/', og.group(1)))
+        for raw in re.findall(r'(?:src|href)="(https?://[^"]+\.(?:jpe?g|png)[^"]*)"', product, re.I):
+            low = raw.lower()
+            if 'thumb' in low or 'icon' in low or 'logo' in low:
+                continue
+            if 'jacket' in low or 'package' in low or 'll.jpg' in low or 'l.jpg' in low:
+                urls.append(raw)
+        break
+    return _unique_urls(urls)
+
+
+def _fanza_package_urls(content_id):
+    content_id = (content_id or '').strip().lower()
+    if not content_id or len(content_id) < 5:
+        return []
+    return [
+        f'https://awsimgsrc.dmm.co.jp/pics_dig/digital/video/{content_id}/{content_id}pl.jpg',
+        f'https://pics.dmm.co.jp/digital/video/{content_id}/{content_id}pl.jpg',
+        f'https://pics.dmm.co.jp/digital/video/{content_id}/{content_id}ps.jpg',
+    ]
+
+
+def _hnt_covers(title):
+    """HNT article art plus FANZA package URLs when a content id is present."""
+    page = _catalog_text('https://anime.hnt.co.jp/?' + urllib.parse.urlencode({'s': title}))
+    articles = []
+    for href, label in re.findall(r'href="(https://anime\.hnt\.co\.jp/\d+/)"[^>]*>(.*?)</a>', page, re.S):
+        label = html.unescape(re.sub(r'<[^>]+>|\s+', ' ', label)).strip()
+        if href not in articles and _title_hit(title, label):
+            articles.append(href)
+        if len(articles) >= 2:
+            break
+    urls = []
+    for href in articles:
+        article = _catalog_text(href)
+        article_id = re.search(r'hnt\.co\.jp/(\d+)/', href)
+        aid = article_id.group(1) if article_id else ''
+        # Prefer FANZA package art linked from the article; skip tiny site banners.
+        for content_id in re.findall(r'cid%3D([0-9a-z]{5,})|cid=([0-9a-z]{5,})', article, re.I):
+            cid = content_id[0] or content_id[1]
+            urls.extend(_fanza_package_urls(cid))
+            break
+        for raw in re.findall(r'(?:src|href|content)="(https?://[^"]+\.(?:jpe?g|png|webp)[^"]*)"', article, re.I):
+            low = raw.lower()
+            if 'cropped' in low or 'logo' in low or 'ranking' in low:
+                continue
+            if 'pics.dmm.co.jp' in low or 'awsimgsrc.dmm' in low:
+                urls.append(raw.split('.webp')[0] if raw.endswith('.webp') else raw)
+        if urls:
+            break
+    return _unique_urls(urls)
+
+
+def _mal_covers(show):
+    """MyAnimeList cover via Jikan when reachable; soft-fail on timeout."""
+    mal_id = show.get('mal_id')
+    endpoints = []
+    if mal_id:
+        endpoints.append(f'https://api.jikan.moe/v4/anime/{int(mal_id)}')
+    else:
+        for title in _show_names(show)[:2]:
+            endpoints.append(
+                'https://api.jikan.moe/v4/anime?'
+                + urllib.parse.urlencode({'q': title, 'limit': '5', 'sfw': 'false'})
+            )
+    wanted = _norm(show.get('original') or show.get('romaji') or show.get('title') or '')
+    for endpoint in endpoints:
+        try:
+            status, payload = _ipv4_get(
+                endpoint,
+                {'User-Agent': 'wooscraper', 'Accept': 'application/json'},
+                500_000,
+                timeout=6,
+            )
+        except Exception as error:
+            logging.warning('MAL cover lookup failed: %s', error)
+            return []
+        if status != 200:
+            continue
+        try:
+            data = json.loads(payload.decode('utf-8', 'replace'))
+        except Exception:
+            continue
+        if isinstance(data.get('data'), list):
+            rows = data['data']
+        elif isinstance(data.get('data'), dict):
+            rows = [data['data']]
+        else:
+            rows = []
+        for row in rows:
+            row_id = int(row.get('mal_id') or 0)
+            if mal_id and row_id and row_id != int(mal_id):
+                continue
+            if not mal_id and wanted:
+                titles = [row.get('title'), row.get('title_english'), row.get('title_japanese')]
+                for entry in row.get('titles') or []:
+                    titles.append(entry.get('title'))
+                if not any(_norm(name or '') == wanted or _title_hit(wanted, name or '') for name in titles if name):
+                    continue
+            images = ((row.get('images') or {}).get('jpg') or {})
+            urls = [images[key] for key in ('large_image_url', 'image_url') if images.get(key)]
+            if urls:
+                return _unique_urls(urls)
+    return []
+
+
+def _anidb_covers(title):
+    """AniDB main image when the HTML search is not behind a challenge page."""
+    page = _catalog_text(
+        'https://anidb.net/search/anime/?' + urllib.parse.urlencode({'adb.search': title, 'do.search': '1'})
+    )
+    if not page or 'Just a moment' in page or 'cf-browser-verification' in page:
+        return []
+    urls = []
+    for href, name in re.findall(r'href="(/anime/\d+)[^"]*"[^>]*>([^<]+)<', page):
+        if not _title_hit(title, html.unescape(name)):
+            continue
+        item = _catalog_text('https://anidb.net' + href)
+        if not item or 'Just a moment' in item:
+            continue
+        for raw in re.findall(r'(?:src|href)="(https?://cdn\.anidb\.net/images/main/[^"]+)"', item):
+            urls.append(raw)
+        if urls:
+            break
+    return _unique_urls(urls)
+
+
+def _cover_candidate_urls(show):
+    """Ranked remote poster URLs: Getchu, DUGA, HNT/FANZA, MAL, AniDB, then AniList."""
+    urls = []
+    for finder in (_getchu_covers, _duga_covers, _hnt_covers):
+        for title in _show_names(show)[:2]:
+            try:
+                found = finder(title)
+            except Exception as error:
+                logging.warning('Cover search failed for %s: %s', title, error)
+                found = []
+            for url in found:
+                if url not in urls:
+                    urls.append(url)
+            if found:
+                break
+    try:
+        for url in _mal_covers(show):
+            if url not in urls:
+                urls.append(url)
+    except Exception as error:
+        logging.warning('MAL cover search failed: %s', error)
+    try:
+        for title in _show_names(show)[:2]:
+            found = _anidb_covers(title)
+            for url in found:
+                if url not in urls:
+                    urls.append(url)
+            if found:
+                break
+    except Exception as error:
+        logging.warning('AniDB cover search failed: %s', error)
+    for url in show.get('picture_urls') or []:
+        if url and url not in urls:
+            urls.append(url)
+    if show.get('poster_url') and show['poster_url'] not in urls:
+        urls.append(show['poster_url'])
+    return urls
+
+
+def _ensure_cover_candidates(show):
+    if show.get('_covers_ready'):
+        return list(show.get('cover_candidates') or [])
+    show['cover_candidates'] = _cover_candidate_urls(show)
+    show['_covers_ready'] = True
+    return list(show['cover_candidates'])
+
+
+def _artwork_remove_names(media_server):
+    name = (media_server or 'plex').strip().lower()
+    if name == 'all':
+        return []
+    profile = artwork_profile(name)
+    keep = set(profile['posters']) | set(profile['backgrounds'])
+    return [
+        item for item in (
+            'poster.jpg', 'folder.jpg', 'cover.jpg',
+            'fanart.jpg', 'background.jpg', 'backdrop.jpg', 'art.jpg',
+        )
+        if item not in keep
+    ]
+
+
+def _local_images(*folders):
+    """Non-standard JPGs already on disk (release covers, not poster/background names)."""
+    reserved = {
+        'poster.jpg', 'folder.jpg', 'cover.jpg', 'fanart.jpg',
+        'background.jpg', 'backdrop.jpg', 'art.jpg',
+    }
+    found = []
+    seen = set()
+    for folder in folders:
+        if not folder:
+            continue
+        root = Path(folder)
+        if not root.is_dir():
+            continue
+        for path in root.iterdir():
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in IMAGE_EXTENSIONS:
+                continue
+            if path.name.startswith('.'):
+                continue
+            if path.name.lower() in reserved:
+                continue
+            if path.name.endswith('-thumb' + path.suffix):
+                continue
+            key = str(path.resolve())
+            if key in seen:
+                continue
+            seen.add(key)
+            found.append(path)
+        season = root / 'Season 01'
+        if season.is_dir() and season.resolve() != root.resolve():
+            for path in season.iterdir():
+                if not path.is_file() or path.suffix.lower() not in IMAGE_EXTENSIONS:
+                    continue
+                if path.name.startswith('.') or '-thumb' in path.stem:
+                    continue
+                key = str(path.resolve())
+                if key in seen:
+                    continue
+                seen.add(key)
+                found.append(path)
+    return found
+
+
+def _pick_best_image(paths, prefer='portrait'):
+    """Return the best path by pixel count. prefer: portrait, landscape, or any.
+
+    portrait/landscape return (None, -1) when nothing matches that shape so callers
+    can fall back to a larger overall image instead of a tiny AniList portrait.
+    """
+    best = None
+    best_pixels = -1
+    for path in paths:
+        width, height = image_dimensions(path)
+        pixels = width * height
+        if pixels <= 0:
+            continue
+        if prefer == 'portrait' and height < width:
+            continue
+        if prefer == 'landscape' and width <= height:
+            continue
+        if pixels > best_pixels:
+            best = path
+            best_pixels = pixels
+    return best, best_pixels
+
+
+def _replace_if_larger_file(source, dest):
+    """Copy source over dest when dest is missing or source has more pixels."""
+    source = Path(source)
+    dest = Path(dest)
+    if not source.is_file():
+        return False
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if not dest.exists() or image_pixels(source) > image_pixels(dest):
+        if source.resolve() != dest.resolve():
+            dest.write_bytes(source.read_bytes())
+        return True
+    return False
+
+
 def _download(url, dest):
     if not url or not url.startswith('https://'):
         return False
-    host = (urllib.parse.urlparse(url).hostname or '').lower()
-    if 'anilist.co' not in host:
+    if not _art_host_ok(url):
         return False
     try:
         status, payload = _ipv4_get(url, image_request_headers(url), 8_000_000)
-        if status != 200:
-            return False
+        if status not in (200, 206):
+            # Some CDNs return a tiny JPEG with a surprising status; reject tiny bodies.
+            if len(payload) < 5000 or payload[:2] != b'\xff\xd8':
+                return False
         if len(payload) < 1000:
             return False
         if payload[:2] not in (b'\xff\xd8', b'\x89P') and payload[:4] != b'RIFF':
@@ -789,52 +1189,169 @@ def _download(url, dest):
         return False
 
 
-def _save_artwork(show_dir, show, media_server):
+def _save_artwork(show_dir, show, media_server, source_dirs=None):
+    """Write poster/background using remote catalogs, local release art, then AniList."""
     profile = artwork_profile(media_server)
+    show_dir = Path(show_dir)
     poster_path = show_dir / profile['posters'][0]
     background_path = show_dir / profile['backgrounds'][0]
-    urls = [show.get('poster_url') or '']
-    urls.extend(show.get('picture_urls') or [])
-    saved = []
-    for url in urls:
-        if not url or url in saved:
-            continue
-        target = show_dir / f'.picture-{len(saved)}.jpg'
+    show_dir.mkdir(parents=True, exist_ok=True)
+    temps = []
+    remote_paths = []
+    candidates = _ensure_cover_candidates(show)
+    for index, url in enumerate(candidates):
+        target = show_dir / f'.picture-{index}.jpg'
         if _download(url, target):
-            saved.append(target)
-        if len(saved) >= 3:
-            break
-    if not saved:
-        return 'no poster published'
-    poster = saved[0]
-    background = saved[0]
-    try:
-        from PIL import Image
-        widest = -1
-        tallest = -1
-        for path in saved:
-            with Image.open(path) as image:
-                width, height = image.size
-            if width > widest:
-                widest = width
-                background = path
-            if height >= width and height > tallest:
-                tallest = height
-                poster = path
-    except Exception:
-        poster = saved[0]
-        background = saved[0]
-    poster_path.parent.mkdir(parents=True, exist_ok=True)
-    if poster != poster_path:
-        poster_path.write_bytes(poster.read_bytes())
-    if background != background_path:
-        background_path.write_bytes(background.read_bytes())
-    copy_bytes_as(poster_path, profile['posters'])
-    copy_bytes_as(background_path, profile['backgrounds'])
-    for path in saved:
-        if path.name.startswith('.picture-'):
+            temps.append(target)
+            width, height = image_dimensions(target)
+            pixels = width * height
+            if pixels < 40_000:
+                # Reject tiny banners / placeholders from catalogs.
+                continue
+            remote_paths.append(target)
+            if height >= width and pixels >= _GOOD_POSTER_PIXELS:
+                # Strong portrait already; skip slower remaining remotes.
+                break
+    local_paths = _local_images(show_dir, *(source_dirs or []))
+    poster_pool = list(remote_paths) + list(local_paths)
+    if poster_path.is_file():
+        poster_pool.append(poster_path)
+    portrait, portrait_pixels = _pick_best_image(poster_pool, prefer='portrait')
+    overall, overall_pixels = _pick_best_image(poster_pool, prefer='any')
+    # Keep a portrait only when it is genuinely large; otherwise prefer the biggest local art.
+    if portrait is not None and portrait_pixels >= _GOOD_POSTER_PIXELS:
+        poster, poster_pixels = portrait, portrait_pixels
+    elif portrait is not None and (overall is None or portrait_pixels >= overall_pixels):
+        poster, poster_pixels = portrait, portrait_pixels
+    else:
+        poster, poster_pixels = overall, overall_pixels
+    background_pool = list(local_paths) + list(remote_paths)
+    if background_path.is_file():
+        background_pool.append(background_path)
+    background, background_pixels = _pick_best_image(background_pool, prefer='landscape')
+    if background is None:
+        background, background_pixels = _pick_best_image(background_pool, prefer='any')
+    notes = []
+    if poster is not None and _replace_if_larger_file(poster, poster_path):
+        notes.append(f'poster {poster_pixels}px')
+    elif poster_path.is_file():
+        notes.append('poster kept')
+    else:
+        notes.append('no poster')
+    if background is not None and _replace_if_larger_file(background, background_path):
+        notes.append(f'background {background_pixels}px')
+    elif background_path.is_file():
+        notes.append('background kept')
+    else:
+        notes.append('no background')
+    if poster_path.is_file():
+        copy_bytes_as(poster_path, profile['posters'])
+    if background_path.is_file():
+        copy_bytes_as(background_path, profile['backgrounds'])
+    prune_other_artwork(show_dir, media_server)
+    for path in temps:
+        path.unlink(missing_ok=True)
+    return ', '.join(notes)
+
+
+def _stem_variants(stem):
+    """Release stems with and without trailing (1) duplicate markers."""
+    variants = [stem]
+    stripped = re.sub(r'\s*\(\d+\)$', '', stem).strip()
+    if stripped and stripped not in variants:
+        variants.append(stripped)
+    return variants
+
+
+def _promote_episode_thumbs(video_path, search_dirs):
+    """Move the best matching release JPG next to the episode as -thumb.jpg."""
+    video_path = Path(video_path)
+    if not video_path.is_file():
+        return []
+    thumb = video_path.with_name(video_path.stem + '-thumb.jpg')
+    candidates = []
+    stems = _stem_variants(video_path.stem)
+    # Also match original release stems that may still be in search_dirs.
+    for folder in search_dirs:
+        root = Path(folder)
+        if not root.is_dir():
+            continue
+        for path in root.iterdir():
+            if not path.is_file() or path.suffix.lower() not in IMAGE_EXTENSIONS:
+                continue
+            if path.name.startswith('.') or path.name.lower() in {
+                'poster.jpg', 'folder.jpg', 'cover.jpg', 'fanart.jpg',
+                'background.jpg', 'backdrop.jpg', 'art.jpg',
+            }:
+                continue
+            if path.name.endswith('-thumb' + path.suffix):
+                continue
+            image_stem = path.stem
+            base = re.sub(r'\s*\(\d+\)$', '', image_stem).strip()
+            if any(image_stem == stem or base == stem or image_stem.startswith(stem) for stem in stems):
+                candidates.append(path)
+            # When video was already renamed, match by original sibling naming is harder;
+            # accept any leftover non-reserved JPG only when this video's folder has exactly one.
+    if not candidates:
+        return []
+    best, _ = _pick_best_image(candidates, prefer='any')
+    if best is None:
+        return []
+    removed = []
+    _replace_if_larger_file(best, thumb)
+    for path in candidates:
+        if path.resolve() == thumb.resolve():
+            continue
+        if path.resolve() == best.resolve() or image_pixels(path) <= image_pixels(best):
+            # Drop duplicates and the source once promoted (unless it is already the thumb).
+            if path.resolve() != thumb.resolve():
+                path.unlink(missing_ok=True)
+                removed.append(path.name)
+    return removed
+
+
+def _cleanup_release_images(folders, keep_paths):
+    """Remove leftover release-named images after poster/background/thumbs are set."""
+    keep = {Path(path).resolve() for path in keep_paths if path}
+    reserved = {
+        'poster.jpg', 'folder.jpg', 'cover.jpg', 'fanart.jpg',
+        'background.jpg', 'backdrop.jpg', 'art.jpg',
+    }
+    removed = []
+    for folder in folders:
+        root = Path(folder)
+        if not root.is_dir():
+            continue
+        for path in list(root.iterdir()):
+            if not path.is_file() or path.suffix.lower() not in IMAGE_EXTENSIONS:
+                continue
+            if path.name.startswith('.'):
+                continue
+            if path.name.lower() in reserved:
+                continue
+            if path.stem.endswith('-thumb'):
+                continue
+            if path.resolve() in keep:
+                continue
             path.unlink(missing_ok=True)
-    return 'poster and background saved'
+            removed.append(path.name)
+    return removed
+
+
+def _series_key(folder_path, library_root):
+    """Group key for a video folder. Season 01 lives under the show folder."""
+    folder = Path(folder_path)
+    if re.fullmatch(r'Season \d+', folder.name, flags=re.I):
+        return str(folder.parent)
+    return str(folder)
+
+
+def _series_label(folder_path):
+    folder = Path(folder_path)
+    if re.fullmatch(r'Season \d+', folder.name, flags=re.I):
+        return folder.parent.name
+    return folder.name
+
 
 
 def _rename_only(source, dest):
@@ -869,6 +1386,27 @@ def _empty_dir(path):
         path.rmdir()
 
 
+def _purge_migrated_source(source_dir):
+    """After videos moved out, drop leftover artwork/NFO so the folder can go away."""
+    root = Path(source_dir)
+    if not root.is_dir():
+        return
+    leftovers = {
+        'poster.jpg', 'folder.jpg', 'cover.jpg', 'fanart.jpg',
+        'background.jpg', 'backdrop.jpg', 'art.jpg', 'tvshow.nfo',
+    }
+    for path in list(root.iterdir()):
+        if not path.is_file():
+            continue
+        name = path.name.lower()
+        if name in leftovers or path.suffix.lower() == '.nfo':
+            path.unlink(missing_ok=True)
+            continue
+        if path.suffix.lower() in IMAGE_EXTENSIONS and not path.stem.endswith('-thumb'):
+            path.unlink(missing_ok=True)
+    _empty_dir(root)
+
+
 def process_library(folder_path, settings, update, should_continue):
     """Write show and episode metadata. Rename videos only when organize is on."""
     library = Path(folder_path)
@@ -879,8 +1417,10 @@ def process_library(folder_path, settings, update, should_continue):
         return
     groups = {}
     for item in files:
-        groups.setdefault(item['folder'], []).append(item)
-    organize = bool(settings.get('organize_files', True)) and not settings.get('audit')
+        key = _series_key(item['folder'], library)
+        groups.setdefault(key, []).append(item)
+    auditing = bool(settings.get('audit'))
+    organize = bool(settings.get('organize_files', True))
     download_cover = bool(settings.get('download_cover', True))
     create_nfo = bool(settings.get('create_nfo', True))
     media_server = settings.get('media_server') or 'plex'
@@ -890,7 +1430,7 @@ def process_library(folder_path, settings, update, should_continue):
             update(message='Stopped')
             return
         folder_path_obj = Path(folder)
-        if settings.get('skip_complete'):
+        if settings.get('skip_complete') and not auditing:
             still = []
             for item in items:
                 if Path(item['file_path']).with_suffix('.nfo').is_file():
@@ -899,12 +1439,15 @@ def process_library(folder_path, settings, update, should_continue):
                     still.append(item)
             if not still:
                 if settings.get('download_trailer', True):
-                    series = parse_release(folder_path_obj.name, folder_path_obj.name)
+                    series = parse_release(_series_label(folder_path_obj), _series_label(folder_path_obj))
                     show = lookup_show(series['title'], series['studio'])
-                    note = _download_show_trailer(folder_path_obj, show)
+                    show_dir = folder_path_obj
+                    if re.fullmatch(r'Season \d+', folder_path_obj.name, flags=re.I):
+                        show_dir = folder_path_obj.parent
+                    note = _download_show_trailer(show_dir, show)
                     print(f'{show.get("title") or series["title"]}: {note}', flush=True)
                     if create_nfo and show.get('trailer_file'):
-                        (folder_path_obj / 'tvshow.nfo').write_text(tvshow_nfo(show), encoding='utf-8')
+                        (show_dir / 'tvshow.nfo').write_text(tvshow_nfo(show), encoding='utf-8')
                 update(
                     processed_files=done,
                     progress=int((done / len(files)) * 100) if files else 100,
@@ -912,10 +1455,11 @@ def process_library(folder_path, settings, update, should_continue):
                 )
                 continue
             items = still
-        series = parse_release(folder_path_obj.name, folder_path_obj.name)
+        series_name = _series_label(folder_path_obj)
+        series = parse_release(series_name, series_name)
         parsed_rows = []
         for item in items:
-            parsed = parse_release(folder_path_obj.name, item['filename'])
+            parsed = parse_release(series_name, item['filename'])
             parsed['title'] = series['title'] or parsed['title']
             parsed['studio'] = series['studio'] or parsed['studio']
             parsed['item'] = item
@@ -924,13 +1468,26 @@ def process_library(folder_path, settings, update, should_continue):
         _assign_episodes(parsed_rows)
         show = lookup_show(parsed_rows[0]['title'], parsed_rows[0]['studio'])
         show_name = show_folder_name(show)
+        source_dirs = []
+        for item in items:
+            parent = Path(item['folder'])
+            if parent not in source_dirs:
+                source_dirs.append(parent)
+            if folder_path_obj not in source_dirs:
+                source_dirs.append(folder_path_obj)
         if organize:
             show_dir = library / show_name
             season_dir = show_dir / 'Season 01'
         else:
-            show_dir = folder_path_obj
-            season_dir = folder_path_obj
+            if re.fullmatch(r'Season \d+', folder_path_obj.name, flags=re.I):
+                show_dir = folder_path_obj.parent
+                season_dir = folder_path_obj
+            else:
+                show_dir = folder_path_obj
+                season_dir = folder_path_obj
         show_dir.mkdir(parents=True, exist_ok=True)
+        if organize:
+            season_dir.mkdir(parents=True, exist_ok=True)
         label = show['title']
         line = ('Matched ' if show['matched'] else 'No catalog match for ') + label
         print(line, flush=True)
@@ -941,7 +1498,8 @@ def process_library(folder_path, settings, update, should_continue):
             message=line,
         )
         if download_cover:
-            note = _save_artwork(show_dir, show, media_server)
+            note = _save_artwork(show_dir, show, media_server, source_dirs=source_dirs)
+            print(f'{label}: {note}', flush=True)
             update(message=f'{label}: {note}')
         if settings.get('download_trailer', True):
             note = _download_show_trailer(show_dir, show)
@@ -949,6 +1507,11 @@ def process_library(folder_path, settings, update, should_continue):
             update(message=f'{label}: {note}')
         if create_nfo:
             (show_dir / 'tvshow.nfo').write_text(tvshow_nfo(show), encoding='utf-8')
+        kept_images = set()
+        if (show_dir / artwork_profile(media_server)['posters'][0]).is_file():
+            kept_images.add((show_dir / artwork_profile(media_server)['posters'][0]).resolve())
+        if (show_dir / artwork_profile(media_server)['backgrounds'][0]).is_file():
+            kept_images.add((show_dir / artwork_profile(media_server)['backgrounds'][0]).resolve())
         for parsed in parsed_rows:
             if not should_continue():
                 update(message='Stopped')
@@ -961,6 +1524,8 @@ def process_library(folder_path, settings, update, should_continue):
             suffix = source.suffix
             new_name = episode_filename(show_name, parsed['episode_start'], parsed['episode_end'], suffix)
             video_path = source
+            original_stem = source.stem
+            search_dirs = list(source_dirs)
             if organize:
                 moved, note = _rename_only(source, season_dir / new_name)
                 update(message=f'{new_name}: {note}')
@@ -968,22 +1533,54 @@ def process_library(folder_path, settings, update, should_continue):
                     (source.parent / 'tvshow.nfo').write_text(tvshow_nfo(show), encoding='utf-8')
                 if moved:
                     video_path = season_dir / new_name
-                    for sibling in list(folder_path_obj.iterdir()) if folder_path_obj.is_dir() else []:
+                    image_hits = []
+                    for sibling in list(source.parent.iterdir()) if source.parent.is_dir() else []:
                         if not sibling.is_file():
                             continue
-                        if sibling.suffix.lower() not in SUBTITLE_EXTENSIONS | IMAGE_EXTENSIONS:
+                        suffix_l = sibling.suffix.lower()
+                        if suffix_l in SUBTITLE_EXTENSIONS:
+                            dest_name = _sidecar_dest(sibling, original_stem, video_path.stem)
+                            if dest_name:
+                                _rename_only(sibling, season_dir / dest_name)
                             continue
-                        dest_name = _sidecar_dest(sibling, source.stem, video_path.stem)
-                        if not dest_name:
+                        if suffix_l not in IMAGE_EXTENSIONS:
                             continue
-                        if sibling.suffix.lower() in IMAGE_EXTENSIONS and dest_name == video_path.stem + sibling.suffix:
-                            dest_name = video_path.stem + '-thumb' + sibling.suffix
-                        _rename_only(sibling, season_dir / dest_name)
+                        if sibling.name.startswith('.') or sibling.name.lower() in {
+                            'poster.jpg', 'folder.jpg', 'cover.jpg', 'fanart.jpg',
+                            'background.jpg', 'backdrop.jpg', 'art.jpg',
+                        }:
+                            continue
+                        base = re.sub(r'\s*\(\d+\)$', '', sibling.stem).strip()
+                        orig_base = re.sub(r'\s*\(\d+\)$', '', original_stem).strip()
+                        if sibling.stem == original_stem or base == orig_base or sibling.stem.startswith(orig_base):
+                            image_hits.append(sibling)
+                    if image_hits:
+                        best, _ = _pick_best_image(image_hits, prefer='any')
+                        thumb_dest = season_dir / (video_path.stem + '-thumb.jpg')
+                        if best is not None:
+                            _rename_only(best, thumb_dest)
+                            for extra in image_hits:
+                                if extra.exists() and extra.resolve() != thumb_dest.resolve():
+                                    extra.unlink(missing_ok=True)
+                    search_dirs.append(season_dir)
+            # Promote thumbs even when organize is off or files were already moved.
+            _promote_episode_thumbs(video_path, search_dirs + [video_path.parent])
+            thumb = video_path.with_name(video_path.stem + '-thumb.jpg')
+            if thumb.is_file():
+                kept_images.add(thumb.resolve())
             if create_nfo:
                 nfo_path = video_path.with_suffix('.nfo')
                 nfo_path.write_text(episode_nfo(show, parsed), encoding='utf-8')
             done += 1
             update(processed_files=done, progress=int((done / len(files)) * 100))
-        if organize and folder_path_obj.resolve() != library.resolve():
-            _empty_dir(folder_path_obj)
+        cleanup_dirs = list(source_dirs) + [show_dir, season_dir]
+        _cleanup_release_images(cleanup_dirs, kept_images)
+        if organize:
+            for source_dir in source_dirs:
+                if source_dir.resolve() in {library.resolve(), show_dir.resolve(), season_dir.resolve()}:
+                    continue
+                _purge_migrated_source(source_dir)
+                parent = source_dir.parent
+                if parent.resolve() != library.resolve() and parent.is_dir():
+                    _empty_dir(parent)
     update(progress=100, message=f'Saved metadata for {done} videos', processed_files=done)

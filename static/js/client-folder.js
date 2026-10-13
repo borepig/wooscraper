@@ -51,10 +51,11 @@
             return;
         }
         if (canWriteFolder()) {
-            help.textContent = 'Choose folder on this device saves NFO files and covers into that folder. Windows and Ubuntu need Chrome or Edge. The path box above is only for the computer running the server.';
+            button.textContent = 'Choose folder on this device';
+            help.textContent = 'Saves NFO files and covers into a folder on this computer. Needs Chrome or Edge over HTTPS or localhost. On the NAS, use the path box / folder button instead.';
         } else {
-            button.textContent = 'Choose video files';
-            help.textContent = 'This browser cannot write into a folder. Choose the video files and Start Scraping downloads a zip of NFO files and covers for you to save. iPhone and iPad always use this.';
+            button.textContent = 'Choose folder on this device';
+            help.textContent = 'This browser cannot write into a folder over plain HTTP. You can still pick a folder of videos; Start Scraping downloads a zip. On the QNAP, prefer the path box and the browse button beside it.';
         }
     }
 
@@ -71,13 +72,18 @@
                     continue;
                 }
                 if (hentai || code) {
+                    let parentName = parentParts[parentParts.length - 1] || name;
+                    // Season 01 folders use the show folder name for AniList lookup.
+                    if (hentai && /^Season \d+$/i.test(parentName) && parentParts.length >= 2) {
+                        parentName = parentParts[parentParts.length - 2];
+                    }
                     found.push({
                         name,
                         handle,
                         parent: dirHandle,
-                        parentName: parentParts[parentParts.length - 1] || name,
+                        parentName,
                         relative: parentParts.concat(name).join('/'),
-                        javCode: hentai ? (parentParts[parentParts.length - 1] || name) : code
+                        javCode: hentai ? parentName : code
                     });
                 }
             }
@@ -145,25 +151,40 @@
         picked = [];
         const files = Array.from(event.target.files || []);
         const hentai = libraryKind() === 'hentai';
+        let folderLabel = '';
         files.forEach((file) => {
+            const relative = file.webkitRelativePath || file.name;
+            const parts = relative.split('/').filter(Boolean);
+            if (!folderLabel && parts.length > 1) {
+                folderLabel = parts[0];
+            }
             const code = extractJavCode(file.name);
+            let parentName = parts.length > 1 ? parts[parts.length - 2] : file.name;
+            if (hentai && /^Season \d+$/i.test(parentName) && parts.length >= 3) {
+                parentName = parts[parts.length - 3];
+            }
             if (hentai || code) {
                 picked.push({
                     name: file.name,
                     handle: null,
                     parent: null,
-                    parentName: file.name,
-                    relative: file.name,
-                    javCode: hentai ? file.name : code
+                    parentName: parentName,
+                    relative: relative,
+                    javCode: hentai ? parentName : code
                 });
             }
         });
         showPicked();
+        const path = document.getElementById('folderPath');
+        if (path && folderLabel) {
+            path.value = '(this device) ' + folderLabel;
+        }
         if (typeof showNotification === 'function') {
             showNotification(
                 picked.length
-                    ? 'Found ' + picked.length + ' video' + (picked.length === 1 ? '' : 's') + '. Start Scraping downloads a zip.'
-                    : 'No JAV videos in that selection',
+                    ? 'Found ' + picked.length + ' video' + (picked.length === 1 ? '' : 's') +
+                        (folderLabel ? ' in ' + folderLabel : '') + '. Start Scraping downloads a zip.'
+                    : (hentai ? 'No videos in that folder' : 'No JAV videos in that selection'),
                 picked.length ? 'success' : 'warning'
             );
         }
@@ -737,6 +758,74 @@
         }
     }
 
+    async function promoteHentaiThumb(sourceDir, episodeDir, originalStem, episodeFile) {
+        if (!sourceDir || !episodeDir || !originalStem || !episodeFile) {
+            return;
+        }
+        const episodeBase = episodeFile.replace(/\.[^.]+$/, '');
+        const thumbName = episodeBase + '-thumb.jpg';
+        const baseStem = originalStem.replace(/\s*\(\d+\)$/, '').trim();
+        let bestHandle = null;
+        let bestSize = -1;
+        const extras = [];
+        for await (const [name, handle] of sourceDir.entries()) {
+            if (handle.kind !== 'file') {
+                continue;
+            }
+            const lower = name.toLowerCase();
+            if (!/\.(jpe?g|png|webp)$/i.test(name)) {
+                continue;
+            }
+            if (['poster.jpg', 'folder.jpg', 'cover.jpg', 'fanart.jpg', 'background.jpg', 'backdrop.jpg', 'art.jpg'].indexOf(lower) !== -1) {
+                continue;
+            }
+            if (/-thumb\./i.test(name)) {
+                continue;
+            }
+            const stem = name.replace(/\.[^.]+$/, '');
+            const stemBase = stem.replace(/\s*\(\d+\)$/, '').trim();
+            if (stem !== originalStem && stemBase !== baseStem && stem.indexOf(baseStem) !== 0) {
+                continue;
+            }
+            try {
+                const file = await handle.getFile();
+                if (file.size > bestSize) {
+                    if (bestHandle) {
+                        extras.push(bestHandle);
+                    }
+                    bestHandle = handle;
+                    bestSize = file.size;
+                } else {
+                    extras.push(handle);
+                }
+            } catch (error) {
+                // Ignore unreadable sidecars.
+            }
+        }
+        if (!bestHandle) {
+            return;
+        }
+        try {
+            const file = await bestHandle.getFile();
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            await writeBytes(episodeDir, thumbName, bytes);
+            try {
+                await bestHandle.remove();
+            } catch (error) {
+                // Source may already be gone after a move.
+            }
+            for (let index = 0; index < extras.length; index += 1) {
+                try {
+                    await extras[index].remove();
+                } catch (error) {
+                    // Ignore duplicate cleanup failures.
+                }
+            }
+        } catch (error) {
+            // Thumb promotion is best-effort on the client path.
+        }
+    }
+
     async function runHentai(options) {
         const audit = Boolean(options && options.audit);
         if (!picked.length) {
@@ -754,7 +843,8 @@
         cancelled = false;
         const createNfo = document.getElementById('createNfo').checked;
         const downloadCover = document.getElementById('downloadCover').checked;
-        const organizeFiles = !audit && document.getElementById('organizeFiles').checked && mode === 'write';
+        // Hentai audit still organizes into Season 01 when the checkbox is on.
+        const organizeFiles = document.getElementById('organizeFiles').checked && mode === 'write';
         const zipEntries = [];
         const start = document.getElementById('startBtn');
         const auditButton = document.getElementById('auditBtn');
@@ -787,6 +877,7 @@
                 }
                 let showDir = item.parent;
                 let episodeDir = item.parent;
+                const originalStem = item.name.replace(/\.[^.]+$/, '');
                 if (organizeFiles && rootHandle && data.show_folder && item.handle && item.handle.move && data.episode_file) {
                     const nextShow = await rootHandle.getDirectoryHandle(data.show_folder, { create: true });
                     const nextSeason = await nextShow.getDirectoryHandle('Season 01', { create: true });
@@ -794,11 +885,12 @@
                         await item.handle.move(nextSeason, data.episode_file);
                         showDir = nextShow;
                         episodeDir = nextSeason;
+                        await promoteHentaiThumb(item.parent, episodeDir, originalStem, data.episode_file);
                     } catch (error) {
                         progress(Math.round((index / picked.length) * 100), 'Left the video in place');
                     }
                 }
-                const showKey = (item.parentName || data.show_folder || label);
+                const showKey = (data.show_folder || item.parentName || label);
                 if (!seenShows[showKey]) {
                     seenShows[showKey] = true;
                     if (downloadCover && data.cover_url) {
@@ -826,6 +918,9 @@
                                 zipEntries.push({ name: data.show_folder + '/' + name, data: fanart });
                             });
                         }
+                    }
+                    if (showDir && data.artwork) {
+                        await pruneArtwork(showDir, data.artwork);
                     }
                     if (createNfo && data.show_nfo) {
                         const showBytes = new TextEncoder().encode(data.show_nfo);
