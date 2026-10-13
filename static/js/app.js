@@ -44,16 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-let browsePath = '';
 let serverHasLibrary = false;
 
 async function setupFolderButton() {
     const button = document.getElementById('chooseFolderBtn');
     const help = document.getElementById('folderHelp');
-    const useBtn = document.getElementById('browseUseFolderBtn');
-    if (useBtn) {
-        useBtn.addEventListener('click', useBrowseFolder);
-    }
     try {
         const response = await fetch('/api/capabilities');
         const data = await response.json();
@@ -64,115 +59,23 @@ async function setupFolderButton() {
     } catch (error) {
         serverHasLibrary = false;
     }
-    if (!button) {
+    if (serverHasLibrary) {
+        // QNAP: type a container path and Scan — no upload, no folder modal.
+        if (button) {
+            button.hidden = true;
+        }
+        if (help) {
+            help.innerHTML = 'Type the folder path on the NAS (inside the container), usually <code>/library/jav</code> or <code>/library/hentai</code>. Scan and Start write files there.';
+        }
         return;
     }
-    const goBtn = document.getElementById('browseGoBtn');
-    const pathInput = document.getElementById('browsePathInput');
-    if (goBtn) {
-        goBtn.addEventListener('click', () => {
-            const typed = (pathInput && pathInput.value || '').trim();
-            loadBrowsePath(typed);
-        });
-    }
-    if (pathInput) {
-        pathInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                loadBrowsePath((pathInput.value || '').trim());
-            }
-        });
-    }
-    if (serverHasLibrary) {
-        // QNAP / local server: pick a folder the server can write into.
-        button.innerHTML = '<i class="fas fa-folder-open"></i> Choose folder';
-        if (help) {
-            help.textContent = 'Type any server path above, or browse. Scan and Start write into that folder — nothing is uploaded.';
-        }
-        button.addEventListener('click', openServerFolderBrowser);
-    } else if (window.clientFolder && typeof window.clientFolder.bindChooser === 'function') {
-        // Hosted / no server disk: browser picks a folder on this PC.
+    if (button && window.clientFolder && typeof window.clientFolder.bindChooser === 'function') {
+        button.hidden = false;
         window.clientFolder.bindChooser(button);
         if (help) {
             help.textContent = 'Choose a folder on this computer. Chrome or Edge can write into it; otherwise you get a zip download.';
         }
     }
-}
-
-async function openServerFolderBrowser() {
-    const start = (document.getElementById('folderPath').value || '').trim();
-    const pathInput = document.getElementById('browsePathInput');
-    if (pathInput) {
-        pathInput.value = start;
-    }
-    await loadBrowsePath(start);
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('folderModal')).show();
-}
-
-async function loadBrowsePath(path) {
-    const list = document.getElementById('browseFolderList');
-    const pathInput = document.getElementById('browsePathInput');
-    if (list) {
-        list.innerHTML = '<div class="list-group-item bg-dark text-muted">Loading…</div>';
-    }
-    const query = path ? ('?path=' + encodeURIComponent(path)) : '';
-    const response = await fetch('/api/browse' + query);
-    const data = await response.json();
-    if (!response.ok) {
-        if (list) {
-            list.innerHTML = '<div class="list-group-item bg-dark text-danger">' +
-                (data.error || 'Could not open folder') + '</div>';
-        }
-        return;
-    }
-    browsePath = data.path || '';
-    if (pathInput) {
-        pathInput.value = browsePath;
-    }
-    if (!list) {
-        return;
-    }
-    list.innerHTML = '';
-    if (data.parent) {
-        const up = document.createElement('button');
-        up.type = 'button';
-        up.className = 'list-group-item list-group-item-action bg-dark text-light';
-        up.innerHTML = '<i class="fas fa-level-up-alt me-2"></i>..';
-        up.addEventListener('click', () => loadBrowsePath(data.parent));
-        list.appendChild(up);
-    }
-    (data.entries || []).forEach((entry) => {
-        const row = document.createElement('button');
-        row.type = 'button';
-        row.className = 'list-group-item list-group-item-action bg-dark text-light';
-        row.innerHTML = '<i class="fas fa-folder me-2 text-warning"></i>' + entry.name;
-        row.addEventListener('click', () => loadBrowsePath(entry.path));
-        list.appendChild(row);
-    });
-    if (!(data.entries || []).length) {
-        const empty = document.createElement('div');
-        empty.className = 'list-group-item bg-dark text-muted';
-        empty.textContent = 'No subfolders — you can use this folder.';
-        list.appendChild(empty);
-    }
-}
-
-function useBrowseFolder() {
-    if (!browsePath) {
-        showNotification('No folder selected', 'warning');
-        return;
-    }
-    if (window.clientFolder && typeof window.clientFolder.clear === 'function') {
-        window.clientFolder.clear();
-    }
-    document.getElementById('folderPath').value = browsePath;
-    currentFolder = browsePath;
-    localStorage.setItem('lastFolderPath', browsePath);
-    const modal = bootstrap.Modal.getInstance(document.getElementById('folderModal'));
-    if (modal) {
-        modal.hide();
-    }
-    showNotification('Folder set: ' + browsePath + '. Click Scan Folder, then Start Scraping.', 'success');
 }
 
 // Convert relative path to absolute path
@@ -811,7 +714,7 @@ function addPathSuggestions() {
         '/home/joe/Downloads'
     ];
 
-    folderPathInput.placeholder = 'Any folder path the server can read, e.g. /library/hentai';
+    folderPathInput.placeholder = '/library/hentai';
 }
 
 // Handle Enter key in folder path input
