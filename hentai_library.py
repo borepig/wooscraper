@@ -18,6 +18,8 @@ import time
 import urllib.parse
 from pathlib import Path
 
+from PIL import Image
+
 from scraper_engine import (
     TRAILER_MAX_BYTES,
     artwork_profile,
@@ -31,6 +33,11 @@ from scraper_engine import (
 VIDEO_EXTENSIONS = {'.mp4', '.mkv', '.avi', '.wmv', '.mov'}
 SUBTITLE_EXTENSIONS = {'.ass', '.ssa', '.srt', '.sub', '.idx'}
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+# Windows copy leftovers and release notes that do not belong in a Plex show folder.
+_JUNK_NAMES = {
+    'thumbs.db', 'desktop.ini', 'important.txt', '重要申明.txt', '.ds_store',
+}
+_NUMBERED_DUP = re.compile(r'^(?P<base>.+?)\s*\((?P<num>\d+)\)(?P<ext>\.[^.]+)$', re.I)
 _SHOW_CACHE = {}
 _LAST_REQUEST = 0.0
 
@@ -1177,6 +1184,48 @@ def _replace_if_larger_file(source, dest):
     return False
 
 
+def _poster_from_cover(cover_path, poster_path):
+    """Crop the right ~47% of a landscape cover into a portrait poster (same as JAV)."""
+    cover_path = Path(cover_path)
+    poster_path = Path(poster_path)
+    if not cover_path.is_file():
+        return False
+    try:
+        with Image.open(cover_path) as img:
+            width, height = img.size
+            if width <= 0 or height <= 0:
+                return False
+            if height >= width:
+                # Already a portrait — copy bytes rather than invent a crop.
+                if cover_path.resolve() != poster_path.resolve():
+                    poster_path.parent.mkdir(parents=True, exist_ok=True)
+                    poster_path.write_bytes(cover_path.read_bytes())
+                return True
+            crop_width = max(1, int(width * 0.47125))
+            left = width - crop_width
+            cropped = img.crop((left, 0, width, height))
+            poster_path.parent.mkdir(parents=True, exist_ok=True)
+            cropped.convert('RGB').save(poster_path, 'JPEG', quality=95)
+        return poster_path.is_file() and image_pixels(poster_path) > 0
+    except Exception as error:
+        logging.warning('Poster crop failed for %s: %s', cover_path, error)
+        return False
+
+
+def _images_same(left, right):
+    left, right = Path(left), Path(right)
+    if not left.is_file() or not right.is_file():
+        return False
+    if left.resolve() == right.resolve():
+        return True
+    try:
+        if left.stat().st_size != right.stat().st_size:
+            return False
+        return left.read_bytes() == right.read_bytes()
+    except OSError:
+        return False
+
+
 def _download(url, dest):
     if not url or not url.startswith('https://'):
         return False
@@ -1201,7 +1250,12 @@ def _download(url, dest):
 
 
 def _save_artwork(show_dir, show, media_server, source_dirs=None):
-    """Write poster/background using remote catalogs, local release art, then AniList."""
+    """Write poster/background using remote catalogs, local release art, then AniList.
+
+    Poster must be a real portrait cover. Landscape screenshots / full covers are
+    never used as poster as-is — if we only have a cover/background, crop the
+    right side into a poster (same rule as JAV).
+    """
     profile = artwork_profile(media_server)
     show_dir = Path(show_dir)
     poster_path = show_dir / profile['posters'][0]
@@ -1217,44 +1271,66 @@ def _save_artwork(show_dir, show, media_server, source_dirs=None):
             width, height = image_dimensions(target)
             pixels = width * height
             if pixels < 40_000:
-                # Reject tiny banners / placeholders from catalogs.
                 continue
             remote_paths.append(target)
             if height >= width and pixels >= _GOOD_POSTER_PIXELS:
-                # Strong portrait already; skip slower remaining remotes.
                 break
     local_paths = _local_images(show_dir, *(source_dirs or []))
-    poster_pool = list(remote_paths) + list(local_paths)
-    if poster_path.is_file():
-        poster_pool.append(poster_path)
-    portrait, portrait_pixels = _pick_best_image(poster_pool, prefer='portrait')
-    overall, overall_pixels = _pick_best_image(poster_pool, prefer='any')
-    # Keep a portrait only when it is genuinely large; otherwise prefer the biggest local art.
-    if portrait is not None and portrait_pixels >= _GOOD_POSTER_PIXELS:
-        poster, poster_pixels = portrait, portrait_pixels
-    elif portrait is not None and (overall is None or portrait_pixels >= overall_pixels):
-        poster, poster_pixels = portrait, portrait_pixels
-    else:
-        poster, poster_pixels = overall, overall_pixels
+    # Background: prefer a real landscape cover (not a tiny banner).
     background_pool = list(local_paths) + list(remote_paths)
     if background_path.is_file():
         background_pool.append(background_path)
     background, background_pixels = _pick_best_image(background_pool, prefer='landscape')
     if background is None:
         background, background_pixels = _pick_best_image(background_pool, prefer='any')
+
+    # Poster: portrait catalog art only. Never use a landscape image unchanged.
+    poster_pool = list(remote_paths) + list(local_paths)
+    if poster_path.is_file():
+        width, height = image_dimensions(poster_path)
+        if height > width:
+            poster_pool.append(poster_path)
+    portrait, portrait_pixels = _pick_best_image(poster_pool, prefer='portrait')
+
     notes = []
-    if poster is not None and _replace_if_larger_file(poster, poster_path):
-        notes.append(f'poster {poster_pixels}px')
-    elif poster_path.is_file():
-        notes.append('poster kept')
-    else:
-        notes.append('no poster')
     if background is not None and _replace_if_larger_file(background, background_path):
         notes.append(f'background {background_pixels}px')
     elif background_path.is_file():
         notes.append('background kept')
     else:
         notes.append('no background')
+
+    used_crop = False
+    if portrait is not None and portrait_pixels >= 80_000:
+        if _replace_if_larger_file(portrait, poster_path):
+            notes.append(f'poster {portrait_pixels}px')
+        elif poster_path.is_file():
+            notes.append('poster kept')
+    elif background_path.is_file() and _poster_from_cover(background_path, poster_path):
+        used_crop = True
+        notes.append('poster cropped from cover')
+    else:
+        cover, _ = _pick_best_image(list(remote_paths) + list(local_paths), prefer='landscape')
+        if cover is None:
+            cover, _ = _pick_best_image(list(remote_paths) + list(local_paths), prefer='any')
+        if cover is not None and _poster_from_cover(cover, poster_path):
+            used_crop = True
+            notes.append('poster cropped from cover')
+        elif poster_path.is_file():
+            notes.append('poster kept')
+        else:
+            notes.append('no poster')
+
+    # Landscape poster or poster identical to background → force crop from cover.
+    if poster_path.is_file() and background_path.is_file():
+        pw, ph = image_dimensions(poster_path)
+        if pw >= ph or _images_same(poster_path, background_path):
+            if _poster_from_cover(background_path, poster_path):
+                used_crop = True
+                if 'poster cropped from cover' not in notes:
+                    notes = [item for item in notes if not item.startswith('poster ')]
+                    notes.append('poster cropped from cover')
+
     if poster_path.is_file():
         copy_bytes_as(poster_path, profile['posters'])
     if background_path.is_file():
@@ -1262,6 +1338,8 @@ def _save_artwork(show_dir, show, media_server, source_dirs=None):
     prune_other_artwork(show_dir, media_server)
     for path in temps:
         path.unlink(missing_ok=True)
+    if used_crop and 'poster cropped from cover' not in notes:
+        notes.append('poster cropped from cover')
     return ', '.join(notes)
 
 
@@ -1346,6 +1424,68 @@ def _cleanup_release_images(folders, keep_paths):
                 continue
             path.unlink(missing_ok=True)
             removed.append(path.name)
+    return removed
+
+
+def _remove_numbered_duplicates(root):
+    """Delete Windows-style 'name (1).ext' copies when the original (or video) exists."""
+    root = Path(root)
+    removed = []
+    if not root.is_dir():
+        return removed
+    for path in list(root.rglob('*')):
+        if not path.is_file():
+            continue
+        match = _NUMBERED_DUP.match(path.name)
+        if not match:
+            continue
+        base = match.group('base').rstrip()
+        ext = match.group('ext').lower()
+        original = path.with_name(base + match.group('ext'))
+        # Subtitle (1)/(2) next to the episode video — always junk duplicates.
+        if ext in SUBTITLE_EXTENSIONS:
+            video_here = any(
+                (path.parent / (base + video_ext)).is_file()
+                for video_ext in VIDEO_EXTENSIONS
+            )
+            if original.is_file() or video_here:
+                path.unlink(missing_ok=True)
+                removed.append(path.name)
+                continue
+        # Duplicate video or any sidecar when the un-numbered file already exists.
+        if original.is_file() and original.resolve() != path.resolve():
+            path.unlink(missing_ok=True)
+            removed.append(path.name)
+    return removed
+
+
+def _remove_junk_files(root):
+    """Drop release notes and OS junk that should not sit in a show folder."""
+    root = Path(root)
+    removed = []
+    if not root.is_dir():
+        return removed
+    for path in list(root.rglob('*')):
+        if not path.is_file():
+            continue
+        name = path.name.lower()
+        if name in _JUNK_NAMES or name.endswith('重要申明.txt'):
+            path.unlink(missing_ok=True)
+            removed.append(path.name)
+            continue
+        # Hidden download leftovers / temp catalog pictures.
+        if name.startswith('.picture-') or name.startswith('.audit-'):
+            path.unlink(missing_ok=True)
+            removed.append(path.name)
+    return removed
+
+
+def scrub_show_tree(show_dir):
+    """Remove duplicate (1)/(2) files and other junk under a show folder."""
+    show_dir = Path(show_dir)
+    removed = []
+    removed.extend(_remove_numbered_duplicates(show_dir))
+    removed.extend(_remove_junk_files(show_dir))
     return removed
 
 
@@ -1586,12 +1726,21 @@ def process_library(folder_path, settings, update, should_continue):
             update(processed_files=done, progress=int((done / len(files)) * 100))
         cleanup_dirs = list(source_dirs) + [show_dir, season_dir]
         _cleanup_release_images(cleanup_dirs, kept_images)
+        scrubbed = scrub_show_tree(show_dir)
+        if scrubbed:
+            print(f'{label}: removed {len(scrubbed)} junk/duplicate files', flush=True)
         if organize:
             for source_dir in source_dirs:
                 if source_dir.resolve() in {library.resolve(), show_dir.resolve(), season_dir.resolve()}:
                     continue
                 _purge_migrated_source(source_dir)
+                scrub_show_tree(source_dir)
                 parent = source_dir.parent
                 if parent.resolve() != library.resolve() and parent.is_dir():
                     _empty_dir(parent)
+    # Final pass: scrub every show folder under the library for leftover (1)/(2) junk.
+    if library.is_dir():
+        for child in library.iterdir():
+            if child.is_dir() and not child.name.startswith(('.', '@')):
+                scrub_show_tree(child)
     update(progress=100, message=f'Saved metadata for {done} videos', processed_files=done)
