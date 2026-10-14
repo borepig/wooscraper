@@ -86,3 +86,26 @@ def test_poster_from_cover_helper(tmp_path):
         width, height = img.size
     assert height == 1000
     assert width == int(2000 * 0.47125)
+    # Portrait source cannot be cropped into a different poster.
+    tall = tmp_path / 'tall.jpg'
+    _write_rgb(tall, (600, 900), (9, 9, 9))
+    assert _poster_from_cover(tall, tmp_path / 'nope.jpg') is False
+
+
+def test_duplicate_portrait_not_kept_as_background(tmp_path):
+    show = {
+        'title': 'Demo',
+        'original': 'Demo',
+        'romaji': 'Demo',
+        'poster_url': '',
+        'picture_urls': [],
+        'cover_candidates': [],
+        '_covers_ready': True,
+        'matched': False,
+    }
+    only = tmp_path / 'only.jpg'
+    _write_rgb(only, (400, 600), (5, 5, 5))
+    note = _save_artwork(tmp_path, show, 'plex', source_dirs=[tmp_path])
+    assert (tmp_path / 'poster.jpg').is_file()
+    assert not (tmp_path / 'background.jpg').is_file()
+    assert 'cleared' in note

@@ -1186,26 +1186,26 @@ def _replace_if_larger_file(source, dest):
 
 def _poster_from_cover(cover_path, poster_path):
     """Crop the right ~47% of a landscape cover into a portrait poster (same as JAV)."""
+    from PIL import ImageFile
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
     cover_path = Path(cover_path)
     poster_path = Path(poster_path)
     if not cover_path.is_file():
         return False
     try:
         with Image.open(cover_path) as img:
+            img = img.convert('RGB')
             width, height = img.size
             if width <= 0 or height <= 0:
                 return False
             if height >= width:
-                # Already a portrait — copy bytes rather than invent a crop.
-                if cover_path.resolve() != poster_path.resolve():
-                    poster_path.parent.mkdir(parents=True, exist_ok=True)
-                    poster_path.write_bytes(cover_path.read_bytes())
-                return True
+                # Already a portrait — cannot invent a landscape crop.
+                return False
             crop_width = max(1, int(width * 0.47125))
             left = width - crop_width
             cropped = img.crop((left, 0, width, height))
             poster_path.parent.mkdir(parents=True, exist_ok=True)
-            cropped.convert('RGB').save(poster_path, 'JPEG', quality=95)
+            cropped.save(poster_path, 'JPEG', quality=95)
         return poster_path.is_file() and image_pixels(poster_path) > 0
     except Exception as error:
         logging.warning('Poster crop failed for %s: %s', cover_path, error)
@@ -1321,15 +1321,33 @@ def _save_artwork(show_dir, show, media_server, source_dirs=None):
         else:
             notes.append('no poster')
 
-    # Landscape poster or poster identical to background → force crop from cover.
+    # Landscape poster or poster identical to background → force crop / untangle.
     if poster_path.is_file() and background_path.is_file():
         pw, ph = image_dimensions(poster_path)
+        bw, bh = image_dimensions(background_path)
         if pw >= ph or _images_same(poster_path, background_path):
-            if _poster_from_cover(background_path, poster_path):
+            if bw > bh and _poster_from_cover(background_path, poster_path):
                 used_crop = True
-                if 'poster cropped from cover' not in notes:
-                    notes = [item for item in notes if not item.startswith('poster ')]
-                    notes.append('poster cropped from cover')
+                notes = [item for item in notes if not item.startswith('poster ')]
+                notes.append('poster cropped from cover')
+            elif _images_same(poster_path, background_path):
+                # Only one portrait image exists — keep it as poster, not as both.
+                other_land, _ = _pick_best_image(
+                    [path for path in (list(remote_paths) + list(local_paths))
+                     if Path(path).resolve() != poster_path.resolve()],
+                    prefer='landscape',
+                )
+                if other_land is not None and _replace_if_larger_file(other_land, background_path):
+                    notes = [item for item in notes if not item.startswith('background ')]
+                    notes.append('background replaced')
+                    if _poster_from_cover(background_path, poster_path):
+                        used_crop = True
+                        notes = [item for item in notes if not item.startswith('poster ')]
+                        notes.append('poster cropped from cover')
+                else:
+                    background_path.unlink(missing_ok=True)
+                    notes = [item for item in notes if not item.startswith('background ')]
+                    notes.append('background cleared (was duplicate poster)')
 
     if poster_path.is_file():
         copy_bytes_as(poster_path, profile['posters'])
